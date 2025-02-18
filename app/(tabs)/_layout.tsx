@@ -8,6 +8,9 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+// barbell icon
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
@@ -38,6 +41,20 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+        }}
+      />
+      {/* icon on the bottom bar for workout page */}
+      <Tabs.Screen
+        name="workout"
+        options={{
+          title: "Workout",
+          tabBarIcon: ({ color }) => <Ionicons name="barbell" size={28} color={color} />
+        }}
+      />
+      <Tabs.Screen
+        name="new-template"
+        options={{
+          href: null
         }}
       />
     </Tabs>
