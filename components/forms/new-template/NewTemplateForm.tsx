@@ -16,7 +16,7 @@ import {
 import { AlertCircleIcon, SearchIcon } from "../../ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
-import ExerciseForm from "./ExerciseForm";
+import ExerciseForm from "../../exercise-form/ExerciseForm";
 import { useNewTemplateFormValues } from "./NewTemplateFormContext";
 
 // TODO need to remove and replace with exercise search component
@@ -78,7 +78,7 @@ export default function NewTemplateForm() {
   // TODO remove and replace with actual searching
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
-  const { nameError, name, setName, exercises, addExercise } =
+  const { nameError, name, setName, exercises, addExercise, editReps, editWeight, addSet, removeSet } =
     useNewTemplateFormValues();
 
   return (
@@ -147,6 +147,11 @@ export default function NewTemplateForm() {
           key={exercise.info.id * Math.random()}
           name={exercise.info.name}
           id={exercise.info.id}
+          exercises={exercises}
+          editReps={editReps}
+          editWeight={editWeight}
+          addSet={addSet}
+          removeSet={removeSet}
         />
       ))}
       {/* TODO implement save template on context side */}

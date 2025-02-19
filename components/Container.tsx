@@ -8,7 +8,7 @@ export default function Container({
   return (
     <KeyboardAvoidingView behavior="padding" className="flex flex-1">
       <ScrollView keyboardShouldPersistTaps="handled">
-        <View className="flex px-8 py-32">{children}</View>
+        <View className="flex px-6 py-32">{children}</View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
