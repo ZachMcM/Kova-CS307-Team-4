@@ -51,7 +51,7 @@ const buttonStyle = tva({
       default:
         'bg-transparent data-[hover=true]:bg-background-50 data-[active=true]:bg-transparent',
       kova:
-        'bg data-[hover=true]:bg-primary-600 data-[active=true]:bg-primary-700 border-primary-300 data-[hover=true]:border-primary-400 data-[active=true]:border-primary-500 data-[focus-visible=true]:web:ring-indicator-info'
+        'bg-kova-500 data-[hover=true]:bg-kova-600 data-[active=true]:bg-kova-700 border-kova-300 data-[hover=true]:border-kova-400 data-[active=true]:border-kova-500 data-[focus-visible=true]:web:ring-indicator-info'
     },
     variant: {
       link: 'px-0',

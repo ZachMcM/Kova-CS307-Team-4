@@ -8,7 +8,6 @@ import { Heading } from "./ui/heading";
 import { EditIcon, Icon } from "./ui/icon";
 import { Text } from "./ui/text";
 import { VStack } from "./ui/vstack";
-import { ExerciseData } from "@/types/exercise-data";
 
 export default function TemplateCard({ template }: { template: any }) {
   return (
@@ -26,12 +25,7 @@ export default function TemplateCard({ template }: { template: any }) {
           </Link>
         </VStack>
         {/* TODO Finish this button with link to start workout */}
-        <Button
-          size="lg"
-          variant="solid"
-          className="bg-[#6FA8DC]"
-          action="primary"
-        >
+        <Button size="lg" variant="solid" action="kova">
           <ButtonText>Start Workout</ButtonText>
         </Button>
       </VStack>

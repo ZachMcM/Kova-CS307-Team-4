@@ -135,7 +135,7 @@ export default function NewTemplateForm() {
         {exercises.map((exercise, i) => (
           <VStack space="xs" key={exercise.info.id}>
             <HStack className="justify-between items-center">
-              <Heading className="text-[#6FA8DC]">{exercise.info.name}</Heading>
+              <Heading className="text-kova-500">{exercise.info.name}</Heading>
               <Button
                 size="xs"
                 onPress={() => {
@@ -153,7 +153,7 @@ export default function NewTemplateForm() {
         ))}
       </VStack>
       {/* TODO implement save template on context side */}
-      <Button onPress={handleSubmit(onSubmit)} className="bg-[#6FA8DC]">
+      <Button action="kova" onPress={handleSubmit(onSubmit)}>
         <ButtonText>Save Template</ButtonText>
       </Button>
       <Controller
