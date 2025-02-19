@@ -36,11 +36,18 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.3.fill" color={color} />,
         }}
       />
+      {/* icon on the bottom bar for workout page */}
       <Tabs.Screen
-        name="exercise"
+        name="workout"
         options={{
-          title: 'Exercise',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="flame.fill" color={color} />,
+          title: "Workout",
+          tabBarIcon: ({ color }) => <Ionicons name="barbell" size={28} color={color} />
+        }}
+      />
+      <Tabs.Screen
+        name="new-template"
+        options={{
+          href: null
         }}
       />
       <Tabs.Screen
@@ -62,20 +69,6 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle" color={color} />,
-        }}
-      />
-      {/* icon on the bottom bar for workout page */}
-      <Tabs.Screen
-        name="workout"
-        options={{
-          title: "Workout",
-          tabBarIcon: ({ color }) => <Ionicons name="barbell" size={28} color={color} />
-        }}
-      />
-      <Tabs.Screen
-        name="new-template"
-        options={{
-          href: null
         }}
       />
     </Tabs>
