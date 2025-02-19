@@ -37,13 +37,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="exercise"
-        options={{
-          title: 'Exercise',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="flame.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
@@ -76,6 +69,12 @@ export default function TabLayout() {
         name="new-template"
         options={{
           href: null
+        }}
+      />
+      <Tabs.Screen
+        name="login"
+        options={{
+          //href: null
         }}
       />
     </Tabs>
