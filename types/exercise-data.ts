@@ -3,8 +3,7 @@ export type SetData = {
   weight: number
 }
 
-export type WorkoutData = {
-  exercise_name: string
-  exercise_id: string
+export type ExerciseData = {
+  info: any
   sets: SetData[]
 }

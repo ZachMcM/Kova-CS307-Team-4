@@ -1,5 +1,6 @@
 import Container from "@/components/Container";
-import NewTemplateForm from "@/components/forms/new-template-form";
+import NewTemplateForm from "@/components/forms/new-template/NewTemplateForm";
+import { NewTemplateFormProvider } from "@/components/forms/new-template/NewTemplateFormContext";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
@@ -16,7 +17,9 @@ export default function NewTemplate() {
             Search for exercises 
           </Text>
         </VStack>
-        <NewTemplateForm/>
+        <NewTemplateFormProvider>
+          <NewTemplateForm/>
+        </NewTemplateFormProvider>
       </VStack>
     </Container>
   );

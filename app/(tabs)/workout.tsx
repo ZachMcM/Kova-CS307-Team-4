@@ -2,24 +2,44 @@ import Container from "@/components/Container";
 import TemplateCard from "@/components/TemplateCard";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { AddIcon, Icon, SearchIcon } from "@/components/ui/icon";
-import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
+import { AddIcon, Icon } from "@/components/ui/icon";
+import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
 export default function Workout() {
   // sample data array
   const sampleData = [
     {
-      id: "22C3B14C-ED50-49FD-BD45-5639029AFF3D",
+      id: "1234",
       name: "Chest/Tris Day",
-      data: ""
-    }
-  ]
+      user: {
+        username: "Zach",
+      },
+      data: {
+        info: {
+          name: "Chest Flies",
+          id: "1234",
+          tags: [
+            {
+              name: "chest",
+              color: "blue",
+            },
+          ],
+        },
+        sets: [
+          {
+            reps: 10,
+            weight: 125,
+          },
+        ],
+      },
+    },
+  ];
 
   // router from expo-router
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <Container>
@@ -28,29 +48,25 @@ export default function Workout() {
           <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
             Workout
           </Heading>
-          <Text className="">
-            Choose a workout template and start your workout
-          </Text>
+          <Text>Choose a workout template and start your workout</Text>
         </VStack>
-        {/* Needs to be replaced by actual search component from areeb @AreebE */}
+        {/* TODO Needs to be replaced by actual search component from areeb @AreebE */}
         <Input>
           <InputField placeholder="Search for a workout template" />
         </Input>
-        {/* Simulates looping through templates */}
-        {
-          sampleData.map((template) => (
-            <TemplateCard key={template.id} template={template}/>
-          ))
-        }
-          <Button 
-            variant="solid" 
-              size="lg" 
-              action="secondary" 
-              onPress={() => router.replace("/(tabs)/new-template")}
-          >
-            <ButtonText>New Template</ButtonText>
-            <Icon as={AddIcon}/>
-          </Button>
+        {/* TODO Simulates looping through templates */}
+        {sampleData.map((template) => (
+          <TemplateCard key={template.id} template={template} />
+        ))}
+        <Button
+          variant="solid"
+          size="lg"
+          action="secondary"
+          onPress={() => router.replace("/(tabs)/new-template")}
+        >
+          <ButtonText>New Template</ButtonText>
+          <Icon as={AddIcon} />
+        </Button>
       </VStack>
     </Container>
   );

@@ -1,13 +1,15 @@
-import { ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, ScrollView, View } from "react-native";
 
-export default function Container({ children }: { children?: React.ReactNode }) {
+export default function Container({
+  children,
+}: {
+  children?: React.ReactNode;
+}) {
   return (
-    <View className="flex flex-1 bg-white">
+    <KeyboardAvoidingView behavior="padding" className="flex flex-1">
       <ScrollView keyboardShouldPersistTaps="handled">
-        <View className="flex px-10 py-28">
-          {children}
-        </View>
+        <View className="flex px-8 py-32">{children}</View>
       </ScrollView>
-    </View>
-  )
+    </KeyboardAvoidingView>
+  );
 }
