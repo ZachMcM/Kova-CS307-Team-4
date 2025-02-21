@@ -6,37 +6,11 @@ import { AddIcon, Icon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { sampleTemplates } from "@/sample-data/templates";
 import { useRouter } from "expo-router";
 
 export default function Workout() {
   // sample data array
-  const sampleData = [
-    {
-      id: "1234",
-      name: "Chest/Tris Day",
-      user: {
-        username: "Zach",
-      },
-      data: {
-        info: {
-          name: "Chest Flies",
-          id: "1234",
-          tags: [
-            {
-              name: "chest",
-              color: "blue",
-            },
-          ],
-        },
-        sets: [
-          {
-            reps: 10,
-            weight: 125,
-          },
-        ],
-      },
-    },
-  ];
 
   // router from expo-router
   const router = useRouter();
@@ -55,7 +29,7 @@ export default function Workout() {
           <InputField placeholder="Search for a workout template" />
         </Input>
         {/* TODO Simulates looping through templates */}
-        {sampleData.map((template) => (
+        {sampleTemplates.map((template) => (
           <TemplateCard key={template.id} template={template} />
         ))}
         <Button

@@ -6,9 +6,11 @@ export const sampleExercises = [
       {
         name: "chest",
         id: "1232342",
-        color: "blue"
+        color: "blue",
+        created_at: new Date().toDateString()
       },
     ],
+    created_at: new Date().toDateString()
   },
   {
     id: "12345",
@@ -17,9 +19,11 @@ export const sampleExercises = [
       {
         name: "chest",
         id: "1233249802342",
-        color: "blue"
+        color: "blue",
+        created_at: new Date().toDateString()
       },
     ],
+    created_at: new Date().toDateString()
   },
   {
     id: "123456",
@@ -28,9 +32,11 @@ export const sampleExercises = [
       {
         name: "chest",
         id: "123299342",
-        color: "blue"
+        color: "blue",
+        created_at: new Date().toDateString()
       },
     ],
+    created_at: new Date().toDateString()
   },
   {
     id: "123234",
@@ -39,9 +45,11 @@ export const sampleExercises = [
       {
         name: "triceps",
         id: "124332342",
-        color: "blue"
+        color: "blue",
+        created_at: new Date().toDateString()
       },
     ],
+    created_at: new Date().toDateString()
   },
   {
     id: "122343234",
@@ -50,8 +58,10 @@ export const sampleExercises = [
       {
         name: "triceps",
         id: "1232330402340242",
-        color: "blue"
+        color: "blue",
+        created_at: new Date().toDateString()
       },
     ],
+    created_at: new Date().toDateString()
   },
 ];

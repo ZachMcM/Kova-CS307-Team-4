@@ -1,9 +1,9 @@
-import { ScrollView } from 'react-native';
+import { ScrollView } from "react-native";
 
 export default function HomeScreen() {
-  return (
-   <ScrollView>
+  const session = true;
 
-   </ScrollView>
-  );
+  return <ScrollView>
+    
+  </ScrollView>;
 }

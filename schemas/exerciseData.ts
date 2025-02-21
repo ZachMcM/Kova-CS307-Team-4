@@ -11,8 +11,10 @@ export const exerciseData = z
           id: z.string(),
           name: z.string(),
           color: z.string(),
+          created_at: z.string()
         })
         .array(),
+      created_at: z.string()
     }),
     // an array of sets
     sets: z
@@ -31,4 +33,4 @@ export const exerciseData = z
       })
       .array(),
   })
-  .array();
+  .array().nonempty();

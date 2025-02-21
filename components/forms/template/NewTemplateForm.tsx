@@ -20,6 +20,7 @@ import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { useTemplateForm } from "./TemplateFormContext";
+import { Tables } from "@/types/database.types";
 
 // TODO need to remove and replace with exercise search component
 
@@ -124,7 +125,7 @@ export default function NewTemplateForm() {
                   <VStack space="md">
                     <Heading size="md">{exercise.name}</Heading>
                     <Box className="flex flex-row flex-wrap gap-2">
-                      {exercise.tags.map((tag: any) => (
+                      {exercise.tags.map((tag: Tables<'Tag'>) => (
                         <Tag key={tag.id} tag={tag} />
                       ))}
                     </Box>
@@ -152,7 +153,6 @@ export default function NewTemplateForm() {
           </VStack>
         ))}
       </VStack>
-      {/* TODO implement save template on context side */}
       <Button action="kova" onPress={handleSubmit(onSubmit)}>
         <ButtonText>Save Template</ButtonText>
       </Button>
