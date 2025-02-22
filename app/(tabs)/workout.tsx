@@ -17,7 +17,7 @@ export default function Workout() {
 
   return (
     <Container>
-      <VStack space="lg">
+      <VStack space="2xl">
         <VStack space="sm">
           <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
             Workout

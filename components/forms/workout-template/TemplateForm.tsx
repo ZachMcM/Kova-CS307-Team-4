@@ -1,10 +1,19 @@
 import Tag from "@/components/Tag";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import {
+  Button,
+  ButtonIcon,
+  ButtonSpinner,
+  ButtonText,
+} from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { useToast } from "@/components/ui/toast";
 import { sampleExercises } from "@/sample-data/exercises";
+import { showErrorToast } from "@/services/toastServices";
+import { Tables } from "@/types/database.types";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import { Pressable } from "react-native";
@@ -19,16 +28,31 @@ import { CloseIcon, SearchIcon } from "../../ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
 import ExerciseDataForm from "./ExerciseDataForm";
-import { useTemplateForm } from "./TemplateFormContext";
-import { Tables } from "@/types/database.types";
+import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
 
 // TODO need to remove and replace with exercise search component
 
-export default function NewTemplateForm() {
+export default function TemplateForm() {
   // TODO remove and replace with actual searching
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
   const { control, handleSubmit } = useTemplateForm();
+
+  const toast = useToast();
+
+  const { mutate: saveTemplate, isPending } = useMutation({
+    mutationFn: async (values: TemplateFormValues) => {
+      console.log(values);
+      // TODO implement db call
+    },
+    onSuccess: () => {
+      // TODO redirect to antoher page
+    },
+    onError: (e) => {
+      console.log(e);
+      showErrorToast(toast, e.message);
+    },
+  });
 
   const {
     fields: exercises,
@@ -48,9 +72,9 @@ export default function NewTemplateForm() {
     return false;
   }
 
-  function onSubmit(values: FieldValues) {
-    // TODO make supabase api call
+  async function onSubmit(values: FieldValues) {
     console.log(values);
+    saveTemplate(values as TemplateFormValues);
   }
 
   return (
@@ -125,7 +149,7 @@ export default function NewTemplateForm() {
                   <VStack space="md">
                     <Heading size="md">{exercise.name}</Heading>
                     <Box className="flex flex-row flex-wrap gap-2">
-                      {exercise.tags.map((tag: Tables<'Tag'>) => (
+                      {exercise.tags.map((tag: Tables<"Tag">) => (
                         <Tag key={tag.id} tag={tag} />
                       ))}
                     </Box>
@@ -153,8 +177,9 @@ export default function NewTemplateForm() {
           </VStack>
         ))}
       </VStack>
-      <Button action="kova" onPress={handleSubmit(onSubmit)}>
+      <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
         <ButtonText>Save Template</ButtonText>
+        {isPending && <ButtonSpinner color={"FFF"} />}
       </Button>
       <Controller
         control={control}

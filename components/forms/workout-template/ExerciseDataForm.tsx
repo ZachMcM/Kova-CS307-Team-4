@@ -4,7 +4,7 @@ import { Heading } from "@/components/ui/heading";
 import { AddIcon, RemoveIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useFieldArray } from "react-hook-form";
+import { Controller, useFieldArray } from "react-hook-form";
 import { TextInput } from "react-native";
 import { useTemplateForm } from "./TemplateFormContext";
 
@@ -48,25 +48,35 @@ export default function ExerciseDataForm({ index }: { index: number }) {
               </Text>
             </Box>
             <Box className="rounded-md h-6 w-16 flex justify-center items-center bg-secondary-500">
-              <TextInput
-                placeholder="0"
-                id={`weight-${i}`}
-                {...control.register(`data.${index}.sets.${i}.weight`, {
-                  valueAsNumber: true,
-                })}
-                className="font-bold text-typography-900"
-                keyboardType="numeric"
+              <Controller
+                control={control}
+                name={`data.${index}.sets.${i}.weight`}
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    placeholder="0"
+                    id={`weight-${i}`}
+                    value={value?.toString() || ""}
+                    onChangeText={(text) => onChange(Number(text) || 0)}
+                    className="font-bold text-typography-900"
+                    keyboardType="numeric"
+                  />
+                )}
               />
             </Box>
             <Box className="rounded-md h-6 w-16 flex justify-center items-center bg-secondary-500">
-              <TextInput
-                placeholder="0"
-                id={`reps-${i}`}
-                {...control.register(`data.${index}.sets.${i}.reps`, {
-                  valueAsNumber: true,
-                })}
-                className="font-bold text-typography-900"
-                keyboardType="numeric"
+              <Controller
+                control={control}
+                name={`data.${index}.sets.${i}.reps`}
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    placeholder="0"
+                    id={`weight-${i}`}
+                    value={value?.toString() || ""}
+                    onChangeText={(text) => onChange(Number(text) || 0)}
+                    className="font-bold text-typography-900"
+                    keyboardType="numeric"
+                  />
+                )}
               />
             </Box>
             <Button

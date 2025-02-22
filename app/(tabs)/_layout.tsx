@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
 import { Platform } from "react-native";
 
@@ -9,12 +9,26 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 // barbell icon
+import { getWorkout } from "@/services/asyncStorageServices";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useQuery } from "@tanstack/react-query";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
-  return (
+  // TODO @IanBruch do a very similar thing but with session, the session ternary should wrap the live workout ternary
+  const { data: workout, isPending } = useQuery({
+    queryFn: async () => {
+      const workout = await getWorkout();
+      return workout;
+    },
+    queryKey: ["live-workout"],
+  });
+
+  return isPending ? (
+    // TODO need to figure out what loading state to show
+    <></>
+  ) : !workout ? (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
@@ -70,6 +84,14 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="templates/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
+  ) : (
+    <Redirect href="/live-workout" />
   );
 }
