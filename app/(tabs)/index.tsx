@@ -1,9 +1,6 @@
-import { ScrollView } from 'react-native';
+import React from 'react';
+import { FeedScreen } from '../../screens/FeedScreen';
 
-export default function HomeScreen() {
-  return (
-   <ScrollView>
-
-   </ScrollView>
-  );
+export default function Index() {
+  return <FeedScreen />;
 }
