@@ -30,10 +30,8 @@ import { VStack } from "../../ui/vstack";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
 
-// TODO need to remove and replace with exercise search component
-
 export default function TemplateForm() {
-  // TODO remove and replace with actual searching
+  // TODO remove and replace with actual searching and exercise search component
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
   const { control, handleSubmit } = useTemplateForm();

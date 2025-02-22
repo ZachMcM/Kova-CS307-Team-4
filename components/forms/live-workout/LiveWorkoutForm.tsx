@@ -43,7 +43,7 @@ export default function LiveWorkoutForm() {
         console.log(exercise);
       }
       await clearWorkout();
-      // TODO implement workout clear
+      // TODO implement db call
     },
     onSuccess: () => {
       // TODO redirect to post workout page

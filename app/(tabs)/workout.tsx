@@ -7,10 +7,17 @@ import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { sampleTemplates } from "@/sample-data/templates";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 
 export default function Workout() {
-  // sample data array
+  const { data: templates, isPending } = useQuery({
+    queryKey: ["templates"],
+    queryFn: async () => {
+      // TODO implement db call
+      return sampleTemplates;
+    },
+  });
 
   // router from expo-router
   const router = useRouter();
@@ -28,10 +35,15 @@ export default function Workout() {
         <Input>
           <InputField placeholder="Search for a workout template" />
         </Input>
-        {/* TODO Simulates looping through templates */}
-        {sampleTemplates.map((template) => (
-          <TemplateCard key={template.id} template={template} />
-        ))}
+        {isPending ? (
+          // TODO determine loading state
+          <></>
+        ) : (
+          templates &&
+          templates.map((template) => (
+            <TemplateCard key={template.id} template={template} />
+          ))
+        )}
         <Button
           variant="solid"
           size="lg"

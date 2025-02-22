@@ -16,8 +16,6 @@ export async function startWorkout(workout: Workout) {
 export const updateWorkout = async (workout: Workout) => {startWorkout(workout)}
 
 // checks if we have a live workout
-//  TODO implement this on homepage to if  and live workout page
-
 export async function getWorkout(): Promise<Workout | null> {
   try {
     const stringVal = await AsyncStorage.getItem("live-workout")

@@ -13,7 +13,6 @@ const TemplateFormContext = createContext<TemplateFormProviderValues | null>(
 export type TemplateFormValues = z.infer<typeof templateFormSchema>;
 export type TemplateFormProviderValues = UseFormReturn<TemplateFormValues>;
 
-// TODO Configure default values as arg once template object is created
 export function TemplateFormProvider({
   children,
   template,
@@ -21,8 +20,6 @@ export function TemplateFormProvider({
   children: ReactNode;
   template?: ExtendedTemplateWithCreator;
 }) {
-  // TODO configure default values
-
   const form = useForm<TemplateFormValues>({
     resolver: zodResolver(templateFormSchema),
     defaultValues:

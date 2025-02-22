@@ -49,11 +49,9 @@ export default function TemplateCard({
           <Pressable onPress={() => router.push(`/templates/${template.id}`)}>
           <Box className="flex flex-row justify-between">
             <Heading>{template.creator.profile.username}</Heading>
-            {/* TODO implement edit functionality */}
             <Icon as={ThreeDotsIcon} />
           </Box>
           </Pressable>
-          {/* TODO add link to user's profile */}
           <Link
             href={{
               pathname: "/profiles/[id]",
@@ -63,7 +61,6 @@ export default function TemplateCard({
             <Text>By: {template.creator.profile.username}</Text>
           </Link>
         </VStack>
-        {/* TODO Finish this button with link to start workout */}
         <Button
           onPress={() => initWorkout()}
           size="lg"
