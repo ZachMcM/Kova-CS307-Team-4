@@ -15,7 +15,8 @@ export default function EditTemplate() {
     queryKey: ["template", id],
     queryFn: async () => {
       // TODO implement db call
-      return sampleTemplates.find((template) => template.id === id);
+      const template = sampleTemplates.find((template) => template.id === id);
+      return template
     },
   });
 

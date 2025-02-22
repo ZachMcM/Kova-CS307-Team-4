@@ -6,14 +6,14 @@ import { ExtendedTemplateWithCreator } from "@/types/extended-types";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useRouter } from "expo-router";
 import { Box } from "./ui/box";
-import { Button, ButtonSpinner, ButtonText } from "./ui/button";
+import { Button, ButtonIcon, ButtonSpinner, ButtonText } from "./ui/button";
 import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";
-import { EditIcon, Icon, ThreeDotsIcon } from "./ui/icon";
+import { EditIcon, Icon, ShareIcon, ThreeDotsIcon } from "./ui/icon";
+import { Menu, MenuItem, MenuItemLabel } from "./ui/menu";
 import { Text } from "./ui/text";
 import { useToast } from "./ui/toast";
 import { VStack } from "./ui/vstack";
-import { Pressable } from "./ui/pressable";
 
 export default function TemplateCard({
   template,
@@ -46,12 +46,39 @@ export default function TemplateCard({
     <Card variant="outline" className="p-6">
       <VStack space="md">
         <VStack space="sm">
-          <Pressable onPress={() => router.push(`/templates/${template.id}`)}>
           <Box className="flex flex-row justify-between">
-            <Heading>{template.creator.profile.username}</Heading>
-            <Icon as={ThreeDotsIcon} />
+            <Heading>{template.name}</Heading>
+            <Menu
+              placement="top"
+              trigger={({ ...triggerProps }) => {
+                return (
+                  <Button variant="link" size="xs" {...triggerProps}>
+                    <ButtonIcon size="xl" as={ThreeDotsIcon} />
+                  </Button>
+                );
+              }}
+            >
+              <MenuItem
+                key="edit"
+                textValue="Edit template"
+                onPress={() =>
+                  router.push({
+                    pathname: "/templates/[id]",
+                    params: { id: template.id },
+                  })
+                }
+              >
+                <Icon as={EditIcon} size="sm" className="mr-2" />
+                <MenuItemLabel size="sm">
+                  Edit template
+                </MenuItemLabel>
+              </MenuItem>
+              <MenuItem key="share" textValue="Share">
+                <Icon as={ShareIcon} size="sm" className="mr-2" />
+                <MenuItemLabel size="sm">Share</MenuItemLabel>
+              </MenuItem>
+            </Menu>
           </Box>
-          </Pressable>
           <Link
             href={{
               pathname: "/profiles/[id]",

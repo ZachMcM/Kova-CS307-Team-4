@@ -13,9 +13,15 @@ import { useToast } from "@/components/ui/toast";
 import { sampleExercises } from "@/sample-data/exercises";
 import { showErrorToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
-import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import { Controller, FieldValues, useFieldArray } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  Controller,
+  FieldValues,
+  useController,
+  useFieldArray,
+} from "react-hook-form";
 import { Pressable } from "react-native";
 import {
   FormControl,
@@ -34,9 +40,11 @@ export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
-  const { control, handleSubmit } = useTemplateForm();
+  const { control, handleSubmit, getValues } = useTemplateForm();
 
   const toast = useToast();
+
+  const queryClient = useQueryClient();
 
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
@@ -45,6 +53,7 @@ export default function TemplateForm() {
     },
     onSuccess: () => {
       // TODO redirect to antoher page
+      queryClient.invalidateQueries({ queryKey: ["template", getValues("id")] });
     },
     onError: (e) => {
       console.log(e);
