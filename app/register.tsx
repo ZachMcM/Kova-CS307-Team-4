@@ -7,16 +7,42 @@ import { Input, InputField } from "@/components/ui/input";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Redirect, useRouter } from "expo-router";
 import { Link, LinkText } from "@/components/ui/link";
-import { useQuery } from "@tanstack/react-query";
-import { getLoginState, loginUser } from "@/services/asyncStorageServices";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getLoginState, loginUser, registerAccount } from "@/services/asyncStorageServices";
+import { useState } from "react";
+import { useToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/services/toastServices";
 
 export default function RegisterScreen() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+
+  const toast = useToast();
+
   const router = useRouter();
   const { data: login_state } = useQuery({
     queryKey: ["logged-in"],
     queryFn: async () => {
       const state = await getLoginState();
       return state;
+    },
+  })
+
+  const { mutate : register } = useMutation({
+    mutationFn: async () => {
+      if (password === confirmPassword) {
+        const state = await registerAccount(email, password);
+      } else {
+        throw new Error("Password and Confirm Password do not match")
+      }
+    },
+    onSuccess: () => {
+      router.replace("/(tabs)/profile")
+    },
+    onError: (e) => {
+      console.log(e);
+      showErrorToast(toast, e.message);
     },
   })
 
@@ -37,20 +63,20 @@ export default function RegisterScreen() {
         <VStack space="sm">
           <Text size="lg" className="ml-3 mt-5">Email</Text>
           <Input className="ml-3 mr-5">
-            <InputField id="email_input" placeholder="Enter Email" />
+            <InputField value={email} onChangeText={setEmail} placeholder="Enter Email" />
         </Input>
         </VStack>
         <VStack space="sm">
           <Text size="lg" className="ml-3 mt-5">Password</Text>
           <Input className="ml-3 mr-5">
-            <InputField id="password_input" placeholder="Enter Password" />
+            <InputField value={password} onChangeText={setPassword} placeholder="Enter Password" />
         </Input>
         <Text size="lg" className="ml-3 mt-5">Confirm Password</Text>
           <Input className="ml-3 mr-5">
-            <InputField id="password_input" placeholder="Enter Password" />
+            <InputField value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Enter Password" />
         </Input>
         <Button variant="solid" size="xl" action="secondary" className="mt-5 mb-5 bg-[#6FA8DC]"
-          onPress={() => router.replace("/(tabs)/workout")}
+          onPress={() => register()}
           > {/* TODO implement button routing and login features */}
           <ButtonText className="text-white">Register For Account</ButtonText>
         </Button>

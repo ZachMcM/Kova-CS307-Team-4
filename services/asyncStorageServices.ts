@@ -36,21 +36,22 @@ export async function clearWorkout() {
 }
 
 //Logs in the user and saves that state to async storage
+//TODO checking is on the backend, we will return a supabase call of 
+//True if it checks out and false otherwise, this is just a placeholder
 export async function loginUser(email:string, password:string) {
-    const test_data = [{
-        email: "admin",
-        password: "admin",
-    }];
-    try {
-        if (test_data.includes({email, password})) {
+        if (email === "admin" && password === "admin") {
             await AsyncStorage.setItem("logged-in", "true")
             console.log("User " + email + " has logged in")
             return AsyncStorage.getItem("logged-in")
+        } else {
+          throw new Error("Incorrect email or password")
         }
-      } catch (e) {
-        console.log(e)
-        return new Error("Error logging in")
-      }
+}
+
+//Logs out the user
+export async function logoutUser() {
+    await AsyncStorage.setItem("logged-in", "false")
+    console.log("logged out")
 }
 
 //Gets the login state of a user, returns as a "true" or "false"
@@ -66,4 +67,14 @@ export async function getLoginState(): Promise<string | null> {
       console.log(e)
       return null
     }
+}
+//TODO this is also a placeholder, checking for if an account exists is on the backend
+export async function registerAccount(email:string, password:string): Promise<string | null> {
+  if (email === "admin") {
+    console.log(email + " already is an account")
+    throw new Error("Account with that email has already been created")
+  } else {
+    console.log(email + " has been successfully registered")
+    return "success"
   }
+}
