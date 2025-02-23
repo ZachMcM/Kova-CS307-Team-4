@@ -67,7 +67,7 @@ export default function LiveWorkoutForm() {
           <Box className="bg-secondary-500 p-1.5 rounded-md">
             <Icon size="xl" as={ClockIcon} />
           </Box>
-          <Text size="xl" className="text-typography-1 font-medium">
+          <Text size="xl" className="font-semibold">
             {minutes}:{seconds}
           </Text>
         </HStack>
