@@ -13,23 +13,42 @@ export default function SettingsScreen() {
 
   const settingsData = [
     {
+      attribute: "Account",
+      type: "banner"
+    },
+    {
+      attribute: "Change email",
+      type: "redirect",
+      content: "/profile"
+    },
+    {
+      attribute: "Change password",
+      type: "redirect",
+      content: "/profile"
+    },
+    {
+      attribute: "Change username",
+      type: "redirect",
+      content: "/app/(tabs)/profile"
+    },
+    {
       attribute: "Social profile",
       type: "banner"
     },
     {
       attribute: "Display age",
       type: "privacy-tri",
-      state: "false"
+      content: "false"
     },
     {
       attribute: "Display weight",
       type: "privacy-tri",
-      state: "false"
+      content: "false"
     },
     {
       attribute: "Display bio",
       type: "privacy-tri",
-      state: "false"
+      content: "false"
     },
   ];
 
