@@ -7,7 +7,17 @@ import { ChevronDownIcon } from "./ui/icon";
 import { View } from "./ui/view"
 
 export default function SettingsCard({ setting }: {setting: any }) {
-  if (setting.type = "privacy-tri") {
+  console.log(setting);
+  if (setting.type === "banner") {
+    console.log("Banner")
+    return (
+      <Card variant="outline" className="rounded-none bg-gray-200 border-0">
+        <Heading size = "xl">{setting.attribute}</Heading>
+      </Card>
+    );
+  }
+  else if (setting.type === "privacy-tri") {
+    console.log("Privacy Tri")
     return (
       <Card variant="outline" className="rounded-none border-l-0 border-r-0 border-t-0">
         <View className = "flex-row justify-end">

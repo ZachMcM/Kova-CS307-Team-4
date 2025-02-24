@@ -13,19 +13,20 @@ export default function SettingsScreen() {
 
   const settingsData = [
     {
-      id: 1,
+      attribute: "Social profile",
+      type: "banner"
+    },
+    {
       attribute: "Display age",
       type: "privacy-tri",
       state: "false"
     },
     {
-      id: 2,
       attribute: "Display weight",
       type: "privacy-tri",
       state: "false"
     },
     {
-      id: 3,
       attribute: "Display bio",
       type: "privacy-tri",
       state: "false"
