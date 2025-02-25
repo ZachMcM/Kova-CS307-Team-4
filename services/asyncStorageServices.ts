@@ -8,7 +8,7 @@ export async function startWorkout(workout: Workout) {
     await AsyncStorage.setItem("live-workout", jsonValue)
   } catch (e) {
     console.log(e)
-    return new Error("Error starting workout")
+    throw new Error("Error starting workout")
   }
 }
 
@@ -35,7 +35,7 @@ export async function setWorkoutEndTime(endTime: number) {
   try {
     const currentWorkout = await getWorkout()
     if (currentWorkout == null) {
-      return new Error("No workout to end")
+      throw new Error("No workout to end")
     }
     currentWorkout.endTime = endTime
     const jsonValue = JSON.stringify(currentWorkout)
@@ -43,7 +43,7 @@ export async function setWorkoutEndTime(endTime: number) {
   }
   catch (e) {
     console.log(e)
-    return new Error("Error ending workout")
+    throw new Error("Error ending workout")
   }
 }
 

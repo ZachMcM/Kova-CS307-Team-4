@@ -29,6 +29,7 @@ import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
+import { newTemplate } from "@/services/templateServices";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -45,7 +46,15 @@ export default function TemplateForm() {
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
       console.log(values);
+      values.data.forEach((exercise) => (
+        console.log(exercise)
+      ))
       // TODO implement db call
+      if (values.id) {
+        await saveTemplate(values)
+      } else {
+        await newTemplate(values)
+      }
     },
     onSuccess: () => {
       // TODO redirect to antoher page
@@ -110,7 +119,7 @@ export default function TemplateForm() {
             </FormControl>
           )}
         />
-        <VStack>
+        <VStack space="xl">
           {/* TODO replace with actual search bar @AreebE */}
           <Input size="md">
             <InputField
