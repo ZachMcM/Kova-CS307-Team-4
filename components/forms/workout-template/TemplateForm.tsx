@@ -14,14 +14,8 @@ import { sampleExercises } from "@/sample-data/exercises";
 import { showErrorToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import {
-  Controller,
-  FieldValues,
-  useController,
-  useFieldArray,
-} from "react-hook-form";
+import { useState } from "react";
+import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import { Pressable } from "react-native";
 import {
   FormControl,
@@ -30,7 +24,7 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "../../ui/form-control";
-import { CloseIcon, SearchIcon } from "../../ui/icon";
+import { SearchIcon, TrashIcon } from "../../ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
 import ExerciseDataForm from "./ExerciseDataForm";
@@ -40,7 +34,9 @@ export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
-  const { control, handleSubmit, getValues } = useTemplateForm();
+  const { control, handleSubmit, watch, formState } = useTemplateForm();
+
+  const templateId = watch("id");
 
   const toast = useToast();
 
@@ -53,7 +49,9 @@ export default function TemplateForm() {
     },
     onSuccess: () => {
       // TODO redirect to antoher page
-      queryClient.invalidateQueries({ queryKey: ["template", getValues("id")] });
+      queryClient.invalidateQueries({
+        queryKey: ["template", templateId],
+      });
     },
     onError: (e) => {
       console.log(e);
@@ -112,96 +110,103 @@ export default function TemplateForm() {
             </FormControl>
           )}
         />
-        {/* TODO replace with actual search bar @AreebE */}
-        <Input size="md">
-          <InputField
-            placeholder="Search exercises"
-            onChangeText={setExerciseQuery}
-            value={exerciseQuery}
+        <VStack>
+          {/* TODO replace with actual search bar @AreebE */}
+          <Input size="md">
+            <InputField
+              placeholder="Search exercises"
+              onChangeText={setExerciseQuery}
+              value={exerciseQuery}
+            />
+            <InputSlot className="p-3">
+              <InputIcon as={SearchIcon} />
+            </InputSlot>
+          </Input>
+          {exerciseQuery.length != 0 &&
+            sampleExercises
+              .filter(
+                (exercise) =>
+                  (exercise.name
+                    .toLowerCase()
+                    .includes(exerciseQuery.toLowerCase()) ||
+                    exercise.tags.filter((tag) =>
+                      tag.name
+                        .toLowerCase()
+                        .includes(exerciseQuery.toLowerCase())
+                    ).length != 0) &&
+                  !isExerciseAdded(exercise.id)
+              )
+              .map((exercise) => (
+                <Pressable
+                  key={exercise.id}
+                  onPress={() => {
+                    setExerciseQuery("");
+                    addExercise({
+                      info: exercise,
+                      sets: [
+                        {
+                          reps: 0,
+                          weight: 0,
+                        },
+                      ],
+                    });
+                  }}
+                  className="flex flex-1"
+                >
+                  <Card variant="outline">
+                    <VStack space="md">
+                      <Heading size="md">{exercise.name}</Heading>
+                      <Box className="flex flex-row flex-wrap gap-2">
+                        {exercise.tags.map((tag: Tables<"Tag">) => (
+                          <Tag key={tag.id} tag={tag} />
+                        ))}
+                      </Box>
+                    </VStack>
+                  </Card>
+                </Pressable>
+              ))}
+          {exercises.map((exercise, i) => (
+            <VStack space="md" key={exercise.info.id}>
+              <HStack className="justify-between items-center">
+                <Heading className="text-kova-500">
+                  {exercise.info.name}
+                </Heading>
+                <Button
+                  size="xs"
+                  onPress={() => {
+                    removeExercise(i);
+                  }}
+                  variant="outline"
+                  action="primary"
+                  className="border-0"
+                >
+                  <ButtonIcon as={TrashIcon} size="lg" color="red" />
+                </Button>
+              </HStack>
+              <ExerciseDataForm key={exercise.info.id} index={i} />
+            </VStack>
+          ))}
+          <Controller
+            control={control}
+            name="data"
+            rules={{ required: true }}
+            render={({ fieldState }) => (
+              <FormControl isInvalid={fieldState.invalid} size="md">
+                <FormControlError>
+                  <FormControlErrorText>
+                    {fieldState.error?.message ||
+                      formState.errors.data?.message}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
           />
-          <InputSlot className="p-3">
-            <InputIcon as={SearchIcon} />
-          </InputSlot>
-        </Input>
-        {exerciseQuery.length != 0 &&
-          sampleExercises
-            .filter(
-              (exercise) =>
-                (exercise.name
-                  .toLowerCase()
-                  .includes(exerciseQuery.toLowerCase()) ||
-                  exercise.tags.filter((tag) =>
-                    tag.name.toLowerCase().includes(exerciseQuery.toLowerCase())
-                  ).length != 0) &&
-                !isExerciseAdded(exercise.id)
-            )
-            .map((exercise) => (
-              <Pressable
-                key={exercise.id}
-                onPress={() => {
-                  setExerciseQuery("");
-                  addExercise({
-                    info: exercise,
-                    sets: [
-                      {
-                        reps: 0,
-                        weight: 0,
-                      },
-                    ],
-                  });
-                }}
-                className="flex flex-1"
-              >
-                <Card variant="outline">
-                  <VStack space="md">
-                    <Heading size="md">{exercise.name}</Heading>
-                    <Box className="flex flex-row flex-wrap gap-2">
-                      {exercise.tags.map((tag: Tables<"Tag">) => (
-                        <Tag key={tag.id} tag={tag} />
-                      ))}
-                    </Box>
-                  </VStack>
-                </Card>
-              </Pressable>
-            ))}
-        {exercises.map((exercise, i) => (
-          <VStack space="xs" key={exercise.info.id}>
-            <HStack className="justify-between items-center">
-              <Heading className="text-kova-500">{exercise.info.name}</Heading>
-              <Button
-                size="xs"
-                onPress={() => {
-                  removeExercise(i);
-                }}
-                variant="outline"
-                action="primary"
-                className="border-0"
-              >
-                <ButtonIcon as={CloseIcon} size="lg" />
-              </Button>
-            </HStack>
-            <ExerciseDataForm key={exercise.info.id} index={i} />
-          </VStack>
-        ))}
+        </VStack>
       </VStack>
       <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
         <ButtonText>Save Template</ButtonText>
         {isPending && <ButtonSpinner color={"FFF"} />}
       </Button>
-      <Controller
-        control={control}
-        name="data"
-        rules={{ required: true }}
-        render={({ fieldState }) => (
-          <FormControl isInvalid={fieldState.invalid} size="md">
-            <FormControlError>
-              <FormControlErrorText>
-                {fieldState.error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
     </VStack>
   );
 }

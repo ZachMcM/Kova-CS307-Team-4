@@ -1,7 +1,7 @@
 import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { AddIcon, RemoveIcon } from "@/components/ui/icon";
+import { AddIcon, RemoveIcon, TrashIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { Controller, useFieldArray } from "react-hook-form";
@@ -87,8 +87,8 @@ export default function ExerciseDataForm({ index }: { index: number }) {
                 removeSet(i);
               }}
             >
-              <ButtonIcon as={RemoveIcon} size="lg" />
-            </Button>
+                <ButtonIcon as={TrashIcon} size="lg" color="red" />
+                </Button>
           </Box>
         ))}
       </VStack>

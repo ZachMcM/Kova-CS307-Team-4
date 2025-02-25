@@ -47,10 +47,10 @@ export function LiveWorkoutProvider({
   useEffect(() => {
     const subscription = watch(async (updatedValues) => {
       updateWorkout({
-        templateId: initWorkout.templateId,
-        templateName: initWorkout.templateName,
-        startTime: initWorkout.startTime,
-        endTime: null,
+        templateId: updatedValues.templateId!,
+        templateName: updatedValues.templateName!,
+        startTime: updatedValues.startTime!,
+        endTime: updatedValues.endTime || null,
         exercises: updatedValues.exercises
           ? updatedValues.exercises?.map((exercise) => ({
               info: {

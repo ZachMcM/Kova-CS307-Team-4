@@ -1,5 +1,10 @@
 import { Box } from "@/components/ui/box";
-import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
+import {
+  Button,
+  ButtonIcon,
+  ButtonSpinner,
+  ButtonText,
+} from "@/components/ui/button";
 import {
   FormControl,
   FormControlError,
@@ -7,48 +12,110 @@ import {
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { ClockIcon, Icon } from "@/components/ui/icon";
+import {
+  CheckCircleIcon,
+  ClockIcon,
+  Icon,
+  ShareIcon,
+} from "@/components/ui/icon";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalContent,
+} from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useElapsedTime } from "@/hooks/useStopwatch";
-import { clearWorkout } from "@/services/asyncStorageServices";
+import { calculateTime, formatCalculateTime } from "@/lib/calculateTime";
+import {
+  clearWorkout,
+  setWorkoutEndTime,
+} from "@/services/asyncStorageServices";
 import { showErrorToast } from "@/services/toastServices";
+import Feather from "@expo/vector-icons/Feather";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
 
 export default function LiveWorkoutForm() {
-  const { control, handleSubmit, getValues } = useLiveWorkout();
+  const { control, handleSubmit, watch, setValue, formState, getValues } =
+    useLiveWorkout();
 
   const { fields: exercises } = useFieldArray({
     control,
     name: "exercises",
   });
 
-  const { minutes, seconds } = useElapsedTime(getValues("startTime"));
+  const endTime = watch("endTime");
+  const startTime = watch("startTime");
+  const templateName = watch("templateName");
+
+  const isWorkoutFinished = endTime != null;
+
+  const { minutes, seconds, setIsStopped } = useElapsedTime(
+    startTime,
+    isWorkoutFinished
+  );
+
+  // Then create a function to calculate the current stats
+  const getWorkoutStats = () => {
+    const currentExercises = getValues("exercises");
+
+    return {
+      exerciseCount: currentExercises.length,
+      totalSets: currentExercises.reduce(
+        (acc, exercise) => acc + exercise.sets.length,
+        0
+      ),
+      totalReps: currentExercises.reduce(
+        (acc, exercise) =>
+          acc +
+          exercise.sets.reduce((setAcc, set) => setAcc + (set.reps || 0), 0),
+        0
+      ),
+    };
+  };
 
   const toast = useToast();
 
-  const router = useRouter();
-
   const queryClient = useQueryClient();
 
-  const { mutate: finishWorkout, isPending } = useMutation({
+  // mutation function for ending the workout in async storage
+  const { mutate: finishWorkout, isPending: finishPending } = useMutation({
+    mutationFn: async () => {
+      setIsStopped(true);
+      const endTime = Date.now();
+      setValue("endTime", endTime);
+      await setWorkoutEndTime(endTime);
+    },
+    onSuccess: () => {
+      // we invalidate the queries so a refetch is done
+      queryClient.invalidateQueries({ queryKey: ["live-workout"] });
+      setModal(true);
+    },
+    onError: (e) => {
+      console.log(e);
+      showErrorToast(toast, e.message);
+    },
+  });
+
+  // mutation function for actually submitting the data to the post in the database
+  const { mutate: postWorkout, isPending: postPending } = useMutation({
     mutationFn: async (values: LiveWorkoutValues) => {
-      console.log(values);
-      for (const exercise of values.exercises) {
-        console.log(exercise);
-      }
+      // TODO remove clear here and get default post values from async or submit only workout data to db and use that as default values
+      console.log("Successfully posted workout", values);
+      values.exercises.map((exercise) => console.log(exercise));
       await clearWorkout();
-      // TODO implement db call
     },
     onSuccess: () => {
       // TODO redirect to post workout page
       // we invalidate the queries so a refetch is done
       queryClient.invalidateQueries({ queryKey: ["live-workout"] });
+      // TODO need to redirect to post page communicate with jason
     },
     onError: (e) => {
       console.log(e);
@@ -57,8 +124,10 @@ export default function LiveWorkoutForm() {
   });
 
   async function onSubmit(values: FieldValues) {
-    finishWorkout(values as LiveWorkoutValues);
+    postWorkout(values as LiveWorkoutValues);
   }
+
+  const [modal, setModal] = useState(isWorkoutFinished);
 
   return (
     <VStack space="4xl">
@@ -68,16 +137,27 @@ export default function LiveWorkoutForm() {
             <Icon size="xl" as={ClockIcon} />
           </Box>
           <Text size="xl" className="font-semibold">
-            {minutes}:{seconds}
+            {!isWorkoutFinished
+              ? `${minutes}:${seconds}`
+              : formatCalculateTime(calculateTime(startTime, endTime!))}
           </Text>
         </HStack>
-        <Button size="md" action="kova" onPress={handleSubmit(onSubmit)}>
+        <Button
+          size="md"
+          action="kova"
+          isDisabled={formState.isLoading}
+          onPress={() => finishWorkout()}
+        >
           <ButtonText size="lg">Finish</ButtonText>
-          {isPending && <ButtonSpinner color="#FFF" />}
+          {finishPending ? (
+            <ButtonSpinner color="#FFF" />
+          ) : (
+            <ButtonIcon as={CheckCircleIcon} size="lg" />
+          )}
         </Button>
       </Box>
       <VStack space="2xl">
-        <Heading className="text-2xl">{getValues("templateName")}</Heading>
+        <Heading className="text-2xl">{templateName}</Heading>
         <VStack space="4xl">
           <VStack space="2xl">
             {exercises.map((exercise, i) => (
@@ -104,6 +184,55 @@ export default function LiveWorkoutForm() {
           />
         </VStack>
       </VStack>
+      <Modal isOpen={modal} size="md">
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalBody>
+            <VStack space="xl" className="items-center">
+              <Feather name="award" size={46} color="yellow" />
+              <VStack className="items-center">
+                <Heading size="2xl">Workout Complete</Heading>
+                <Text>Great job on finishing your workout!</Text>
+              </VStack>
+              <VStack space="2xl" className="w-full">
+                <HStack className="justify-between items-center">
+                  <Heading size="md">Duration</Heading>
+                  <Heading size="2xl">
+                    {formatCalculateTime(calculateTime(startTime, endTime!))}
+                  </Heading>
+                </HStack>
+                <HStack className="justify-between items-center">
+                  <Heading size="md">Exercises</Heading>
+                  <Heading size="2xl">
+                    {getWorkoutStats().exerciseCount}
+                  </Heading>
+                </HStack>
+                <HStack className="justify-between items-center">
+                  <Heading size="md">Total Sets</Heading>
+                  <Heading size="2xl">{getWorkoutStats().totalSets}</Heading>
+                </HStack>
+                <HStack className="justify-between items-center">
+                  <Heading size="md">Total Reps</Heading>
+                  <Heading size="2xl">{getWorkoutStats().totalReps}</Heading>
+                </HStack>
+              </VStack>
+              <Button
+                size="lg"
+                action="kova"
+                className="w-full"
+                onPress={handleSubmit(onSubmit)}
+              >
+                <ButtonText>Post Workout</ButtonText>
+                {postPending ? (
+                  <ButtonSpinner color="#FFF" />
+                ) : (
+                  <ButtonIcon as={ShareIcon} size="lg" />
+                )}
+              </Button>
+            </VStack>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </VStack>
   );
 }
