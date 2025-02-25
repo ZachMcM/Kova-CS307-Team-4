@@ -19,7 +19,7 @@ export default function HomeScreen() {
   })
   return (
    <ScrollView>
-    {(login_data==="false") ? (<Redirect href={"/login"}></Redirect>) : (<> </>)}
+    {/*(login_data==="false") ? (<Redirect href={"/login"}></Redirect>) : (<> </>)*/}
       <Container>
         <VStack className='mt-30'>
           <Button onPress={() => {logoutUser(); router.replace("/login")}}>
