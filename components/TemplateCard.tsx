@@ -1,38 +1,101 @@
 // need to change parameter type once generated
 
-import { Link } from "expo-router";
+import { startWorkout } from "@/services/asyncStorageServices";
+import { showErrorToast } from "@/services/toastServices";
+import { ExtendedTemplateWithCreator } from "@/types/extended-types";
+import { useMutation } from "@tanstack/react-query";
+import { Link, useRouter } from "expo-router";
 import { Box } from "./ui/box";
-import { Button, ButtonText } from "./ui/button";
+import { Button, ButtonIcon, ButtonSpinner, ButtonText } from "./ui/button";
 import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";
-import { EditIcon, Icon } from "./ui/icon";
+import { EditIcon, Icon, ShareIcon, ThreeDotsIcon } from "./ui/icon";
+import { Menu, MenuItem, MenuItemLabel } from "./ui/menu";
 import { Text } from "./ui/text";
+import { useToast } from "./ui/toast";
 import { VStack } from "./ui/vstack";
-import { ExerciseData } from "@/types/exercise-data";
 
-export default function TemplateCard({ template }: { template: any }) {
+export default function TemplateCard({
+  template,
+}: {
+  template: ExtendedTemplateWithCreator;
+}) {
+  const router = useRouter();
+
+  const toast = useToast();
+
+  const { mutate: initWorkout, isPending } = useMutation({
+    mutationFn: async () => {
+      await startWorkout({
+        templateId: template.id,
+        templateName: template.name!,
+        exercises: template.data,
+        startTime: Date.now(),
+        endTime: null,
+      });
+    },
+    onSuccess: () => {
+      router.push("/live-workout");
+    },
+    onError: (e) => {
+      showErrorToast(toast, e.message);
+    },
+  });
+
   return (
     <Card variant="outline" className="p-6">
       <VStack space="md">
         <VStack space="sm">
           <Box className="flex flex-row justify-between">
             <Heading>{template.name}</Heading>
-            {/* TODO implement edit functionality */}
-            <Icon as={EditIcon} />
+            <Menu
+              placement="top"
+              trigger={({ ...triggerProps }) => {
+                return (
+                  <Button variant="link" size="xs" {...triggerProps}>
+                    <ButtonIcon size="xl" as={ThreeDotsIcon} />
+                  </Button>
+                );
+              }}
+            >
+              <MenuItem
+                key="edit"
+                textValue="Edit template"
+                onPress={() =>
+                  router.push({
+                    pathname: "/templates/[id]",
+                    params: { id: template.id },
+                  })
+                }
+              >
+                <Icon as={EditIcon} size="sm" className="mr-2" />
+                <MenuItemLabel size="sm">
+                  Edit template
+                </MenuItemLabel>
+              </MenuItem>
+              <MenuItem key="share" textValue="Share">
+                <Icon as={ShareIcon} size="sm" className="mr-2" />
+                <MenuItemLabel size="sm">Share</MenuItemLabel>
+              </MenuItem>
+            </Menu>
           </Box>
-          {/* TODO add link to user's profile */}
-          <Link href="/">
-            <Text>By: {template.user.username}</Text>
+          <Link
+            href={{
+              pathname: "/profiles/[id]",
+              params: { id: template.creator.profile.userId! },
+            }}
+          >
+            <Text>By: {template.creator.profile.username}</Text>
           </Link>
         </VStack>
-        {/* TODO Finish this button with link to start workout */}
         <Button
+          onPress={() => initWorkout()}
           size="lg"
           variant="solid"
-          className="bg-[#6FA8DC]"
-          action="primary"
+          action="kova"
         >
           <ButtonText>Start Workout</ButtonText>
+          {isPending && <ButtonSpinner color={"#FFF"} />}
         </Button>
       </VStack>
     </Card>

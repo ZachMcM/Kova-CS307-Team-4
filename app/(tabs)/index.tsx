@@ -1,4 +1,5 @@
 import { ScrollView } from 'react-native';
+import { getWorkout } from "@/services/asyncStorageServices";
 import { getLoginState, logoutUser } from '@/services/asyncStorageServices';
 import { useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter} from "expo-router";

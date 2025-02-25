@@ -6,44 +6,25 @@ import { AddIcon, Icon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { sampleTemplates } from "@/sample-data/templates";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 
 export default function Workout() {
-  // sample data array
-  const sampleData = [
-    {
-      id: "1234",
-      name: "Chest/Tris Day",
-      user: {
-        username: "Zach",
-      },
-      data: {
-        info: {
-          name: "Chest Flies",
-          id: "1234",
-          tags: [
-            {
-              name: "chest",
-              color: "blue",
-            },
-          ],
-        },
-        sets: [
-          {
-            reps: 10,
-            weight: 125,
-          },
-        ],
-      },
+  const { data: templates, isPending } = useQuery({
+    queryKey: ["templates"],
+    queryFn: async () => {
+      // TODO implement db call
+      return sampleTemplates;
     },
-  ];
+  });
 
   // router from expo-router
   const router = useRouter();
 
   return (
     <Container>
-      <VStack space="lg">
+      <VStack space="2xl">
         <VStack space="sm">
           <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
             Workout
@@ -54,10 +35,15 @@ export default function Workout() {
         <Input>
           <InputField placeholder="Search for a workout template" />
         </Input>
-        {/* TODO Simulates looping through templates */}
-        {sampleData.map((template) => (
-          <TemplateCard key={template.id} template={template} />
-        ))}
+        {isPending ? (
+          // TODO determine loading state
+          <></>
+        ) : (
+          templates &&
+          templates.map((template) => (
+            <TemplateCard key={template.id} template={template} />
+          ))
+        )}
         <Button
           variant="solid"
           size="lg"
