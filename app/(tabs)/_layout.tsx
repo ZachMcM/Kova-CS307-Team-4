@@ -79,7 +79,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* icon on the bottom bar for workout page */}
       <Tabs.Screen
         name="workout"
         options={{
