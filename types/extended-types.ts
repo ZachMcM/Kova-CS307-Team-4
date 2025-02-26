@@ -6,5 +6,9 @@ export type ExtendedTemplateWithCreator = Omit<Tables<'Template'>, 'data'> & {
   data: ExerciseData[]
   creator: {
     profile: Tables<'Profile'>
+  },
+  user: {
+    id: string,
+    email: string
   }
 }
