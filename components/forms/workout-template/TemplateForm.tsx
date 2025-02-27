@@ -11,9 +11,11 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useToast } from "@/components/ui/toast";
 import { sampleExercises } from "@/sample-data/exercises";
+import { newTemplate, updateTemplate } from "@/services/templateServices";
 import { showErrorToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import { Pressable } from "react-native";
@@ -29,7 +31,6 @@ import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
-import { newTemplate } from "@/services/templateServices";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -43,17 +44,15 @@ export default function TemplateForm() {
 
   const queryClient = useQueryClient();
 
+  const router = useRouter();
+
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
-      console.log(values);
-      values.data.forEach((exercise) => (
-        console.log(exercise)
-      ))
       // TODO implement db call
       if (values.id) {
-        await saveTemplate(values)
+        await updateTemplate(values);
       } else {
-        await newTemplate(values)
+        await newTemplate(values);
       }
     },
     onSuccess: () => {
@@ -61,9 +60,12 @@ export default function TemplateForm() {
       queryClient.invalidateQueries({
         queryKey: ["template", templateId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["templates"],
+      });
+      router.push("/workout");
     },
     onError: (e) => {
-      console.log(e);
       showErrorToast(toast, e.message);
     },
   });
@@ -87,7 +89,6 @@ export default function TemplateForm() {
   }
 
   async function onSubmit(values: FieldValues) {
-    console.log(values);
     saveTemplate(values as TemplateFormValues);
   }
 
@@ -166,7 +167,7 @@ export default function TemplateForm() {
                     <VStack space="md">
                       <Heading size="md">{exercise.name}</Heading>
                       <Box className="flex flex-row flex-wrap gap-2">
-                        {exercise.tags.map((tag: Tables<"Tag">) => (
+                        {exercise.tags.map((tag: Tables<"tag">) => (
                           <Tag key={tag.id} tag={tag} />
                         ))}
                       </Box>
@@ -204,7 +205,10 @@ export default function TemplateForm() {
                 <FormControlError>
                   <FormControlErrorText>
                     {fieldState.error?.message ||
-                      formState.errors.data?.message}
+                      formState.errors.data?.message ||
+                      formState.errors.data?.root?.message ||
+                      formState.errors.root?.message ||
+                      "Invalid exercises"}
                   </FormControlErrorText>
                 </FormControlError>
               </FormControl>

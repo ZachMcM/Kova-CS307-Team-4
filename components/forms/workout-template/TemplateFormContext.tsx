@@ -1,7 +1,7 @@
-import { formatExerciseDataToForm } from "@/lib/formatters";
 import { templateFormSchema } from "@/schemas/templateFormSchema";
 import { ExtendedTemplateWithCreator } from "@/types/extended-types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { usePathname } from "expo-router";
 import { createContext, ReactNode, useContext, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import * as z from "zod";
@@ -27,7 +27,7 @@ export function TemplateFormProvider({
         ? {
             name: template?.name!,
             id: template.id,
-            data: formatExerciseDataToForm(template.data),
+            data: template.data,
           }
         : {
             name: "",
@@ -36,16 +36,18 @@ export function TemplateFormProvider({
           },
   });
 
+  const pathname = usePathname();
+
   // Reset form when template changes
   useEffect(() => {
     if (template) {
       form.reset({
         name: template.name || "",
         id: template.id || "",
-        data: formatExerciseDataToForm(template.data) || [],
+        data: template.data,
       });
     }
-  }, [template, form.reset]);
+  }, [template, pathname]);
 
   return (
     <TemplateFormContext.Provider value={form}>

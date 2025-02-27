@@ -83,10 +83,10 @@ export default function TemplateCard({
           <Link
             href={{
               pathname: "/profiles/[id]",
-              params: { id: template.creator.profile.userId! },
+              params: { id: template.creatorProfile.id! },
             }}
           >
-            <Text>By: {template.creator.profile.username}</Text>
+            <Text>By: {template.creatorProfile.username}</Text>
           </Link>
         </VStack>
         <Button

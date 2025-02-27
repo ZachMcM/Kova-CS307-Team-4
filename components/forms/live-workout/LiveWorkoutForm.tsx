@@ -37,7 +37,11 @@ import { showErrorToast } from "@/services/toastServices";
 import Feather from "@expo/vector-icons/Feather";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Controller, FieldValues, useFieldArray } from "react-hook-form";
+import {
+  Controller,
+  FieldValues,
+  useFieldArray
+} from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
 

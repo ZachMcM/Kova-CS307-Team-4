@@ -15,14 +15,15 @@ export const exerciseSchema = z
           .int()
           .nonnegative()
           .nullish()
-          .transform((x) => (x ? x : undefined)),
+          .transform((x) => (x === null || x === undefined ? undefined : x)),
         weight: z
           .number({ required_error: "Must be a valid number" })
           .nonnegative()
           .nullish()
-          .transform((x) => (x ? x : undefined)),
+          .transform((x) => (x === null || x === undefined ? undefined : x)),
       })
-      .array(),
+      .array()
+      .nonempty({ message: "You must have a set" }),
   })
   .array()
   .nonempty({ message: "Exercises cannot be empty" });

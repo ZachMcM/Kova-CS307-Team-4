@@ -1,4 +1,5 @@
 import Container from "@/components/Container";
+import TemplateCardSkeleton from "@/components/skeletons/TemplateCardSkeleton";
 import TemplateCard from "@/components/TemplateCard";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -6,7 +7,7 @@ import { AddIcon, Icon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { sampleTemplates } from "@/sample-data/templates";
+import { getUserTemplates } from "@/services/templateServices";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 
@@ -14,8 +15,10 @@ export default function Workout() {
   const { data: templates, isPending } = useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      // TODO implement db call
-      return sampleTemplates;
+      // TODO replace with actual user session
+      const templates = await getUserTemplates();
+      console.log(templates)
+      return templates;
     },
   });
 
@@ -36,8 +39,7 @@ export default function Workout() {
           <InputField placeholder="Search for a workout template" />
         </Input>
         {isPending ? (
-          // TODO determine loading state
-          <></>
+          Array(5).fill("").map((_, i) => <TemplateCardSkeleton key={i}/>)
         ) : (
           templates &&
           templates.map((template) => (
