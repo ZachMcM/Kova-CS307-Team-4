@@ -59,7 +59,7 @@ export default function TabLayout() {
         options={{
           title: "Feed",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="list.bullet" color={color} />
+            <IconSymbol size={28} name="house.fill" color={color} />
           ),
         }}
       />
@@ -86,6 +86,12 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.fill" color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          href: null, // Hide from navigation
         }}
       />
       <Tabs.Screen
