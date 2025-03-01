@@ -1,9 +1,11 @@
 import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { AddIcon, RemoveIcon, TrashIcon } from "@/components/ui/icon";
+import { AddIcon, TrashIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { showErrorToast } from "@/services/toastServices";
 import { Controller, useFieldArray } from "react-hook-form";
 import { TextInput } from "react-native";
 import { useTemplateForm } from "./TemplateFormContext";
@@ -21,6 +23,8 @@ export default function ExerciseDataForm({ index }: { index: number }) {
     control,
     name: `data.${index}.sets`,
   });
+
+  const toast = useToast();
 
   return (
     <VStack space="lg">
@@ -84,11 +88,15 @@ export default function ExerciseDataForm({ index }: { index: number }) {
               action="primary"
               className="border-0 w-16"
               onPress={() => {
-                removeSet(i);
+                if (sets.length == 1) {
+                  showErrorToast(toast, "You must have one set in an exercise");
+                } else {
+                  removeSet(i);
+                }
               }}
             >
-                <ButtonIcon as={TrashIcon} size="lg" color="red" />
-                </Button>
+              <ButtonIcon as={TrashIcon} size="lg" color="red" />
+            </Button>
           </Box>
         ))}
       </VStack>

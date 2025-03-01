@@ -1,4 +1,3 @@
-import { formatExerciseDataToForm } from "@/lib/formatters";
 import { exerciseSchema } from "@/schemas/exerciseSchema";
 import { updateWorkout } from "@/services/asyncStorageServices";
 import { Workout } from "@/types/workout-types";
@@ -36,7 +35,7 @@ export function LiveWorkoutProvider({
       templateName: initWorkout.templateName,
       startTime: initWorkout.startTime,
       endTime: initWorkout.endTime,
-      exercises: formatExerciseDataToForm(initWorkout.exercises),
+      exercises: initWorkout.exercises,
     },
   });
 

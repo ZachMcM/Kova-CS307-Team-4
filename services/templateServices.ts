@@ -1,48 +1,53 @@
 import { TemplateFormValues } from "@/components/forms/workout-template/TemplateFormContext";
 import { supabase } from "@/lib/supabase";
+import { sampleProfileId } from "@/sample-data/sampleProfile";
 import { Tables } from "@/types/database.types";
 import { ExtendedTemplateWithCreator } from "@/types/extended-types";
 
-// function to get all the templates
-export const getUserTemplates = async (
-  userId: string
-): Promise<ExtendedTemplateWithCreator[]> => {
-  const { data: templates, error: templateError } = await supabase
-    .from("TemplateUser")
+// gets one template based on id
+export const getTemplate = async (
+  id: string
+): Promise<ExtendedTemplateWithCreator> => {
+  const { data: template, error } = await supabase
+    .from("template")
     .select(
       `
-        template:Template (
-          *,
-          creator:profiles!Template_creatorUserId_fkey (
-            *
-          )
-        )
+        *,
+        creatorProfile:creatorProfileId(*)
       `
     )
-    .eq("user_id", userId);
+    .eq("id", id)
+    .limit(1).single();
+
+  if (error) throw new Error(error.message);
+
+  return template as ExtendedTemplateWithCreator
+};
+
+// function to get all the templates
+export const getUserTemplates = async (): Promise<
+  ExtendedTemplateWithCreator[]
+> => {
+  // TODO need to replace with actaul session.user.profile.id
+  const { data: templates, error: templateError } = await supabase
+    .from("template")
+    .select(
+      `
+        *,
+        creatorProfile:creatorProfileId(*)
+      `
+    )
+    .eq("profileId", sampleProfileId)
 
   if (templateError) {
     throw new Error(`Error fetching templates: ${templateError.message}`);
   }
 
-  if (!templates?.length) {
+  if (!templates) {
     return [];
   }
 
-  // Transform templates and parse data
-  const parsedTemplates: ExtendedTemplateWithCreator[] = templates.map((tu) => {
-    const template = tu.template as any; // temporary any for raw template
-
-    return {
-      ...template,
-      data: template.data ? JSON.parse(template.data) : [],
-      creator: {
-        profile: template.creator,
-      },
-    };
-  });
-
-  return parsedTemplates;
+  return templates as ExtendedTemplateWithCreator[]
 };
 
 // function to create a new template
@@ -50,73 +55,57 @@ export const newTemplate = async ({
   name,
   data,
 }: Omit<TemplateFormValues, "id">) => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // TODO need to replace with actaul session.user.profile.id
   const { data: template, error: templateErr } = await supabase
-    .from("Template")
+    .from("template")
     .insert({
       name,
       data,
-      creatorUserId: user?.id,
+      creatorProfileId: sampleProfileId,
+      profileId: sampleProfileId,
     })
     .select()
-    .returns<Tables<"Template">>();
-
-  console.log(template);
+    .returns<Tables<"template">>();
 
   if (templateErr) throw new Error(templateErr.message);
 
-  const { data: templateUser, error: templateUserErr } = await supabase
-    .from("TemplateUser")
-    .insert({
-      user_id: user?.id,
-      template_id: template.id,
-    })
-    .select()
-    .returns<Tables<"TemplateUser">>();
-
-  if (templateUserErr) throw new Error(templateUserErr.message);
-
-  return templateUser;
+  return template;
 };
 
-// TODO determine how we want to handle editing templates when the user is not the creator
-export const saveTemplate = async ({ name, data, id }: TemplateFormValues) => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export const updateTemplate = async ({ name, data, id }: TemplateFormValues) => {
+  // TODO need to replace with actaul session.user.profile.id
   const { data: updatedTemplate, error } = await supabase
-    .from("Template")
+    .from("template")
     .update({
       name,
       data,
     })
     .eq("id", id)
+    .eq("profileId", sampleProfileId)
     .select()
-    .returns<Tables<"Template">>();
+    .returns<Tables<"template">>();
 
   if (error) throw new Error(error.message);
 
   return updatedTemplate;
 };
 
-export const deleteTemplate = async ({ id }: TemplateFormValues) => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export const copyTemplate = async (templateId: string) => {
+  // TODO need to replace with actaul session.user.profile.id
+  const { name, data, creatorProfileId } = await getTemplate(templateId);
 
-  const { data: deletedTemplate, error } = await supabase
-    .from("TemplateUser")
-    .delete()
-    .eq("user_id", user?.id)
-    .eq("template_id", id)
+  const { data: newTemplate, error } = await supabase
+    .from("template")
+    .insert({
+      name,
+      data,
+      profileId: sampleProfileId,
+      creatorProfileId
+    })
     .select()
-    .returns<Tables<"TemplateUser">>();
+    .returns<Tables<"template">>();
 
   if (error) throw new Error(error.message);
 
-  return deletedTemplate;
+  return newTemplate;
 };

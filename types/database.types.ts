@@ -9,7 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      Exercise: {
+      exercise: {
         Row: {
           created_at: string
           id: string
@@ -27,7 +27,7 @@ export type Database = {
         }
         Relationships: []
       }
-      Profile: {
+      profile: {
         Row: {
           age: number | null
           avatar: string | null
@@ -37,7 +37,7 @@ export type Database = {
           goal: string | null
           id: string
           private: boolean | null
-          userId: string | null
+          userId: string
           username: string | null
         }
         Insert: {
@@ -49,7 +49,7 @@ export type Database = {
           goal?: string | null
           id?: string
           private?: boolean | null
-          userId?: string | null
+          userId: string
           username?: string | null
         }
         Update: {
@@ -61,48 +61,48 @@ export type Database = {
           goal?: string | null
           id?: string
           private?: boolean | null
-          userId?: string | null
+          userId?: string
           username?: string | null
         }
         Relationships: []
       }
-      RelTag: {
+      relTag: {
         Row: {
           created_at: string
-          exercise_id: string | null
+          exercise_id: string
           id: string
-          tag_id: string | null
+          tag_id: string
         }
         Insert: {
           created_at?: string
-          exercise_id?: string | null
+          exercise_id?: string
           id?: string
-          tag_id?: string | null
+          tag_id?: string
         }
         Update: {
           created_at?: string
-          exercise_id?: string | null
+          exercise_id?: string
           id?: string
-          tag_id?: string | null
+          tag_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "RelTag_exercise_id_fkey"
             columns: ["exercise_id"]
             isOneToOne: false
-            referencedRelation: "Exercise"
+            referencedRelation: "exercise"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "RelTag_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
-            referencedRelation: "Tag"
+            referencedRelation: "tag"
             referencedColumns: ["id"]
           },
         ]
       }
-      Tag: {
+      tag: {
         Row: {
           color: string | null
           created_at: string
@@ -123,55 +123,44 @@ export type Database = {
         }
         Relationships: []
       }
-      Template: {
+      template: {
         Row: {
           created_at: string
-          creatorUserId: string | null
+          creatorProfileId: string
           data: Json | null
           id: string
           name: string | null
+          profileId: string
         }
         Insert: {
           created_at?: string
-          creatorUserId?: string | null
+          creatorProfileId: string
           data?: Json | null
           id?: string
           name?: string | null
+          profileId: string
         }
         Update: {
           created_at?: string
-          creatorUserId?: string | null
+          creatorProfileId?: string
           data?: Json | null
           id?: string
           name?: string | null
-        }
-        Relationships: []
-      }
-      TemplateUser: {
-        Row: {
-          created_at: string
-          id: string
-          template_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          template_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          template_id?: string | null
-          user_id?: string | null
+          profileId?: string
         }
         Relationships: [
           {
-            foreignKeyName: "TemplateProfiles_template_id_fkey"
-            columns: ["template_id"]
+            foreignKeyName: "Template_creatorUserId_fkey"
+            columns: ["creatorProfileId"]
             isOneToOne: false
-            referencedRelation: "Template"
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Template_profileId_fkey"
+            columns: ["profileId"]
+            isOneToOne: false
+            referencedRelation: "profile"
             referencedColumns: ["id"]
           },
         ]
