@@ -1,6 +1,7 @@
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { ToastProvider } from "@gluestack-ui/toast";
 import {
   DarkTheme,
   DefaultTheme,
