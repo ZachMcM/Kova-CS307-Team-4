@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabase";
 import { AuthAccountResponse } from "@/types/extended-types";
 import { AuthResponse, AuthWeakPasswordError } from "@supabase/supabase-js";
 
+//TODO DEPRECATED remove when we are sure we do not need it
+
 export const createAccount = async (
   userEmail: string,
   userPassword: string,

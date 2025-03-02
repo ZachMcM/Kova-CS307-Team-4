@@ -5,25 +5,19 @@ import { Redirect, useRouter } from "expo-router";
 import { Button, ButtonText } from '@/components/ui/button';
 import { VStack } from '@/components/ui/vstack';
 import Container from '@/components/Container';
-import { isUserInSession, signOutUser } from '@/services/loginServices';
 import { showErrorToast } from '@/services/toastServices';
 import { useToast } from '@/components/ui/toast';
+import { SessionProvider, useSession } from '@/components/SessionContext';
 
 
 export default function HomeScreen() {
   const router = useRouter();
   const toast = useToast();
-  const { data: login_state } = useQuery({
-    queryKey: ["login_state"],
-    queryFn: async () => {
-      const state = await isUserInSession();
-      return state;
-    }
-  })
+  const { session, signOutUser } = useSession();
 
   return (
     <ScrollView>
-      { login_state ? (<Redirect href={"/login"}></Redirect>) : (<></>)}
+      { session == null ? (<Redirect href={"/login"}></Redirect>) : (<></>)}
       <Container>
         <VStack className='mt-30'>
           <Button onPress={() => {

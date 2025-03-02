@@ -11,9 +11,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { createAccount, signInUser } from "@/services/loginServices";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";
+import { useSession } from "@/components/SessionContext";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -22,6 +22,7 @@ export default function RegisterScreen() {
 
   const toast = useToast();
   const router = useRouter();
+  const { createAccount, signInUser} = useSession();
 
   return (
     <Container>

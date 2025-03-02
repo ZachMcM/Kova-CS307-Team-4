@@ -1,3 +1,4 @@
+import { SessionProvider } from "@/components/SessionContext";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -68,6 +69,7 @@ export default function RootLayout() {
   // auto
 
   return (
+    <SessionProvider>
     <QueryClientProvider client={queryClient}>
       <QueryClientProvider client={queryClient}>
       <GluestackUIProvider mode={(colorScheme ?? "light") as "light" | "dark"}>
@@ -90,5 +92,6 @@ export default function RootLayout() {
         </GluestackUIProvider>
     </QueryClientProvider>
     </QueryClientProvider>
+    </SessionProvider>
   );
 }
