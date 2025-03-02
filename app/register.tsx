@@ -11,7 +11,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { createAccount } from "@/services/loginServices";
+import { createAccount, signInUser } from "@/services/loginServices";
+import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
+import { HStack } from "@/components/ui/hstack";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -23,6 +25,17 @@ export default function RegisterScreen() {
 
   return (
     <Container>
+      <Button
+        variant = "outline"
+        size = "md"
+        action = "primary"
+        onPress={() => router.replace("/login")}
+        className = "p-3">
+        <HStack>
+        <Icon as={ChevronLeftIcon} className="mt-0"></Icon>
+        <ButtonText>Back to Login</ButtonText>
+        </HStack>
+    </Button>
       <Card variant="ghost" className="p-10 mb-50">
         <VStack space="sm" className="mb-50">
           <Heading size="4xl">Account Registration</Heading>
@@ -69,7 +82,9 @@ export default function RegisterScreen() {
             action="secondary"
             className="mt-5 mb-5 bg-[#6FA8DC]"
             onPress={() => {
-              createAccount(email, password, confirmPassword).then(() => { 
+              createAccount(email, password, confirmPassword).then(() => {
+                signInUser(email, password);
+              }).then(() => { 
                 router.replace("/(tabs)/profile");
                 showSuccessToast(toast, "Welcome to Kova!")
               }).catch(error => {

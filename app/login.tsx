@@ -70,8 +70,7 @@ export default function LoginScreen() {
           >
             <ButtonText className="text-white">Sign In</ButtonText>
           </Button>
-          <Link>
-            {/* TODO actually add this link to a new page */}
+          <Link onPress= {() => router.replace("/password-recovery")}>
             <LinkText>Forgot Password?</LinkText>
           </Link>
         </VStack>

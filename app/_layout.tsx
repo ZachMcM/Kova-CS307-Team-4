@@ -83,6 +83,7 @@ export default function RootLayout() {
             />
               <Stack.Screen name="register" options={{headerShown: false}} />
             <Stack.Screen name="login" options={{headerShown: false}} />
+            <Stack.Screen name="password-recovery" options={{headerShown: false}} />
           </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

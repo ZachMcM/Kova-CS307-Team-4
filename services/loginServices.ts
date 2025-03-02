@@ -82,8 +82,8 @@ export const signOutUser = async () => {
 // then trying to sign back in (right now, you have to sign in twice)
 export const isUserInSession = async (): Promise<boolean> => {
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  console.log(user ? "User is in session" : "User is not in session");
-  return user == null ? true : false;
+    data: { session },
+  } = await supabase.auth.getSession();
+  console.log(session ? "User is in session" : "User is not in session");
+  return session == null ? true : false;
 };
