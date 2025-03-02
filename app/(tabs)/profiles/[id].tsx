@@ -19,6 +19,8 @@ export default function ProfileScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
 
+  console.log("profiles/[id].tsx: Fetching profile with id: " + id);
+
   const { data: profile, isPending } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
@@ -27,10 +29,6 @@ export default function ProfileScreen() {
       return profile;
     },
   });
-
-  const getProfilePrivacy = (profile: any) => {
-    return profile.privacy;
-  }
 
   return (
    <Container className = "flex px-6 py-16">
@@ -65,7 +63,7 @@ export default function ProfileScreen() {
                   </VStack>
                 </HStack>
               </VStack>
-              <Button onPress={() => router.replace("/(tabs)/settings")} className = "w-0 h-0">
+              <Button onPress={() => router.replace("/settings")} className = "w-0 h-0">
                 <Icon as = {MenuIcon} size = "xl" className = "mt-8 ml-8 w-8 h-8"></Icon>
               </Button>
             </HStack>

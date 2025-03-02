@@ -3,7 +3,7 @@ export type PrivateProfile = {
   user_id: string;
   username: string;
   avatar: string;
-  privacy: true;
+  private: true;
   friends: number;
   following: number;
   followers: number;
@@ -14,7 +14,7 @@ export type PublicProfile = {
   user_id: string;
   username: string;
   avatar: string;
-  privacy: false;
+  private: false;
   friends: number;
   following: number;
   followers: number;
@@ -28,5 +28,5 @@ export type Profile = PublicProfile | PrivateProfile;
 
 // Function to to check if a profile is public (in general)
 export function isPublicProfile(profile: Profile): profile is PublicProfile {
-  return profile.privacy === false;
+  return profile.private === false;
 }

@@ -9,18 +9,18 @@ export const getProfile = async (id: string): Promise<Profile> => {
   const { data: profile, error } = await supabase
     .from("profile")
     .select("*")
-    .eq("user_id", id)
+    .eq("userId", id)
     .limit(1).single();
 
   if (error) throw new Error(error.message);
 
-  if (profile.privacy) {
+  if (profile.private) {
     return {
       id: profile.id,
       user_id: profile.user_id,
       username: profile.username,
       avatar: profile.avatar,
-      privacy: profile.privacy,
+      private: profile.private,
       friends: profile.friends,
       following: profile.following,
       followers: profile.followers
@@ -31,7 +31,7 @@ export const getProfile = async (id: string): Promise<Profile> => {
       user_id: profile.user_id,
       username: profile.username,
       avatar: profile.avatar,
-      privacy: profile.privacy,
+      private: profile.private,
       friends: profile.friends,
       following: profile.following,
       followers: profile.followers,
