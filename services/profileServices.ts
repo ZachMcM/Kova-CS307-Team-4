@@ -41,3 +41,18 @@ export const getProfile = async (id: string): Promise<Profile> => {
     } as PublicProfile;
   }
 }
+
+export const updateProfile = async (id:string, goal: string, bio: string, location: string) => {
+  const { error } = await supabase
+    .from("profile")
+    .update({
+      goal: goal,
+      bio: bio,
+      location: location,
+    })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+};
