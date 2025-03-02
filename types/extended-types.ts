@@ -1,3 +1,4 @@
+import { Session, User, WeakPassword } from "@supabase/auth-js";
 import { Tables } from "./database.types";
 import { ExerciseData } from "./workout-types";
 
@@ -5,4 +6,10 @@ import { ExerciseData } from "./workout-types";
 export type ExtendedTemplateWithCreator = Omit<Tables<'template'>, 'data'> & {
   data: ExerciseData[],
   creatorProfile: Tables<'profile'>
+}
+
+export type AuthAccountResponse = {
+  user: User,
+  session: Session,
+  weakPassword?: WeakPassword
 }
