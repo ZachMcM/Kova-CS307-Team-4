@@ -2,6 +2,7 @@ export type PrivateProfile = {
   id: string;
   user_id: string;
   username: string;
+  name: string;
   avatar: string;
   private: true;
   friends: number;
@@ -13,6 +14,7 @@ export type PublicProfile = {
   id: string;
   user_id: string;
   username: string;
+  name: string;
   avatar: string;
   private: false;
   friends: number;

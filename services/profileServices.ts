@@ -1,7 +1,4 @@
-import { TemplateFormValues } from "@/components/forms/workout-template/TemplateFormContext";
 import { supabase } from "@/lib/supabase";
-import { sampleProfileId } from "@/sample-data/sampleProfile";
-import { Tables } from "@/types/database.types";
 import { Profile, PrivateProfile, PublicProfile } from "@/types/profile-types";
 
 // Get profile based on provided user_id
@@ -18,6 +15,7 @@ export const getProfile = async (id: string): Promise<Profile> => {
     return {
       id: profile.id,
       user_id: profile.user_id,
+      name: profile.name,
       username: profile.username,
       avatar: profile.avatar,
       private: profile.private,
@@ -29,6 +27,7 @@ export const getProfile = async (id: string): Promise<Profile> => {
     return {
       id: profile.id,
       user_id: profile.user_id,
+      name: profile.name,
       username: profile.username,
       avatar: profile.avatar,
       private: profile.private,
