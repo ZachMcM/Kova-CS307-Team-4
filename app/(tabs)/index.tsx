@@ -1,6 +1,6 @@
-import React from 'react';
-import { FeedScreen } from '../../screens/FeedScreen';
+import { Redirect } from 'expo-router';
 
-export default function Index() {
-  return <FeedScreen />;
+export default function IndexScreen() {
+  // Redirect to the feed screen
+  return <Redirect href="/(tabs)/feed" />;
 }

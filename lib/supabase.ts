@@ -1,15 +1,18 @@
-// the supabase object is what we use to make api calls to our database
-
 import { AppState } from 'react-native'
-import 'react-native-url-polyfill/auto'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createClient } from '@supabase/supabase-js'
-import { Database } from '@/types/supabase'
 
-const supabaseUrl = 'https://spntxjldrghjrhyhhncu.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwbnR4amxkcmdoanJoeWhobmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4Mzg4MTcsImV4cCI6MjA1NTQxNDgxN30.LOlrKsjKUbVLjmvUNx_rAMcpTGB4LcHoLuAU8gBKNYE'
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_API_KEY!
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+})
 
 // Tells Supabase Auth to continuously refresh the session automatically
 // if the app is in the foreground. When this is added, you will continue
