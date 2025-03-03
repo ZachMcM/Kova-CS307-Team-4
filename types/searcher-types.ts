@@ -29,28 +29,28 @@ export type TaggedSearchItem = SearchItem & {
 
 /** Counts how many words exist within all the terms.
   * * frequencies -- the frequencies of each word.
-  * * total_items -- the total number of items in the list
-  * * get_inverse_frequency -- the inverse frequency, defined as the 
+  * * totalItems -- the total number of items in the list
+  * * getInverseFrequency -- the inverse frequency, defined as the 
   *      total number of items, minus the terms that don't have a given word.
   *     (is a loose interpretation.)
   */
 export type WordCounter = {
     frequencies: Map<string, number>;
-    total_items: number;
-    get_inverse_frequency: (name: string) => number;
+    totalItems: number;
+    getInverseFrequency: (name: string) => number;
 }
 
 /** Counts how many tags exist within the item set.
  * * frequencies -- the frequencies of the tags.
- * * total_items -- the total number of items in the list
- * * get_inverse_frequency -- the inverse frequency, defined as the 
+ * * totalItems -- the total number of items in the list
+ * * getInverseFrequency -- the inverse frequency, defined as the 
  *      total number of items, minus the items that don't have a given tag.
  *     (is a loose interpretation.)
  */
 export type TagCounter = {
-    tag_frequencies: Map<string, number>;
-    total_items: number;
-    get_inverse_frequency: (tag: string) => number;
+    tagFrequencies: Map<string, number>;
+    totalItems: number;
+    getInverseFrequency: (tag: string) => number;
 }
 
 // BASIC CREATORS
@@ -62,7 +62,7 @@ export type TagCounter = {
  * @param id -- The id of the item.
  * @returns a SearchItem
  */
-export function createSearchItem(name: string, id: string) : SearchItem {
+function createSearchItem(name: string, id: string) : SearchItem {
     let item = {name: name, id: id};
     return item;
 }
@@ -87,7 +87,7 @@ export function createSearchTag(name: string, id: string) : SearchTag {
  * @param isTag -- If the item is itself a tag.
  * @returns a SearchTaggedItem
  */
-export function createSearchTaggedItem(name: string, 
+function createSearchTaggedItem(name: string, 
         tags: SearchTag[], 
         id: string, 
         isTag: boolean) : TaggedSearchItem {
@@ -102,21 +102,21 @@ export function createSearchTaggedItem(name: string,
  */
 export function createWordCounter(terms: string[]): WordCounter {
     let counter = {frequencies: new Map<string, number>(),
-        total_items: 0, 
-        get_inverse_frequency: (name: string) => {
-            return counter.total_items - counter.frequencies.get(name)!;
+        totalItems: 0, 
+        getInverseFrequency: (name: string) => {
+            return counter.totalItems - counter.frequencies.get(name)!;
         }};
     terms.forEach((term) => {
         let words = term.split(" ");
-        let words_present = new Set<string>();
-        counter.total_items++;
+        let wordsPresent = new Set<string>();
+        counter.totalItems++;
         words.forEach((word) => {
-            if (!words_present.has(word)) {
+            if (!wordsPresent.has(word)) {
                 if (!counter.frequencies.has(word)) {
                     counter.frequencies.set(word, 0);
                 }
                 counter.frequencies.set(word, counter.frequencies.get(word)! + 1);
-                words_present.add(word);
+                wordsPresent.add(word);
             }
         });
     });
@@ -129,22 +129,93 @@ export function createWordCounter(terms: string[]): WordCounter {
  * @returns a TagCounter
  */
 export function createTagCounter(items: TaggedSearchItem[]): TagCounter {
-    let counter = {tag_frequencies: new Map<string, number>(),
-        total_items: 0,
-        get_inverse_frequency: (tag: string) => {
-            return counter.total_items - counter.tag_frequencies.get(tag)!;
+    let counter = {tagFrequencies: new Map<string, number>(),
+        totalItems: 0,
+        getInverseFrequency: (tag: string) => {
+            return counter.totalItems - counter.tagFrequencies.get(tag)!;
         }};
     items.forEach((taggedItem) => {
-        counter.total_items++;
+        counter.totalItems++;
         taggedItem.tags.forEach((tag) => {
-            if (!counter.tag_frequencies.has(tag.name)) {
-                counter.tag_frequencies.set(tag.name, 0);
+            if (!counter.tagFrequencies.has(tag.name)) {
+                counter.tagFrequencies.set(tag.name, 0);
             }
-            counter.tag_frequencies.set(tag.name,
-                counter.tag_frequencies.get(tag.name)! + 1);
+            counter.tagFrequencies.set(tag.name,
+                counter.tagFrequencies.get(tag.name)! + 1);
         });
     });
     return counter;
+}
+
+// ADVANCED CREATORS [For user stories]
+
+/**
+ * Converts a list of followers to a list of search items.
+ * 
+ * @param followers -- the followers to create the list from.
+ * 
+ * @returns a list of SearchItems
+ */
+export function followerToSearch(followers: any[]) : SearchItem[] {
+    let sItems: SearchItem[] = [];
+    followers.forEach((follower) => {
+        sItems.push(createSearchItem(follower.name, follower.userID));
+    });
+    return sItems;
+}
+
+/**
+ * Converts a list of friends to a list of search items.
+ * 
+ * @param friends -- the friends to create the list from.
+ * 
+ * @returns a list of SearchItems
+ */
+export function friendsToSearch(friends: any[]) : SearchItem[] {
+    let sItems: SearchItem[] = [];
+    friends.forEach((friend) => {
+        sItems.push(createSearchItem(friend.name, friend.userID));
+    });
+    return sItems;
+}
+
+/**
+ * Converts a list of templates to a list of search items.
+ * 
+ * @param templates -- the templates to create the list from.
+ * 
+ * @returns a list of SearchItems
+ */
+export function templatesToSearch(templates: any[]) : SearchItem[] {
+    let sItems: SearchItem[] = [];
+    templates.forEach((template) => {
+        sItems.push(createSearchItem(template.name, template.id));
+    });
+    return sItems;
+}
+
+/**
+ * Converts a list of exercises to a list of search items.
+ * 
+ * @param exercises -- the exercises to create the list from.
+ * 
+ * @returns a list of TaggedSearchItems.
+ */
+export function exercisesToSearch(exercises: any[]) : TaggedSearchItem[] {
+    let tSItems: TaggedSearchItem[] = [];
+    let nameToTag = new Map<string, SearchTag>();
+    exercises.forEach((exercise) => {
+        let searchTags: SearchTag[] = [];
+        exercise.tags.forEach((tag: { name: string; id: string; }) => {
+            if (!nameToTag.has(tag.name)) {
+                nameToTag.set(tag.name, createSearchTag(tag.name, tag.id));
+                tSItems.push(createSearchTaggedItem(tag.name, [], tag.id, true));
+            }
+            searchTags.push(nameToTag.get(tag.name)!);
+        });
+        tSItems.push(createSearchTaggedItem(exercise.name, searchTags, exercise.id, false));
+    });
+    return tSItems;
 }
 
 // COMPARERS
@@ -156,20 +227,20 @@ export function createTagCounter(items: TaggedSearchItem[]): TagCounter {
  * @param item -- the item to compare to.
  * @param counter -- the counter that helps to find the frequency.
  */
-function compare_to_query(query: String, 
+function compareToQuery(query: string, 
         item: SearchItem, 
         counter: WordCounter): number {
     let score = 0;
     let terms = query.split(" ");
     terms.forEach( (term) => {
         if (item.name.includes(term)) {
-            score += counter.get_inverse_frequency(term);
+            score += counter.getInverseFrequency(term);
         }
     });
     return score;
 }
 
-/** Conducts a search for tagged items. Performs the basic 'compare_to', as well as 
+/** Conducts a search for tagged items. Performs the basic 'compareTo', as well as 
  *      doubling any score values that come from matching a tag. Tag scores are also
  *      calculated using inverse frequency.
  * @param query -- the query itself
@@ -178,7 +249,7 @@ function compare_to_query(query: String,
  * @param selectedTags -- the selected tags to filter by. If blank, ignore.
  * @returns the score of the given item.
  */
-function compare_to_tagged_query(query: string,
+function compareToTaggedQuery(query: string,
         item: TaggedSearchItem,
         wordCounter: WordCounter,
         tagCounter: TagCounter,
@@ -193,7 +264,7 @@ function compare_to_tagged_query(query: string,
         return -1;
     }
 
-    let score = compare_to_query(query, item, wordCounter);
+    let score = compareToQuery(query, item, wordCounter);
     if (item.isTag) {
         score *= 2;
     }
@@ -202,7 +273,7 @@ function compare_to_tagged_query(query: string,
         terms.forEach( (term) => {
             item.tags.forEach( (tag) => {
                 if (tag.name.includes(term)) {
-                    score += tagCounter.get_inverse_frequency(tag.name);
+                    score += tagCounter.getInverseFrequency(tag.name);
                 }
             });
         });
@@ -218,7 +289,7 @@ function compare_to_tagged_query(query: string,
  * @param items The items to sort.
  * @param scores The scores associated with each item, pre-calculated.
  */
-function sort_list(items: SearchItem[],
+function sortList(items: SearchItem[],
         scores: Map<string, number>): void {
     for (let i = 0; i < items.length; i++) {
         let maxScore = scores.get(items[i].id)!;
@@ -243,14 +314,14 @@ function sort_list(items: SearchItem[],
  * @param items The list of search items.
  * @param wordCounter The word counter to find inverse-frequency.
  */
-export function sort_item_list(query: String,
+export function sortItemList(query: string,
         items: SearchItem[],
         wordCounter :WordCounter): void {
     let idToScore = new Map<string, number>();
     items.forEach((item) => {
-        idToScore.set(item.id, compare_to_query(query, item, wordCounter));
+        idToScore.set(item.id, compareToQuery(query, item, wordCounter));
     });
-    sort_list(items, idToScore);
+    sortList(items, idToScore);
 }
 
 /**
@@ -258,20 +329,20 @@ export function sort_item_list(query: String,
  * 
  * @param query The query to compare to.
  * @param items The list of search items.
- * @param selected_tags The tags that must be present, or none if they don't matter.
+ * @param selectedTags The tags that must be present, or none if they don't matter.
  * @param wordCounter The word counter to find inverse-frequency.
  * @param tagCounter The tag counter to find inverse-frequency.
  */
-export function sort_tagged_list(query: string,
+export function sortTaggedList(query: string,
         items: TaggedSearchItem[],
-        selected_tags: SearchTag[],
+        selectedTags: SearchTag[],
         wordCounter: WordCounter,
         tagCounter: TagCounter): void {
     let idToScore = new Map<string, number>();
     items.forEach((item) => {
-        idToScore.set(item.id, compare_to_tagged_query(query, item, wordCounter,
-            tagCounter, selected_tags));
+        idToScore.set(item.id, compareToTaggedQuery(query, item, wordCounter,
+            tagCounter, selectedTags));
     });
-    sort_list(items, idToScore);
+    sortList(items, idToScore);
 }
 
