@@ -1,5 +1,3 @@
-import { Tables } from "./database.types"
-
 export type SetData = {
   reps?: number 
   weight?: number

@@ -2,9 +2,10 @@ import Container from "@/components/Container";
 import TemplateForm from "@/components/forms/workout-template/TemplateForm";
 import { TemplateFormProvider } from "@/components/forms/workout-template/TemplateFormContext";
 import { Heading } from "@/components/ui/heading";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { sampleTemplates } from "@/sample-data/templates";
+import { getTemplate } from "@/services/templateServices";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 
@@ -15,8 +16,9 @@ export default function EditTemplate() {
     queryKey: ["template", id],
     queryFn: async () => {
       // TODO implement db call
-      const template = sampleTemplates.find((template) => template.id === id);
-      return template
+      const template = (await getTemplate(id as string)) || null;
+      console.log(JSON.stringify(template));
+      return template;
     },
   });
 
@@ -30,13 +32,13 @@ export default function EditTemplate() {
           <Text>Edit the workout template</Text>
         </VStack>
         {isPending ? (
-          <></>
-        ) : template ? (
-          <TemplateFormProvider template={template}>
-            <TemplateForm />
-          </TemplateFormProvider>
+          <Spinner />
         ) : (
-          <></>
+          template && (
+            <TemplateFormProvider template={template}>
+              <TemplateForm />
+            </TemplateFormProvider>
+          )
         )}
       </VStack>
     </Container>

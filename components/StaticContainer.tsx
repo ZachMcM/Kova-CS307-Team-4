@@ -1,6 +1,11 @@
 import { KeyboardAvoidingView, ScrollView, View } from "react-native";
 
-export default function Container({
+/*
+ *  StaticContainer differs from Container as it does not include a ScrollView
+ *  and therefore cannot be scrolled.
+ */
+
+export default function StaticContainer({
   children,
   className
 }: {
@@ -9,9 +14,7 @@ export default function Container({
 }) {
   return (
     <KeyboardAvoidingView behavior="padding" className="flex flex-1">
-      <ScrollView keyboardShouldPersistTaps="handled">
-        <View className={className ? className : "flex px-6 py-24 mb-12"}>{children}</View>
-      </ScrollView>
+      <View className={className ? className : "flex px-6 py-32"}>{children}</View>
     </KeyboardAvoidingView>
   );
 }

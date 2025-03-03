@@ -13,8 +13,25 @@ import { getWorkout } from "@/services/asyncStorageServices";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useQuery } from "@tanstack/react-query";
 
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+
+  // @MilesBrown - Added this to get the user id of the current session to access profile information
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+
+    fetchUserId();
+  }, []);
 
   // TODO @IanBruch do a very similar thing but with session, the session ternary should wrap the live workout ternary
   const { data: workout, isPending } = useQuery({
@@ -55,9 +72,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="feed"
         options={{
-          title: "Home",
+          title: "Feed",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
@@ -71,16 +88,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-        }}
-      />
-      {/* icon on the bottom bar for workout page */}
-      <Tabs.Screen
         name="workout"
         options={{
           title: "Workout",
@@ -90,13 +97,23 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="new-template"
+        name="profiles/[id]"
         options={{
-          href: null,
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.fill" color={color} />
+          ),
+          href: userId ? `/profiles/${userId}` : undefined,
         }}
       />
       <Tabs.Screen
-        name="profiles/[id]"
+        name="index"
+        options={{
+          href: null, // Hide from navigation
+        }}
+      />
+      <Tabs.Screen
+        name="new-template"
         options={{
           href: null,
         }}
@@ -105,8 +122,18 @@ export default function TabLayout() {
         name="templates/[id]"
         options={{
           href: null,
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="relations/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

@@ -3,7 +3,7 @@
 import { startWorkout } from "@/services/asyncStorageServices";
 import { showErrorToast } from "@/services/toastServices";
 import { ExtendedTemplateWithCreator } from "@/types/extended-types";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useRouter } from "expo-router";
 import { Box } from "./ui/box";
 import { Button, ButtonIcon, ButtonSpinner, ButtonText } from "./ui/button";
@@ -24,6 +24,8 @@ export default function TemplateCard({
 
   const toast = useToast();
 
+  const queryClient = useQueryClient();
+
   const { mutate: initWorkout, isPending } = useMutation({
     mutationFn: async () => {
       await startWorkout({
@@ -35,7 +37,8 @@ export default function TemplateCard({
       });
     },
     onSuccess: () => {
-      router.push("/live-workout");
+      router.replace("/live-workout");
+      queryClient.invalidateQueries({ queryKey: ["live-workout"] });
     },
     onError: (e) => {
       showErrorToast(toast, e.message);
@@ -69,9 +72,7 @@ export default function TemplateCard({
                 }
               >
                 <Icon as={EditIcon} size="sm" className="mr-2" />
-                <MenuItemLabel size="sm">
-                  Edit template
-                </MenuItemLabel>
+                <MenuItemLabel size="sm">Edit template</MenuItemLabel>
               </MenuItem>
               <MenuItem key="share" textValue="Share">
                 <Icon as={ShareIcon} size="sm" className="mr-2" />
@@ -82,10 +83,10 @@ export default function TemplateCard({
           <Link
             href={{
               pathname: "/profiles/[id]",
-              params: { id: template.creator.profile.userId! },
+              params: { id: template.creatorProfile.id! },
             }}
           >
-            <Text>By: {template.creator.profile.username}</Text>
+            <Text>By: {template.creatorProfile.username}</Text>
           </Link>
         </VStack>
         <Button
