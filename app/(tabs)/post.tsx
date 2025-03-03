@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View, Image, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, Image, TouchableOpacity, Alert } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Input, InputField } from '@/components/ui/input';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
@@ -10,6 +10,8 @@ import { HStack } from '@/components/ui/hstack';
 import Container from '@/components/Container';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import { createPost, uploadPostImage } from '@/services/postServices';
+import { router } from 'expo-router';
 
 // Mock workout data that would come from the workout session
 const mockWorkoutData = {
@@ -29,6 +31,7 @@ export default function PostScreen() {
   const [isPublic, setIsPublic] = useState(true);
   const [image, setImage] = useState<string | null>(null);
   const [includeWorkoutData, setIncludeWorkoutData] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Function to pick an image from the gallery
   const pickImage = async () => {
@@ -45,25 +48,49 @@ export default function PostScreen() {
   };
 
   // Function to handle post submission
-  const handleSubmit = () => {
-    // Here you would connect to Supabase and save the post
-    console.log({
-      title,
-      description,
-      location,
-      isPublic,
-      image,
-      includeWorkoutData,
-      workoutData: includeWorkoutData ? mockWorkoutData : null
-    });
-    
-    // Reset form after submission
-    setTitle('');
-    setDescription('');
-    setLocation('');
-    setIsPublic(true);
-    setImage(null);
-    setIncludeWorkoutData(true);
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please enter a title for your post');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Upload image if one is selected
+      let imageUrl = null;
+      if (image) {
+        imageUrl = await uploadPostImage(image);
+      }
+      
+      // Create post in Supabase
+      await createPost({
+        title,
+        description,
+        location: location || undefined,
+        isPublic,
+        imageUrl: imageUrl || undefined,
+        workoutData: includeWorkoutData ? mockWorkoutData : undefined
+      });
+      
+      // Reset form after submission
+      setTitle('');
+      setDescription('');
+      setLocation('');
+      setIsPublic(true);
+      setImage(null);
+      setIncludeWorkoutData(true);
+      
+      Alert.alert('Success', 'Your workout has been posted!');
+      
+      // Navigate back to feed or profile
+      router.push('/(tabs)');
+    } catch (error) {
+      console.error('Error posting workout:', error);
+      Alert.alert('Error', 'Failed to post your workout. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -187,8 +214,11 @@ export default function PostScreen() {
             variant="solid"
             onPress={handleSubmit}
             style={styles.submitButton}
+            disabled={isSubmitting}
           >
-            <Text style={styles.buttonText} bold>Post Workout</Text>
+            <Text style={styles.buttonText} bold>
+              {isSubmitting ? 'Posting...' : 'Post Workout'}
+            </Text>
           </Button>
         </VStack>
       </Container>
