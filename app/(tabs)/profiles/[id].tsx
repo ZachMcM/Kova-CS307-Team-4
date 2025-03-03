@@ -287,7 +287,7 @@ export default function ProfileScreen() {
                   </Pressable>
                 </HStack>
               </VStack>
-              <Button onPress={() => router.replace("/profiles/da0b3abd-891a-49cd-b2ef-d324bef51f25")} className = "w-0 h-0">
+              <Button onPress={() => router.replace("/settings")} className = "w-0 h-0">
                 <Icon as = {MenuIcon} size = "xl" className = "mt-8 ml-8 w-8 h-8"></Icon>
               </Button>
             </HStack>

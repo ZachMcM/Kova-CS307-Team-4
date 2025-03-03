@@ -131,7 +131,7 @@ export const getFollowers = async (userId: string) => {
   const { data: followers, error } = await supabase.from("followingRel").select("sourceId").eq("targetId", userId);
   if (error) throw new Error(error.message);
 
-  const { data: profiles, error: profileError } = await supabase.from("profile").select("*").in("userId", followers.map(follower => follower.sourceId));
+  const { data: profiles, error: profileError } = await supabase.from("profile").select(`userId, name, avatar`).in("userId", followers.map(follower => follower.sourceId));
   if (profileError) throw new Error(profileError.message);
 
   return profiles;
@@ -141,7 +141,7 @@ export const getFollowing = async (userId: string) => {
   const { data: following, error } = await supabase.from("followingRel").select("targetId").eq("sourceId", userId);
   if (error) throw new Error(error.message);
   
-  const { data: profiles, error: profileError } = await supabase.from("profile").select("*").in("userId", following.map(following => following.targetId));
+  const { data: profiles, error: profileError } = await supabase.from("profile").select(`userId, name, avatar`).in("userId", following.map(following => following.targetId));
   if (profileError) throw new Error(profileError.message);
 
   return profiles;
@@ -155,7 +155,7 @@ export const getFriends = async (userId: string) => {
   if (followerError) throw new Error(followerError.message);
 
   const friends = following.filter(following => followers.some(follower => follower.sourceId === following.targetId));
-  const { data: profiles, error: profileError } = await supabase.from("profile").select("*").in("userId", friends.map(friend => friend.targetId));
+  const { data: profiles, error: profileError } = await supabase.from("profile").select(`userId, name, avatar`).in("userId", friends.map(friend => friend.targetId));
   if (profileError) throw new Error(profileError.message);
 
   return profiles;
