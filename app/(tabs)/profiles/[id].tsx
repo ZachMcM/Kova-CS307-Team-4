@@ -10,7 +10,7 @@ import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Icon, MenuIcon, TrashIcon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
-import { getProfile, updateProfile } from "@/services/profileServices";
+import { getProfile, updateProfile, isProfileFollowed, isProfileFollowing, followUser, unfollowUser } from "@/services/profileServices";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "@/components/ui/spinner";
@@ -18,7 +18,7 @@ import { isPublicProfile } from "@/types/profile-types";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/toast";
-import { showErrorToast, showSuccessToast } from "@/services/toastServices";
+import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 
 export default function ProfileScreen() {
@@ -38,6 +38,10 @@ export default function ProfileScreen() {
   const [bioDisabled, setBioDisabled] = useState(false);
   const [locationDisabled, setLocationDisabled] = useState(false);
 
+  // Follower functionality
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollower, setIsFollower] = useState(false);
+
   //console.log("profiles/[id].tsx: Fetching profile with id: " + id);
 
   // Functions related to accessing the profiles
@@ -49,6 +53,32 @@ export default function ProfileScreen() {
       return profile;
     },
   });
+
+  const { data: followingData, isPending: isFollowingPending } = useQuery({
+    queryKey: ["followingStatus", userId, id],
+    queryFn: async () => {
+      if (!userId || !id || typeof id !== 'string') return false;
+      return await isProfileFollowed(userId, id);
+    },
+    enabled: !!userId && !!id, // Only run the query if userId and id are defined
+  });
+
+  const { data: followerData, isPending: isFollowerPending } = useQuery({
+    queryKey: ["followerStatus", userId, id],
+    queryFn: async () => {
+      if (!userId || !id || typeof id !== 'string') return false;
+      return await isProfileFollowing(userId, id);
+    },
+    enabled: !!userId && !!id, // Only run the query if userId and id are defined
+  });
+
+  useEffect(() => {
+    setIsFollowing(!!followingData);
+  }, [followingData]);
+
+  useEffect(() => {
+    setIsFollower(!!followerData);
+  }, [followerData]);
   
   useEffect(() => {
     const fetchUserId = async () => {
@@ -60,8 +90,6 @@ export default function ProfileScreen() {
 
     fetchUserId();
   }, []);
-
-  //console.log("profiles/[id].tsx: Access user id: " + userId);
 
   // Functions related to editing the profile
   const handleSave = async () => {
@@ -118,10 +146,43 @@ export default function ProfileScreen() {
     setLocation("");
   };
 
-  const disableBioInput = () => {
-    setBioDisabled(true);
-    setBio("");
-  };
+  // Friends and Following functionality
+
+  const followProfile = async () => {
+    try {
+      if (profile && userId && id && typeof id === 'string') {
+        await followUser(userId, id);
+        setIsFollowing(true);
+        showFollowToast(toast, profile.name, true);
+        profile.followers += 1;
+
+        if (isFollower) {
+          profile.friends += 1;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      showErrorToast(toast, "Failed to follow profile");
+    }
+  }
+
+  const unfollowProfile = async () => {
+    try {
+      if (profile && userId && id && typeof id === 'string') {
+        await unfollowUser(userId, id);
+        setIsFollowing(false);
+        showFollowToast(toast, profile.name, false);
+        profile.followers -= 1;
+
+        if (isFollower) {
+          profile.friends -= 1;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      showErrorToast(toast, "Failed to unfollow profile");
+    }
+  }
 
   return (
    <StaticContainer className = "flex px-6 py-16">
@@ -156,7 +217,7 @@ export default function ProfileScreen() {
                   </VStack>
                 </HStack>
               </VStack>
-              <Button onPress={() => router.replace("/profiles/b0d0be17-f0dd-41e5-bc61-049c384b2374")} className = "w-0 h-0">
+              <Button onPress={() => router.replace("/profiles/da0b3abd-891a-49cd-b2ef-d324bef51f25")} className = "w-0 h-0">
                 <Icon as = {MenuIcon} size = "xl" className = "mt-8 ml-8 w-8 h-8"></Icon>
               </Button>
             </HStack>
@@ -222,8 +283,12 @@ export default function ProfileScreen() {
               <Button size = "lg" variant = "outline" action = "primary" className = "border-[#6FA8DC]" onPress={saveValuesAndEditProfile}>
                 <ButtonText className = "text-[#6FA8DC]">Edit Profile</ButtonText>
               </Button>
+            ) : isFollowing ? (
+              <Button size = "lg" variant = "outline" action = "secondary" className = "border-[#6FA8DC]" onPress={unfollowProfile}>
+                <ButtonText className = "text-[#6FA8DC]">Unfollow</ButtonText>
+              </Button>
             ) : (
-              <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#6FA8DC]">
+              <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#6FA8DC]" onPress={followProfile}>
                 <ButtonText className = "text-white">Follow</ButtonText>
               </Button>
             )}

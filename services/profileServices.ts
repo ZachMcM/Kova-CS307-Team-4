@@ -56,3 +56,73 @@ export const updateProfile = async (id:string, goal: string, bio: string, locati
     throw new Error(error.message);
   }
 };
+
+export const isProfileFollowed = async (sourceId: string, targetId: string): Promise<boolean> => {
+  const { data: follows, error } = await supabase
+    .from("followingRel")
+    .select("*")
+    .eq("sourceId", sourceId)
+    .eq("targetId", targetId)
+    .limit(1);
+
+  if (error) throw new Error(error.message);
+
+  return follows.length !== 0;
+}
+
+export const isProfileFollowing = async (sourceId: string, targetId: string): Promise<boolean> => {
+  const { data: follows, error } = await supabase
+    .from("followingRel")
+    .select("*")
+    .eq("sourceId", targetId)
+    .eq("targetId", sourceId)
+    .limit(1);
+
+  if (error) throw new Error(error.message);
+
+  return follows.length !== 0;
+}
+
+export const followUser = async (sourceId: string, targetId: string) => {
+  try {
+    await supabase.from("followingRel").insert([{ sourceId: sourceId, targetId: targetId }]);
+    await supabase.rpc('increment_following', { user_id: sourceId });
+    await supabase.rpc('increment_followers', { user_id: targetId });
+  } catch (error) {
+    throw new Error("Failed to insert follow relationship");
+  }
+
+  // Check if both users follow eachother
+  const isMutualFollow = await isProfileFollowed(targetId, sourceId);
+
+  if (isMutualFollow) {
+    try {
+      await supabase.rpc('increment_friends', { user_id: sourceId });
+      await supabase.rpc('increment_friends', { user_id: targetId });
+    } catch {
+      throw new Error("Failed to insert friend relationship");
+    }
+  }
+}
+
+export const unfollowUser = async (sourceId: string, targetId: string) => {
+  try {
+    await supabase.from("followingRel").delete().eq("sourceId", sourceId).eq("targetId", targetId);
+    await supabase.rpc('decrement_following', { user_id: sourceId });
+    await supabase.rpc('decrement_followers', { user_id: targetId });
+  } catch (error) {
+    throw new Error("Failed to delete follow relationship");
+  }
+
+  // Check if both users follow eachother
+  const isMutualFollow = await isProfileFollowed(targetId, sourceId);
+
+  if (isMutualFollow) {
+    try {
+      await supabase.rpc('decrement_friends', { user_id: sourceId });
+      await supabase.rpc('decrement_friends', { user_id: targetId });
+    } catch {
+      throw new Error("Failed to delete friend relationship");
+    }
+  }
+}
