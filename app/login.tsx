@@ -7,7 +7,8 @@ import { Link, LinkText } from "@/components/ui/link";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { getLoginState, loginUser } from "@/services/asyncStorageServices";
+import { supabase } from "@/lib/supabase";
+import { signInUser } from "@/services/loginServices";
 import { showErrorToast } from "@/services/toastServices";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter } from "expo-router";
@@ -18,34 +19,11 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
 
   const toast = useToast();
-
   const router = useRouter();
-  const { data: login_state } = useQuery({
-    queryKey: ["logged-in"],
-    queryFn: async () => {
-      const state = await getLoginState();
-      return state;
-    },
-  });
-
-  const { mutate: login } = useMutation({
-    mutationFn: async () => {
-      console.log(email + " " + password);
-      const state = await loginUser(email, password);
-      return state;
-    },
-    onSuccess: () => {
-      router.replace("/(tabs)");
-    },
-    onError: (e) => {
-      console.log(e);
-      showErrorToast(toast, e.message);
-    },
-  });
 
   return (
     <Container>
-      {login_state === "true" ? <Redirect href={"/"}></Redirect> : <></>}
+      {/*login_state === "true" ? <Redirect href={"/"}></Redirect> : <></>*/}
       <Card variant="ghost" className="p-10 mb-50">
         <VStack space="sm" className="mb-50">
           <Heading size="4xl">Sign In</Heading>
@@ -59,7 +37,7 @@ export default function LoginScreen() {
           </Text>
           <Input className="ml-3 mr-5">
             <InputField
-              value={email}
+              value={email.trim()}
               onChangeText={setEmail}
               placeholder="Enter Email"
             />
@@ -71,7 +49,7 @@ export default function LoginScreen() {
           </Text>
           <Input className="ml-3 mr-5">
             <InputField
-              value={password}
+              value={password.trim()}
               onChangeText={setPassword}
               placeholder="Enter Password"
             />
@@ -82,16 +60,19 @@ export default function LoginScreen() {
             action="secondary"
             className="mt-5 mb-5 bg-[#6FA8DC]"
             onPress={() => {
-              login();
+              signInUser(email, password).then(() => {
+                router.replace("/(tabs)");
+              }).catch(error => {
+                console.log(error);
+                showErrorToast(toast, error.message);
+              })
             }}
           >
-            {/* TODO implement button routing and login features */}
             <ButtonText className="text-white">Sign In</ButtonText>
           </Button>
           <Link>
             {/* TODO actually add this link to a new page */}
             <LinkText>Forgot Password?</LinkText>
-            {/* TODO ask abt LinkText error */}
           </Link>
         </VStack>
       </Card>

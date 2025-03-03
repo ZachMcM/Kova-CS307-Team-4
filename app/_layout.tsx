@@ -1,6 +1,7 @@
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { ToastProvider } from "@gluestack-ui/toast";
 import {
   DarkTheme,
   DefaultTheme,
@@ -82,6 +83,7 @@ export default function RootLayout() {
             />
               <Stack.Screen name="register" options={{headerShown: false}} />
             <Stack.Screen name="login" options={{headerShown: false}} />
+            <Stack.Screen name="settings" options={{headerShown: false}} />
           </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

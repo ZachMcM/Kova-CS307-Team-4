@@ -7,9 +7,12 @@ import { Button, ButtonText } from "@/components/ui/button";
 import { useRouter } from "expo-router";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { Heading } from "@/components/ui/heading";
+import { useState, useEffect } from "react";
+import { supabase } from '@/lib/supabase';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const [userId, setUserId] = useState<string | null>(null);
 
   const settingsData = [
     {
@@ -52,6 +55,17 @@ export default function SettingsScreen() {
     },
   ];
 
+  useEffect(() => {
+      const fetchUserId = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setUserId(session.user.id);
+        }
+      };
+  
+      fetchUserId();
+    }, []);
+
   return (
     <StaticContainer className = "flex px-6 py-16">
       <VStack>
@@ -60,7 +74,7 @@ export default function SettingsScreen() {
             variant = "outline"
             size = "lg"
             action = "primary"
-            onPress={() => router.replace("/(tabs)/profile")}
+            onPress={() => router.replace(`/(tabs)/profiles/${userId}`)}
             className = "p-3"
           >
             <Icon as={ChevronLeftIcon} className = "m-0"></Icon>
