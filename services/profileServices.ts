@@ -126,3 +126,16 @@ export const unfollowUser = async (sourceId: string, targetId: string) => {
     }
   }
 }
+
+export const uploadProfilePicture = async (userId: string, file: File) => {
+  try {
+    const filePath = `${userId}/${file.name}`;
+    await supabase.storage.from('profile-images').upload(filePath, file);
+    const { data: publicURLData } = supabase.storage.from('profile-images').getPublicUrl(filePath);
+    const publicURL = publicURLData.publicUrl;
+    await supabase.from('profile').update({ avatar: publicURL }).eq('userId', userId);
+    return publicURL;
+  } catch (error) {
+    throw new Error("Failed to upload profile picture");
+  }
+}

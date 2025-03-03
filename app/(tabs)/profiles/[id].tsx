@@ -3,14 +3,14 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from '@/components/ui/vstack';
 import { HStack } from "@/components/ui/hstack";
-import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
+import { Avatar, AvatarFallbackText, AvatarImage } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Pressable } from "@/components/ui/pressable";
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { Icon, MenuIcon, TrashIcon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
-import { getProfile, updateProfile, isProfileFollowed, isProfileFollowing, followUser, unfollowUser } from "@/services/profileServices";
+import { getProfile, updateProfile, isProfileFollowed, isProfileFollowing, followUser, unfollowUser, uploadProfilePicture } from "@/services/profileServices";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "@/components/ui/spinner";
@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
 
@@ -33,6 +34,7 @@ export default function ProfileScreen() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [goal, setGoal] = useState("");
   const [bio, setBio] = useState("");
+  const [avatar, setAvatar] = useState("");
   const [location, setLocation] = useState("");
   const [goalDisabled, setGoalDisabled] = useState(false);
   const [bioDisabled, setBioDisabled] = useState(false);
@@ -49,7 +51,7 @@ export default function ProfileScreen() {
     queryKey: ["profile", id],
     queryFn: async () => {
       const profile = (await getProfile(id as string) || null);
-      //console.log(JSON.stringify(profile));
+      console.log(JSON.stringify(profile));
       return profile;
     },
   });
@@ -91,25 +93,35 @@ export default function ProfileScreen() {
     fetchUserId();
   }, []);
 
+  useEffect(() => {
+    console.log("isEditingProfile changed:", isEditingProfile);
+  }, [isEditingProfile]);
+
   // Functions related to editing the profile
   const handleSave = async () => {
     try {
       if (profile && isPublicProfile(profile)) {
-        console.log(profile);
+        // If the user has not entered a value, set the value to the placeholder value
         if (!location) { setLocation(profile.location); }
         if (!goal) { setGoal(profile.goal); }
         if (!bio) { setBio(profile.bio); }
+
+        // If the user has disabled the input, set the value to an empty string
         if (locationDisabled) { setLocation(""); }
         if (goalDisabled) { setGoal(""); }
         if (bioDisabled) { setBio(""); }
-        console.log("profiles/[id].tsx: Updating profile with id: " + id);
-        console.log("profiles/[id].tsx: New location: '" + location + "', New goal: '" + goal + "', New bio: '" + bio + "'");
+
         await updateProfile(profile.id, goal, bio, location);
         setIsEditingProfile(false);
         showSuccessToast(toast, "Profile updated successfully");
+
+        // "Update" the profile with values on the frontend
         profile.location = location;
         profile.goal = goal;
         profile.bio = bio;
+        profile.avatar = avatar;
+
+        // Re-enable the inputs
         setGoalDisabled(false);
         setBioDisabled(false);
         setLocationDisabled(false);
@@ -121,19 +133,23 @@ export default function ProfileScreen() {
   };
 
   const saveValuesAndEditProfile = () => {
+    if (profile) { setAvatar(profile.avatar); }
     setIsEditingProfile(true);
   }
 
-  const saveAndSetEditingProfile = () => {
+  const saveAndSetEditingProfile = async () => {
+    console.log("profiles/[id].tsx: Saving and setting editing profile");
     setIsEditingProfile(false);
-    handleSave();
+    await handleSave();
   };
 
   const cancelEdits = () => {
+    console.log("profiles/[id].tsx: Cancelling edits");
     setIsEditingProfile(false);
     setGoalDisabled(false);
     setBioDisabled(false);
     setLocationDisabled(false);
+    if (profile) { profile.avatar = avatar; }
   };
 
   const disableGoalInput = () => {
@@ -184,6 +200,38 @@ export default function ProfileScreen() {
     }
   }
 
+  // Image upload functionality
+  const pickImage = async () => {
+    const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (result.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled) {
+      const file = {uri: pickerResult.assets[0].uri, name: pickerResult.assets[0].uri.split('/').pop(), type: 'image/jpeg'};
+
+      try {
+        if (userId && profile) {
+          // The file error here is a TypeScript error, but the code will still work
+          const publicURL = await uploadProfilePicture(userId, file);
+          profile.avatar = publicURL;
+          showSuccessToast(toast, "Profile picture updated successfully");
+        }
+      } catch (error) {
+        console.error(error);
+        showErrorToast(toast, "Failed to upload profile picture");
+      }
+    }
+  };
+
   return (
    <StaticContainer className = "flex px-6 py-16">
       <VStack space = "md">
@@ -194,9 +242,25 @@ export default function ProfileScreen() {
           : profile && (
           <VStack space = "lg">
             <HStack space = "md">
-              <Avatar className="bg-indigo-600 mt-1" size = "xl">
-                <AvatarFallbackText className="text-white">{profile.name}</AvatarFallbackText>
-              </Avatar>
+              { isEditingProfile ? (
+                <Pressable onPress={pickImage}>
+                  <Avatar className="bg-indigo-600 mt-1" size = "xl">
+                    {profile.avatar ? (
+                      <AvatarImage source={{ uri: profile.avatar }}></AvatarImage>
+                    ) : (
+                      <AvatarFallbackText className="text-white">{profile.name}</AvatarFallbackText>
+                    )}
+                  </Avatar>
+                </Pressable>
+              ) : (
+                <Avatar className="bg-indigo-600 mt-1" size = "xl">
+                  {profile.avatar ? (
+                    <AvatarImage source={{ uri: profile.avatar }} />
+                  ) : (
+                    <AvatarFallbackText className="text-white">{profile.name}</AvatarFallbackText>
+                  )}
+                </Avatar>
+              )}
               <VStack space = "xs">
                 <VStack>
                   <Heading size="xl" className = "mb-0 h-8 w-56">{profile.name}</Heading>
@@ -222,7 +286,7 @@ export default function ProfileScreen() {
               </Button>
             </HStack>
             <VStack>
-              { isPublicProfile(profile) && (profile.location || profile.goal || profile.bio) && (
+              { isPublicProfile(profile) && (
                 <Box className = "border border-gray-300 rounded p-2 mt-2">
                   { isEditingProfile && !locationDisabled ? (
                     <HStack>
@@ -236,7 +300,7 @@ export default function ProfileScreen() {
                         </InputSlot>
                       </Input>
                     </HStack>
-                  ) : profile.location && !locationDisabled && (
+                  ) : profile.location && (
                     <HStack>
                       <Heading size = "md" className = "mr-1">📍</Heading>
                       <Heading size = "md">{profile.location}</Heading>
