@@ -1,59 +1,105 @@
 // Contains search item types, as well as some helper methods for sorting.
 
-export type Item = {
+/** A simple search item with an id and a name.
+ * * name -- the name of item.
+ * * id -- the id of the item.
+ */
+export type SearchItem = {
     name: string;
-    id: number
+    id: string
 }
 
-export type Tag = {
-    name: string;
+/** A simple search tag for support with the search algorithms. 
+ * * (Contains 'name' and 'id' of SearchItem.)
+ */
+export type SearchTag = {
+    name: string
+};
+
+/** A simple search item with support for tagged items.
+ * * (Possesses 'name' and 'id' of SearchItem.)
+ * * tags -- the tags this item has.
+ * * isTag -- if this item is a tag itself. Note: either tags has at least one item
+ *            or isTag is true.
+ */
+export type TaggedSearchItem = SearchItem & {
+    tags: SearchTag[];
+    isTag: boolean;
 }
 
-export type TaggedItem = Item & {
-    tags: Tag[];
-}
-
-// Counts how many words exist within all the terms.
-// * frequencies -- the frequencies of each word.
-// * total_items -- the total number of items in the list
-// * get_inverse_frequency -- the inverse frequency, defined as the 
-//      total number of items, minus the terms that don't have a given word.
-//      (is a loose interpretation.)
-export interface WordCounter {
+/** Counts how many words exist within all the terms.
+  * * frequencies -- the frequencies of each word.
+  * * total_items -- the total number of items in the list
+  * * get_inverse_frequency -- the inverse frequency, defined as the 
+  *      total number of items, minus the terms that don't have a given word.
+  *     (is a loose interpretation.)
+  */
+export type WordCounter = {
     frequencies: Map<string, number>;
     total_items: number;
     get_inverse_frequency: (name: string) => number;
 }
 
-// Counts how many tags exist within the item set.
-// * frequencies -- the frequencies of the tags.
-// * total_items -- the total number of items in the list
-// * get_inverse_frequency -- the inverse frequency, defined as the 
-//      total number of items, minus the items that don't have a given tag.
-//      (is a loose interpretation.)
-export interface TagCounter {
+/** Counts how many tags exist within the item set.
+ * * frequencies -- the frequencies of the tags.
+ * * total_items -- the total number of items in the list
+ * * get_inverse_frequency -- the inverse frequency, defined as the 
+ *      total number of items, minus the items that don't have a given tag.
+ *     (is a loose interpretation.)
+ */
+export type TagCounter = {
     tag_frequencies: Map<string, number>;
     total_items: number;
     get_inverse_frequency: (tag: string) => number;
 }
 
-export function createItem(name: string, id: number) : Item {
+// BASIC CREATORS
+
+/**
+ * Creates a basic SearchItem.
+ * 
+ * @param name -- The name of the item.
+ * @param id -- The id of the item.
+ * @returns a SearchItem
+ */
+export function createSearchItem(name: string, id: string) : SearchItem {
     let item = {name: name, id: id};
     return item;
 }
 
-export function createTag(name: string) : Tag {
+/**
+ * Creates a basic SearchTag
+ * @param name -- The name of the item.
+ * @param id -- The id of the tag.
+ * @returns a SearchTag
+ */
+export function createSearchTag(name: string, id: string) : SearchTag {
     let tag = {name: name};
     return tag;
 }
 
-export function createTaggedItem(name: string, tags: Tag[], id: number) : TaggedItem {
-    let item = {name: name, tags: tags, id: id};
+/**
+ * Creates a SearchTaggedItem, representing either an item or a tag.
+ * 
+ * @param name -- The name of the item.
+ * @param tags -- The tags of the item.
+ * @param id -- The id of the item.
+ * @param isTag -- If the item is itself a tag.
+ * @returns a SearchTaggedItem
+ */
+export function createSearchTaggedItem(name: string, 
+        tags: SearchTag[], 
+        id: string, 
+        isTag: boolean) : TaggedSearchItem {
+    let item = {name: name, tags: tags, id: id, isTag: isTag};
     return item;
 }
 
-// Returns a word counter from a list.
-// * terms -- the terms to build the word counter from.
+/**  Returns a word counter from a list.
+ * 
+ * @param terms -- the terms to build the word counter from.
+ * @returns a WordCounter
+ */
 export function createWordCounter(terms: string[]): WordCounter {
     let counter = {frequencies: new Map<string, number>(),
         total_items: 0, 
@@ -77,10 +123,12 @@ export function createWordCounter(terms: string[]): WordCounter {
     return counter;
 }
 
-// Returns a tag counter from a list.
-// * items -- the items to build the tag counter from. Assumed that each
-//            tag only has only unique tags.
-export function createTagCounter(items: TaggedItem[]): TagCounter {
+/** Returns a tag counter from a list of items.
+ * @param items -- the items to build the tag counter from. Assumed that each
+ *            tag only has only unique tags.
+ * @returns a TagCounter
+ */
+export function createTagCounter(items: TaggedSearchItem[]): TagCounter {
     let counter = {tag_frequencies: new Map<string, number>(),
         total_items: 0,
         get_inverse_frequency: (tag: string) => {
@@ -99,12 +147,17 @@ export function createTagCounter(items: TaggedItem[]): TagCounter {
     return counter;
 }
 
-// Conducts a search for regular items.
-// * query -- the query itself
-// * item -- the item to compare to
-// * counter -- the counter that helps to find the frequency.
+// COMPARERS
+
+/** Conducts a score calculation for regular items. Simply checks if any 
+ *      word in the query matches that of the item. If true, the score is
+ *      incremented based on the inverse frequency.
+ * @param query -- the query itself
+ * @param item -- the item to compare to.
+ * @param counter -- the counter that helps to find the frequency.
+ */
 function compare_to_query(query: String, 
-        item: Item, 
+        item: SearchItem, 
         counter: WordCounter): number {
     let score = 0;
     let terms = query.split(" ");
@@ -116,39 +169,57 @@ function compare_to_query(query: String,
     return score;
 }
 
-// Conducts a search for tagged items.
-// * query -- the query itself
-// * item -- the item to compare to
-// * counter -- the counter that helps to find the frequency.
-// * selectedTags -- the selected tags to filter by. If blank, ignore.
+/** Conducts a search for tagged items. Performs the basic 'compare_to', as well as 
+ *      doubling any score values that come from matching a tag. Tag scores are also
+ *      calculated using inverse frequency.
+ * @param query -- the query itself
+ * @param item -- the item to compare to
+ * @param counter -- the counter that helps to find the frequency.
+ * @param selectedTags -- the selected tags to filter by. If blank, ignore.
+ * @returns the score of the given item.
+ */
 function compare_to_tagged_query(query: string,
-        item: TaggedItem,
+        item: TaggedSearchItem,
         wordCounter: WordCounter,
         tagCounter: TagCounter,
-        selectedTags: Tag[]): number {
-    let score = compare_to_query(query, item, wordCounter);
-    let terms = query.split(" ");
-    terms.forEach( (term) => {
-        item.tags.forEach( (tag) => {
-            if (tag.name.includes(term)) {
-                score += tagCounter.get_inverse_frequency(tag.name);
-            }
-        });
-    });
+        selectedTags: SearchTag[]): number {
     let containsATag = selectedTags.length == 0;
     selectedTags.forEach((tag) => {
         if (item.tags.includes(tag)) {
             containsATag = true;
         }
     });
-    if (!containsATag) {
-        score = -1;
+    if (!containsATag && !item.isTag) {
+        return -1;
+    }
+
+    let score = compare_to_query(query, item, wordCounter);
+    if (item.isTag) {
+        score *= 2;
+    }
+    else {
+        let terms = query.split(" ");
+        terms.forEach( (term) => {
+            item.tags.forEach( (tag) => {
+                if (tag.name.includes(term)) {
+                    score += tagCounter.get_inverse_frequency(tag.name);
+                }
+            });
+        });
     }
     return score;
 }
 
-function sort_list(items: Item[],
-        scores: Map<number, number>): void {
+// SORTERS
+
+/**
+ * Sorts a given list based on scores. Is a helper method. Highest scores are prioritized.
+ * 
+ * @param items The items to sort.
+ * @param scores The scores associated with each item, pre-calculated.
+ */
+function sort_list(items: SearchItem[],
+        scores: Map<string, number>): void {
     for (let i = 0; i < items.length; i++) {
         let maxScore = scores.get(items[i].id)!;
         let position = i;
@@ -165,25 +236,42 @@ function sort_list(items: Item[],
     }
 }
 
+/**
+ * Sorts a list of untagged items.
+ * 
+ * @param query The query to compare to.
+ * @param items The list of search items.
+ * @param wordCounter The word counter to find inverse-frequency.
+ */
 export function sort_item_list(query: String,
-        items: Item[],
+        items: SearchItem[],
         wordCounter :WordCounter): void {
-    let idToScore = new Map<number, number>();
+    let idToScore = new Map<string, number>();
     items.forEach((item) => {
         idToScore.set(item.id, compare_to_query(query, item, wordCounter));
     });
     sort_list(items, idToScore);
 }
 
+/**
+ * Sorts a list of tagged items.
+ * 
+ * @param query The query to compare to.
+ * @param items The list of search items.
+ * @param selected_tags The tags that must be present, or none if they don't matter.
+ * @param wordCounter The word counter to find inverse-frequency.
+ * @param tagCounter The tag counter to find inverse-frequency.
+ */
 export function sort_tagged_list(query: string,
-        items: TaggedItem[],
-        selected_tags: Tag[],
+        items: TaggedSearchItem[],
+        selected_tags: SearchTag[],
         wordCounter: WordCounter,
         tagCounter: TagCounter): void {
-    let idToScore = new Map<number, number>();
+    let idToScore = new Map<string, number>();
     items.forEach((item) => {
         idToScore.set(item.id, compare_to_tagged_query(query, item, wordCounter,
             tagCounter, selected_tags));
     });
     sort_list(items, idToScore);
 }
+
