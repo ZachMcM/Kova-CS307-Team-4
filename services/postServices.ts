@@ -34,7 +34,7 @@ export const getPosts = async (isPublicOnly = false) => {
       *,
       profile:profileId(*)
     `)
-    .order("createdAt", { ascending: false });
+    .order("createdat", { ascending: false });
 
   if (isPublicOnly) {
     query = query.eq("isPublic", true);
