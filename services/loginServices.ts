@@ -60,7 +60,8 @@ export const signInUser = async (
     console.log("create default profile");
     const { error: insertionError } = await supabase.from("profile").insert({
       userId: signInData.user?.id,
-      username: "New Kova User",
+      username: "NewKovaUser",
+      name: "John Kova"
     });
     if (insertionError) throw new Error(insertionError.message);
   }
