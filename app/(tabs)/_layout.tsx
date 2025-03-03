@@ -125,6 +125,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="relations/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           href: null,

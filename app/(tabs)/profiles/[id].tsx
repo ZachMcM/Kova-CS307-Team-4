@@ -267,18 +267,24 @@ export default function ProfileScreen() {
                   <Text size="sm">@{profile.username}</Text>
                 </VStack>
                 <HStack space = "2xl">
-                  <VStack>
-                    <Heading size = "lg" className = "text-center">{profile.friends}</Heading>
-                    <Text size = "sm" className = "text-center">friends</Text>
-                  </VStack>
-                  <VStack>
-                    <Heading size = "lg" className = "text-center">{profile.followers}</Heading>
-                    <Text size = "sm" className = "text-center">followers</Text>
-                  </VStack>
-                  <VStack>
-                    <Heading size = "lg" className = "text-center">{profile.following}</Heading>
-                    <Text size = "sm" className = "text-center">following</Text>
-                  </VStack>
+                  <Pressable onPress = {() => router.replace(`/relations/${id}?type=friends`)}>
+                    <VStack>
+                      <Heading size = "lg" className = "text-center">{profile.friends}</Heading>
+                      <Text size = "sm" className = "text-center">friends</Text>
+                    </VStack>
+                  </Pressable>
+                  <Pressable onPress = {() => router.replace(`/relations/${id}?type=followers`)}>
+                    <VStack>
+                      <Heading size = "lg" className = "text-center">{profile.followers}</Heading>
+                      <Text size = "sm" className = "text-center">followers</Text>
+                    </VStack>
+                  </Pressable>
+                  <Pressable onPress = {() => router.replace(`/relations/${id}?type=following`)}>
+                    <VStack>
+                      <Heading size = "lg" className = "text-center">{profile.following}</Heading>
+                      <Text size = "sm" className = "text-center">following</Text>
+                    </VStack>
+                  </Pressable>
                 </HStack>
               </VStack>
               <Button onPress={() => router.replace("/profiles/da0b3abd-891a-49cd-b2ef-d324bef51f25")} className = "w-0 h-0">
