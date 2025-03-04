@@ -1,17 +1,32 @@
 import { ScrollView, RefreshControl, View, StyleSheet } from 'react-native';
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { showErrorToast } from '@/services/toastServices';
 import { Redirect, useRouter } from "expo-router";
 import Container from '@/components/Container';
 import { WorkoutPost } from '@/components/WorkoutPost';
 import React, { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonText } from '@/components/ui/button';
 import { VStack } from '@/components/ui/vstack';
 import { Text } from '@/components/ui/text';
 import { useSession } from '@/components/SessionContext';
 import { useToast } from '@/components/ui/toast';
+import { fetchFeed, resetFeed, updateFeed } from '@/services/asyncStorageServices';
 
 // Mock data for the feed
+type Post = {
+  id: string;
+  username: string;
+  date: string;
+  title: string;
+  description: string;
+  exercises: {
+      name: string;
+  }[];
+  likes: number;
+  comments: number;
+  imageUrl: string;
+}
+
 const mockPosts = [
   {
     id: '1',
@@ -64,10 +79,12 @@ export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const toast= useToast();
+  const queryClient = useQueryClient();
   const { signOutUser } = useSession();
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback( async () => {
     setRefreshing(true);
+    await resetFeed();
     // In a real app, you would fetch new data here
     setTimeout(() => {
       setRefreshing(false);
@@ -80,6 +97,25 @@ export default function FeedScreen() {
       showErrorToast(toast, error.message);
     });
   };
+
+  const { data: feed_data } = useQuery({
+      queryKey: ["feed-data"],
+      queryFn: async () => {
+        const feed_data = await fetchFeed();
+        console.log(feed_data)
+        return feed_data;
+      },
+  });
+
+  const { mutate: load_data } = useMutation({
+    mutationFn: async () => {
+      await fetchFeed();
+      console.log("loaded: " + feed_data)
+      await updateFeed();
+      console.log("loaded 2: " + feed_data)
+      queryClient.invalidateQueries( {queryKey: ["feed-data"]} )
+    }
+  })
 
   return (
     <ScrollView 
@@ -101,7 +137,7 @@ export default function FeedScreen() {
           </Button>
         </VStack>
         
-        {mockPosts.map((post) => (
+        {feed_data != null ? (JSON.parse(feed_data).map((post: Post) => (
           <WorkoutPost
             key={post.id}
             username={post.username}
@@ -113,7 +149,10 @@ export default function FeedScreen() {
             comments={post.comments}
             imageUrl={post.imageUrl}
           />
-        ))}
+        ))) : <></>}
+        <Button onPress={() => {load_data()}}>
+          <ButtonText>Load more posts</ButtonText>
+        </Button>
       </Container>
     </ScrollView>
   );
