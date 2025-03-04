@@ -14,7 +14,7 @@ import { getProfile, updateProfile, isProfileFollowed, isProfileFollowing, follo
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "@/components/ui/spinner";
-import { isPublicProfile } from "@/types/profile-types";
+import { getProfileAccess } from "@/types/profile-types";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/toast";
@@ -22,6 +22,8 @@ import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/to
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import * as ImagePicker from 'expo-image-picker';
 import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
+import { View } from "react-native";
+import { set } from "zod";
 
 export default function ProfileScreen() {
 
@@ -33,13 +35,26 @@ export default function ProfileScreen() {
 
   // Profile editing states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  const [storedGoal, setStoredGoal] = useState("");
   const [goal, setGoal] = useState("");
+
+  const [storedBio, setStoredBio] = useState("");
   const [bio, setBio] = useState("");
+
+  const [storedAvatar, setStoredAvatar] = useState("");
   const [avatar, setAvatar] = useState("");
+
+  const [storedLocation, setStoredLocation] = useState("");
   const [location, setLocation] = useState("");
+
+  const [storedAchievement, setStoredAchievement] = useState("");
+  const [achievement, setAchievement] = useState("");
+
   const [goalDisabled, setGoalDisabled] = useState(false);
   const [bioDisabled, setBioDisabled] = useState(false);
   const [locationDisabled, setLocationDisabled] = useState(false);
+  const [achievementDisabled, setAchievementDisabled] = useState(false);
 
   // Follower functionality
   const [isFollowing, setIsFollowing] = useState(false);
@@ -97,11 +112,12 @@ export default function ProfileScreen() {
   }, []);
 
   useEffect(() => {
-    if (profile && isPublicProfile(profile)) {
+    if (profile && getProfileAccess(profile, isFriend)) {
       setGoal(profile.goal || "");
       setBio(profile.bio || "");
       setAvatar(profile.avatar || "");
       setLocation(profile.location || "");
+      setAchievement(profile.achievement || "");
     }
   }, [profile]);
 
@@ -112,13 +128,14 @@ export default function ProfileScreen() {
   // Functions related to editing the profile
   const handleSave = async () => {
     try {
-      if (profile && isPublicProfile(profile)) {
+      if (profile && getProfileAccess(profile, isFriend)) {
         // If the user has disabled the input, set the value to an empty string
         if (locationDisabled) { setLocation(""); }
         if (goalDisabled) { setGoal(""); }
         if (bioDisabled) { setBio(""); }
+        if (achievementDisabled) { setAchievement(""); }
 
-        await updateProfile(profile.id, goal, bio, location);
+        await updateProfile(profile.id, goal, bio, location, achievement);
         setIsEditingProfile(false);
         showSuccessToast(toast, "Profile updated successfully");
 
@@ -127,11 +144,13 @@ export default function ProfileScreen() {
         profile.goal = goal;
         profile.bio = bio;
         profile.avatar = avatar;
+        profile.achievement = achievement;
 
         // Re-enable the inputs
         setGoalDisabled(false);
         setBioDisabled(false);
         setLocationDisabled(false);
+        setAchievementDisabled(false);
       }
     } catch (error) {
       console.error(error);
@@ -140,7 +159,14 @@ export default function ProfileScreen() {
   };
 
   const saveValuesAndEditProfile = () => {
-    if (profile) { setAvatar(profile.avatar); }
+
+    if (profile && getProfileAccess(profile, isFriend)) {
+      setStoredAvatar(profile.avatar);
+      setStoredLocation(profile.location);
+      setStoredGoal(profile.goal);
+      setStoredBio(profile.bio);
+      setStoredAchievement(profile.achievement);
+    }
     setIsEditingProfile(true);
   }
 
@@ -156,7 +182,19 @@ export default function ProfileScreen() {
     setGoalDisabled(false);
     setBioDisabled(false);
     setLocationDisabled(false);
-    if (profile) { profile.avatar = avatar; }
+    setAchievementDisabled(false);
+    setAvatar(storedAvatar);
+    setLocation(storedLocation);
+    setGoal(storedGoal);
+    setBio(storedBio);
+    setAchievement(storedAchievement);
+    if (profile && getProfileAccess(profile, isFriend)) { 
+      profile.avatar = storedAvatar;
+      profile.location = storedLocation;
+      profile.goal = storedGoal;
+      profile.bio = storedBio;
+      profile.achievement = storedAchievement;
+    }
   };
 
   const disableGoalInput = () => {
@@ -168,6 +206,11 @@ export default function ProfileScreen() {
     setLocationDisabled(true);
     setLocation("");
   };
+
+  const disableAchievementInput = () => {
+    setAchievementDisabled(true); 
+    setAchievement("");
+  }
 
   // Friends and Following functionality
 
@@ -310,13 +353,13 @@ export default function ProfileScreen() {
               )}
             </HStack>
             <VStack>
-              { isPublicProfile(profile) && (isEditingProfile || (profile.location || profile.goal || profile.bio)) && (
+              { getProfileAccess(profile, isFriend) && (isEditingProfile || (profile.location || profile.goal || profile.bio)) && (
                 <Box className = "border border-gray-300 rounded p-2 mt-2">
                   { isEditingProfile && !locationDisabled ? (
                     <HStack>
                       <Heading size = "md" className = "mr-1 mt-3">📍</Heading>
                       <Input size = "md" variant = "outline" className = "mt-2 w-11/12 ml-0.5">
-                        <InputField id = "locationInput" value={location} onChangeText={setLocation}></InputField>
+                        <InputField id = "locationInput" value={location} onChangeText={setLocation} maxLength = {40}></InputField>
                         <InputSlot>
                           <Pressable onPress={disableLocationInput}>
                             <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
@@ -325,16 +368,38 @@ export default function ProfileScreen() {
                       </Input>
                     </HStack>
                   ) : profile.location && !locationDisabled && (
-                    <HStack>
+                    <HStack className = "text-wrap">
                       <Heading size = "md" className = "mr-1">📍</Heading>
-                      <Heading size = "md">{profile.location}</Heading>
+                      <View className = "w-11/12">
+                        <Heading size = "md">{profile.location}</Heading>
+                      </View>
+                    </HStack>
+                  )}
+                  { isEditingProfile && !achievementDisabled ? (
+                    <HStack>
+                      <Heading size = "md" className = "mr-1 mt-3">🏆</Heading>
+                      <Input size = "md" variant = "outline" className = "mt-2 w-11/12 ml-0.5">
+                        <InputField id = "achievementInput" value={achievement} onChangeText={setAchievement} maxLength = {40}></InputField>
+                        <InputSlot>
+                          <Pressable onPress={disableAchievementInput}>
+                            <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
+                          </Pressable>
+                        </InputSlot>
+                      </Input>
+                    </HStack>
+                  ) : profile.achievement && !achievementDisabled && (
+                    <HStack className = "text-wrap">
+                      <Heading size = "md" className = "mr-1">🏆</Heading>
+                      <View className = "w-11/12">
+                        <Heading size = "md">{profile.achievement}</Heading>
+                      </View>
                     </HStack>
                   )}
                   { isEditingProfile && !goalDisabled ? (
                     <HStack>
                       <Heading size = "md" className = "mr-1 mt-3">🎯</Heading>
                       <Input size = "md" variant = "outline" className = "mt-2 w-11/12 ml-0.5">
-                        <InputField id = "goalInput" value={goal} onChangeText={setGoal}></InputField>
+                        <InputField id = "goalInput" value={goal} onChangeText={setGoal} maxLength = {40}></InputField>
                         <InputSlot>
                           <Pressable onPress={disableGoalInput}>
                             <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
@@ -343,14 +408,16 @@ export default function ProfileScreen() {
                       </Input>
                     </HStack>
                   ) : profile.goal && !goalDisabled && (
-                    <HStack>
+                    <HStack className = "text-wrap">
                       <Heading size = "md" className = "mr-1">🎯</Heading>
-                      <Heading size = "md">{profile.goal}</Heading>
+                      <View className = "w-11/12">
+                        <Heading size = "md">{profile.goal}</Heading>
+                      </View>
                     </HStack>
                   )}
                   { isEditingProfile ? (
                     <Textarea className = "text-wrap mt-2">
-                      <TextareaInput id = "bioInput" value={bio} onChangeText={setBio}></TextareaInput>
+                      <TextareaInput id = "bioInput" value={bio} onChangeText={setBio} maxLength={300}></TextareaInput>
                     </Textarea>
                   ) : profile.bio && (
                     <Text className = "mt-2">{profile.bio}</Text>
