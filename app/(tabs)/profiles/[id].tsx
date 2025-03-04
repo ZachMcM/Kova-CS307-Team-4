@@ -8,7 +8,7 @@ import { Box } from "@/components/ui/box";
 import { Pressable } from "@/components/ui/pressable";
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input";
 import { Button, ButtonText } from "@/components/ui/button";
-import { Icon, MenuIcon, TrashIcon } from "@/components/ui/icon";
+import { Icon, MenuIcon, TrashIcon, CheckCircleIcon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
 import { getProfile, updateProfile, isProfileFollowed, isProfileFollowing, followUser, unfollowUser, uploadProfilePicture } from "@/services/profileServices";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +21,7 @@ import { useToast } from "@/components/ui/toast";
 import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import * as ImagePicker from 'expo-image-picker';
+import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
 
 export default function ProfileScreen() {
 
@@ -43,6 +44,8 @@ export default function ProfileScreen() {
   // Follower functionality
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollower, setIsFollower] = useState(false);
+
+  const isFriend = isFollowing && isFollower;
 
   //console.log("profiles/[id].tsx: Fetching profile with id: " + id);
 
@@ -94,6 +97,15 @@ export default function ProfileScreen() {
   }, []);
 
   useEffect(() => {
+    if (profile && isPublicProfile(profile)) {
+      setGoal(profile.goal || "");
+      setBio(profile.bio || "");
+      setAvatar(profile.avatar || "");
+      setLocation(profile.location || "");
+    }
+  }, [profile]);
+
+  useEffect(() => {
     console.log("isEditingProfile changed:", isEditingProfile);
   }, [isEditingProfile]);
 
@@ -101,11 +113,6 @@ export default function ProfileScreen() {
   const handleSave = async () => {
     try {
       if (profile && isPublicProfile(profile)) {
-        // If the user has not entered a value, set the value to the placeholder value
-        if (!location) { setLocation(profile.location); }
-        if (!goal) { setGoal(profile.goal); }
-        if (!bio) { setBio(profile.bio); }
-
         // If the user has disabled the input, set the value to an empty string
         if (locationDisabled) { setLocation(""); }
         if (goalDisabled) { setGoal(""); }
@@ -224,6 +231,7 @@ export default function ProfileScreen() {
           const publicURL = await uploadProfilePicture(userId, file);
           profile.avatar = publicURL;
           showSuccessToast(toast, "Profile picture updated successfully");
+          setAvatar(publicURL);
         }
       } catch (error) {
         console.error(error);
@@ -263,7 +271,15 @@ export default function ProfileScreen() {
               )}
               <VStack space = "xs">
                 <VStack>
-                  <Heading size="xl" className = "mb-0 h-8 w-56">{profile.name}</Heading>
+                  <HStack>
+                    <Heading size="xl" className = "mb-0 h-8 w-56">{profile.name}</Heading>
+                    { isFriend && (
+                      <Badge size="md" variant="solid" action="muted" className = "bg-none text-none rounded-2xl">
+                        <BadgeIcon as={CheckCircleIcon} className = "text-[#4d7599]"></BadgeIcon>
+                        <Text className = "ml-1 text-[#4d7599] text-sm">Friend</Text>
+                      </Badge>
+                    )}
+                  </HStack>
                   <Text size="sm">@{profile.username}</Text>
                 </VStack>
                 <HStack space = "2xl">
@@ -294,13 +310,13 @@ export default function ProfileScreen() {
               )}
             </HStack>
             <VStack>
-              { isPublicProfile(profile) && (profile.location || profile.goal || profile.bio) && (
+              { isPublicProfile(profile) && (isEditingProfile || (profile.location || profile.goal || profile.bio)) && (
                 <Box className = "border border-gray-300 rounded p-2 mt-2">
                   { isEditingProfile && !locationDisabled ? (
                     <HStack>
                       <Heading size = "md" className = "mr-1 mt-3">📍</Heading>
                       <Input size = "md" variant = "outline" className = "mt-2 w-11/12 ml-0.5">
-                        <InputField id = "locationInput" placeholder={profile.location} onChangeText={setLocation}></InputField>
+                        <InputField id = "locationInput" value={location} onChangeText={setLocation}></InputField>
                         <InputSlot>
                           <Pressable onPress={disableLocationInput}>
                             <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
@@ -308,7 +324,7 @@ export default function ProfileScreen() {
                         </InputSlot>
                       </Input>
                     </HStack>
-                  ) : profile.location && (
+                  ) : profile.location && !locationDisabled && (
                     <HStack>
                       <Heading size = "md" className = "mr-1">📍</Heading>
                       <Heading size = "md">{profile.location}</Heading>
@@ -318,7 +334,7 @@ export default function ProfileScreen() {
                     <HStack>
                       <Heading size = "md" className = "mr-1 mt-3">🎯</Heading>
                       <Input size = "md" variant = "outline" className = "mt-2 w-11/12 ml-0.5">
-                        <InputField id = "goalInput" placeholder={profile.goal} onChangeText={setGoal}></InputField>
+                        <InputField id = "goalInput" value={goal} onChangeText={setGoal}></InputField>
                         <InputSlot>
                           <Pressable onPress={disableGoalInput}>
                             <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
@@ -334,7 +350,7 @@ export default function ProfileScreen() {
                   )}
                   { isEditingProfile ? (
                     <Textarea className = "text-wrap mt-2">
-                      <TextareaInput id = "bioInput" placeholder={profile.bio} onChangeText={setBio}></TextareaInput>
+                      <TextareaInput id = "bioInput" value={bio} onChangeText={setBio}></TextareaInput>
                     </Textarea>
                   ) : profile.bio && (
                     <Text className = "mt-2">{profile.bio}</Text>

@@ -50,6 +50,14 @@ export default function RelationsView() {
     enabled: !!id,
   });
 
+  const { data: userFriends } = useQuery({
+    queryKey: ["friends", userId],
+    queryFn: async () => {
+      return await getFriends(userId as string);
+    },
+    enabled: !!userId,
+  });
+
   const handleFollowBack = async (relation: any) => {
     try {
       await followUser(id as string, relation.userId);
@@ -89,10 +97,12 @@ export default function RelationsView() {
     fetchUserId();
   }, []);
 
-  const friendIds = friends?.map((friend: any) => friend.userId);
+  const userFriendIds = userFriends?.map((friend: any) => friend.userId);
+
+  //const friendIds = friends?.map((friend: any) => friend.userId);
   const followingIds = following?.map((following: any) => following.userId);
   const relations = selectedTab === "friends" ? friends : selectedTab === "followers" ? followers : following;
-  console.log(userId + " " + id)
+  console.log(followingIds)
 
   return (
     <StaticContainer className = "flex px-6 py-16">
@@ -103,7 +113,7 @@ export default function RelationsView() {
             <Heading size="xl" className = "mt-1">Profile</Heading>
           </HStack>
         </Pressable>
-        <HStack space = "md" className = "pb-2 mb-2 border-b border-gray-300">
+        <HStack space = "md" className = "pb-2 border-b border-gray-300">
           <Button className={`flex-auto ${selectedTab === 'friends' ? 'bg-[#6FA8DC]' : 'bg-gray-200'}`} onPress={() => router.replace(`/relations/${id}?type=friends`)}>
             <ButtonText className={selectedTab === 'friends' ? 'text-white' : 'text-black'}>Friends</ButtonText>
           </Button>
@@ -115,13 +125,13 @@ export default function RelationsView() {
           </Button>
         </HStack>
         <ScrollView className = "h-[80vh]">
-          <VStack space="md">
+          <VStack>
             {isLoading ? (
               <Text>Loading...</Text>
             ) : (
               relations?.map((relation: any) => (
                 <Pressable key={relation.userId} onPress={() => router.replace(`/profiles/${relation.userId}`)}>
-                  <HStack space="md" className="p-2 border-b border-gray-300">
+                  <HStack space="md" className="p-2 border-b border-gray-300 mb-0">
                     <Avatar className="bg-indigo-600" size="md">
                       {relation.avatar ? (
                         <AvatarImage source={{ uri: relation.avatar }} />
@@ -131,7 +141,7 @@ export default function RelationsView() {
                     </Avatar>
                     <HStack className="relative flex-auto">
                       <Text className="self-center">{relation.name}</Text>
-                      {(selectedTab === "friends" || friendIds?.includes(relation.userId)) && (
+                      {((selectedTab === "friends" && userId === id) || userFriendIds?.includes(relation.userId)) && relation.userId !== userId && (
                         <Badge size="md" variant="solid" action="muted" className = "bg-none text-none m-2 rounded-2xl">
                           <BadgeIcon as={CheckCircleIcon} className = "text-[#4d7599]"></BadgeIcon>
                           <Text className = "ml-1 text-[#4d7599] text-sm">Friend</Text>
@@ -139,17 +149,14 @@ export default function RelationsView() {
                       )}
                       {selectedTab === "followers" && !followingIds?.includes(relation.userId) && userId === id && (
                         <Button
-                          className="absolute mt-2 right-0 mb-2"
+                          className="absolute mt-1 right-0"
                           onPress={() => handleFollowBack(relation)}
                         >
                           <ButtonText>Follow Back</ButtonText>
                         </Button>
                       )}
-                      {(selectedTab === "following" && userId === id) && (
-                        <Button
-                          className="absolute mt-2 right-0 mb-2"
-                          onPress={() => handleUnfollow(relation)}
-                        >
+                      {(followingIds?.includes(relation.userId) && userId === id) && (
+                        <Button className="absolute mt-1 right-0" onPress={() => handleUnfollow(relation)} variant = "outline" action = "secondary">
                           <ButtonText>Unfollow</ButtonText>
                         </Button>
                       )}
