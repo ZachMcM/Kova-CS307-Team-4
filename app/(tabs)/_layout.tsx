@@ -13,8 +13,25 @@ import { getWorkout } from "@/services/asyncStorageServices";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useQuery } from "@tanstack/react-query";
 
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+
+  // @MilesBrown - Added this to get the user id of the current session to access profile information
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+
+    fetchUserId();
+  }, []);
 
   // TODO @IanBruch do a very similar thing but with session, the session ternary should wrap the live workout ternary
   const { data: workout, isPending } = useQuery({
@@ -80,12 +97,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="profiles/[id]"
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.fill" color={color} />
           ),
+          href: userId ? `/profiles/${userId}` : undefined,
         }}
       />
       <Tabs.Screen
@@ -101,17 +119,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profiles/[id]"
+        name="templates/[id]"
         options={{
           href: null,
         }}
       />
       <Tabs.Screen
-        name="templates/[id]"
+        name="relations/[id]"
         options={{
           href: null,
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle" color={color} />,
         }}
       />
       <Tabs.Screen
