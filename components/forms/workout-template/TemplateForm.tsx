@@ -1,11 +1,6 @@
 import Tag from "@/components/Tag";
 import { Box } from "@/components/ui/box";
-import {
-  Button,
-  ButtonIcon,
-  ButtonSpinner,
-  ButtonText,
-} from "@/components/ui/button";
+import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -26,7 +21,7 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "../../ui/form-control";
-import { SearchIcon, TrashIcon } from "../../ui/icon";
+import { Icon, SearchIcon, TrashIcon } from "../../ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
 import ExerciseDataForm from "./ExerciseDataForm";
@@ -175,27 +170,21 @@ export default function TemplateForm() {
                   </Card>
                 </Pressable>
               ))}
-          {exercises.map((exercise, i) => (
-            <VStack space="md" key={exercise.info.id}>
-              <HStack className="justify-between items-center">
-                <Heading className="text-kova-500">
-                  {exercise.info.name}
-                </Heading>
-                <Button
-                  size="xs"
-                  onPress={() => {
-                    removeExercise(i);
-                  }}
-                  variant="outline"
-                  action="primary"
-                  className="border-0"
-                >
-                  <ButtonIcon as={TrashIcon} size="lg" color="red" />
-                </Button>
-              </HStack>
-              <ExerciseDataForm key={exercise.info.id} index={i} />
-            </VStack>
-          ))}
+          <VStack space="4xl">
+            {exercises.map((exercise, i) => (
+              <VStack space="md" key={exercise.info.id}>
+                <HStack className="justify-between items-center">
+                  <Heading className="text-kova-500">
+                    {exercise.info.name}
+                  </Heading>
+                  <Pressable onPress={() => removeExercise(i)}>
+                    <Icon as={TrashIcon} size="xl" color="red" />
+                  </Pressable>
+                </HStack>
+                <ExerciseDataForm key={exercise.info.id} index={i} />
+              </VStack>
+            ))}
+          </VStack>
           <Controller
             control={control}
             name="data"

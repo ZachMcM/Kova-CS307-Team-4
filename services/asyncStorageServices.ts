@@ -23,7 +23,6 @@ export async function getWorkout(): Promise<Workout | null> {
       return null
     }
     const workout = JSON.parse(stringVal)
-    console.log(workout)
     return workout
   } catch (e) {
     console.log(e)
@@ -50,5 +49,5 @@ export async function setWorkoutEndTime(endTime: number) {
 // clears the workout once its finished
 
 export async function clearWorkout() {
-  await AsyncStorage.clear()
+  await AsyncStorage.setItem("live-workout", "")
 }

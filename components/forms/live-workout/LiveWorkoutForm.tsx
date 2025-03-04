@@ -37,11 +37,7 @@ import { showErrorToast } from "@/services/toastServices";
 import Feather from "@expo/vector-icons/Feather";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  Controller,
-  FieldValues,
-  useFieldArray
-} from "react-hook-form";
+import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
 
@@ -110,9 +106,8 @@ export default function LiveWorkoutForm() {
   // mutation function for actually submitting the data to the post in the database
   const { mutate: postWorkout, isPending: postPending } = useMutation({
     mutationFn: async (values: LiveWorkoutValues) => {
-      // TODO remove clear here and get default post values from async or submit only workout data to db and use that as default values
-      console.log("Successfully posted workout", values);
-      values.exercises.map((exercise) => console.log(exercise));
+      // TODO interact with post workout (need to omit done because it is not needed in final iteration)
+      console.log("Successfully posted workout", JSON.stringify(values));
       await clearWorkout();
     },
     onSuccess: () => {
@@ -163,15 +158,13 @@ export default function LiveWorkoutForm() {
       <VStack space="2xl">
         <Heading className="text-2xl">{templateName}</Heading>
         <VStack space="4xl">
-          <VStack space="2xl">
-            {exercises.map((exercise, i) => (
-              <LiveExerciseForm
-                key={exercise.info.id}
-                exercise={exercise}
-                index={i}
-              />
-            ))}
-          </VStack>
+          {exercises.map((exercise, i) => (
+            <LiveExerciseForm
+              key={exercise.info.id}
+              exercise={exercise}
+              index={i}
+            />
+          ))}
           <Controller
             control={control}
             name="exercises"

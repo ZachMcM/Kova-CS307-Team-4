@@ -220,7 +220,7 @@ export default function ProfileScreen() {
 
       try {
         if (userId && profile) {
-          // The file error here is a TypeScript error, but the code will still work
+          // @ts-ignore
           const publicURL = await uploadProfilePicture(userId, file);
           profile.avatar = publicURL;
           showSuccessToast(toast, "Profile picture updated successfully");

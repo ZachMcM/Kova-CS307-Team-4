@@ -1,7 +1,8 @@
-import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Grid, GridItem } from "@/components/ui/grid";
 import { Heading } from "@/components/ui/heading";
-import { AddIcon, TrashIcon } from "@/components/ui/icon";
+import { AddIcon, Icon, TrashIcon } from "@/components/ui/icon";
+import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
@@ -29,29 +30,58 @@ export default function ExerciseDataForm({ index }: { index: number }) {
   return (
     <VStack space="lg">
       <VStack space="sm">
-        <Box className="flex flex-row items-center justify-between">
-          <Heading size="sm" className="h-6 w-16">
-            Set
-          </Heading>
-          <Heading size="sm" className="h-6 w-16">
-            lbs
-          </Heading>
-          <Heading size="sm" className="h-6 w-16">
-            Reps
-          </Heading>
-          <Box className="h-6 w-16" />
-        </Box>
-        {sets.map((set, i) => (
-          <Box
-            key={set.id}
-            className="flex flex-row items-center justify-between"
+        <Grid
+          className="gap-2"
+          _extra={{
+            className: "grid-cols-8",
+          }}
+        >
+          <GridItem
+            _extra={{
+              className: "col-span-2",
+            }}
           >
-            <Box className="rounded-md h-6 w-16 flex justify-center items-center bg-secondary-500">
-              <Text size="sm" className="font-bold text-typography-900">
+            <Heading size="md">Set</Heading>
+          </GridItem>
+          <GridItem
+            _extra={{
+              className: "col-span-2",
+            }}
+          >
+            <Heading size="md">lbs</Heading>
+          </GridItem>
+          <GridItem
+            _extra={{
+              className: "col-span-2",
+            }}
+          >
+            <Heading size="md">Reps</Heading>
+          </GridItem>
+        </Grid>
+        {sets.map((set, i) => (
+          <Grid
+            key={set.id}
+            className="items-center gap-4"
+            _extra={{
+              className: "grid-cols-8",
+            }}
+          >
+            <GridItem
+              className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
+              _extra={{
+                className: "col-span-2",
+              }}
+            >
+              <Text size="md" className="font-bold text-typography-900">
                 {i + 1}
               </Text>
-            </Box>
-            <Box className="rounded-md h-6 w-16 flex justify-center items-center bg-secondary-500">
+            </GridItem>
+            <GridItem
+              className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
+              _extra={{
+                className: "col-span-2",
+              }}
+            >
               <Controller
                 control={control}
                 name={`data.${index}.sets.${i}.weight`}
@@ -61,13 +91,18 @@ export default function ExerciseDataForm({ index }: { index: number }) {
                     id={`weight-${i}`}
                     value={value?.toString() || ""}
                     onChangeText={(text) => onChange(Number(text) || 0)}
-                    className="font-bold text-typography-900"
+                    className="font-bold text-typography-900 w-full h-full text-center"
                     keyboardType="numeric"
                   />
                 )}
               />
-            </Box>
-            <Box className="rounded-md h-6 w-16 flex justify-center items-center bg-secondary-500">
+            </GridItem>
+            <GridItem
+              className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
+              _extra={{
+                className: "col-span-2",
+              }}
+            >
               <Controller
                 control={control}
                 name={`data.${index}.sets.${i}.reps`}
@@ -77,27 +112,34 @@ export default function ExerciseDataForm({ index }: { index: number }) {
                     id={`weight-${i}`}
                     value={value?.toString() || ""}
                     onChangeText={(text) => onChange(Number(text) || 0)}
-                    className="font-bold text-typography-900"
+                    className="font-bold text-typography-900 w-full h-full text-center"
                     keyboardType="numeric"
                   />
                 )}
               />
-            </Box>
-            <Button
-              variant="outline"
-              action="primary"
-              className="border-0 w-16"
-              onPress={() => {
-                if (sets.length == 1) {
-                  showErrorToast(toast, "You must have one set in an exercise");
-                } else {
-                  removeSet(i);
-                }
+            </GridItem>
+            <GridItem
+              className="flex flex-row justify-end"
+              _extra={{
+                className: "col-span-2",
               }}
             >
-              <ButtonIcon as={TrashIcon} size="lg" color="red" />
-            </Button>
-          </Box>
+              <Pressable
+                onPress={() => {
+                  if (sets.length == 1) {
+                    showErrorToast(
+                      toast,
+                      "You must have one set in an exercise"
+                    );
+                  } else {
+                    removeSet(i);
+                  }
+                }}
+              >
+                <Icon as={TrashIcon} size="xl" color="red" />
+              </Pressable>
+            </GridItem>
+          </Grid>
         ))}
       </VStack>
       <Button

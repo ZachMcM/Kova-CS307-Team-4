@@ -1,6 +1,7 @@
 export type SetData = {
   reps?: number 
   weight?: number
+  done?: boolean
 }
 
 export type ExerciseData = {
