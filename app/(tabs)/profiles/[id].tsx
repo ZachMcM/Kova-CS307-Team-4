@@ -62,14 +62,11 @@ export default function ProfileScreen() {
 
   const isFriend = isFollowing && isFollower;
 
-  //console.log("profiles/[id].tsx: Fetching profile with id: " + id);
-
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
       const profile = (await getProfile(id as string) || null);
-      console.log(JSON.stringify(profile));
       return profile;
     },
   });
@@ -122,7 +119,6 @@ export default function ProfileScreen() {
   }, [profile]);
 
   useEffect(() => {
-    console.log("isEditingProfile changed:", isEditingProfile);
   }, [isEditingProfile]);
 
   // Functions related to editing the profile
@@ -171,13 +167,11 @@ export default function ProfileScreen() {
   }
 
   const saveAndSetEditingProfile = async () => {
-    console.log("profiles/[id].tsx: Saving and setting editing profile");
     setIsEditingProfile(false);
     await handleSave();
   };
 
   const cancelEdits = () => {
-    console.log("profiles/[id].tsx: Cancelling edits");
     setIsEditingProfile(false);
     setGoalDisabled(false);
     setBioDisabled(false);
