@@ -359,7 +359,7 @@ export default function ProfileScreen() {
                     <HStack>
                       <Heading size = "md" className = "mr-1 mt-3">📍</Heading>
                       <Input size = "md" variant = "outline" className = "mt-2 w-11/12 ml-0.5">
-                        <InputField id = "locationInput" value={location} onChangeText={setLocation} maxLength = {40}></InputField>
+                        <InputField id = "locationInput" value={location} onChangeText={setLocation} maxLength = {40} placeholder = "Add your town or city..."></InputField>
                         <InputSlot>
                           <Pressable onPress={disableLocationInput}>
                             <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
@@ -379,7 +379,7 @@ export default function ProfileScreen() {
                     <HStack>
                       <Heading size = "md" className = "mr-1 mt-3">🏆</Heading>
                       <Input size = "md" variant = "outline" className = "mt-2 w-11/12 ml-0.5">
-                        <InputField id = "achievementInput" value={achievement} onChangeText={setAchievement} maxLength = {40}></InputField>
+                        <InputField id = "achievementInput" value={achievement} onChangeText={setAchievement} maxLength = {40} placeholder = "Write something you're proud of..."></InputField>
                         <InputSlot>
                           <Pressable onPress={disableAchievementInput}>
                             <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
@@ -399,7 +399,7 @@ export default function ProfileScreen() {
                     <HStack>
                       <Heading size = "md" className = "mr-1 mt-3">🎯</Heading>
                       <Input size = "md" variant = "outline" className = "mt-2 w-11/12 ml-0.5">
-                        <InputField id = "goalInput" value={goal} onChangeText={setGoal} maxLength = {40}></InputField>
+                        <InputField id = "goalInput" value={goal} onChangeText={setGoal} maxLength = {40} placeholder = "Write your next big goal..."></InputField>
                         <InputSlot>
                           <Pressable onPress={disableGoalInput}>
                             <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
@@ -417,7 +417,7 @@ export default function ProfileScreen() {
                   )}
                   { isEditingProfile ? (
                     <Textarea className = "text-wrap mt-2">
-                      <TextareaInput id = "bioInput" value={bio} onChangeText={setBio} maxLength={300}></TextareaInput>
+                      <TextareaInput id = "bioInput" value={bio} onChangeText={setBio} maxLength={300} placeholder = "Write some information about yourself..."></TextareaInput>
                     </Textarea>
                   ) : profile.bio && (
                     <Text className = "mt-2">{profile.bio}</Text>
