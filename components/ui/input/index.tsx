@@ -183,7 +183,7 @@ const InputSlot = React.forwardRef<
 });
 
 type IInputFieldProps = React.ComponentProps<typeof UIInput.Input> &
-  VariantProps<typeof inputFieldStyle> & { className?: string };
+  VariantProps<typeof inputFieldStyle> & { className?: string};
 
 const InputField = React.forwardRef<
   React.ElementRef<typeof UIInput.Input>,
