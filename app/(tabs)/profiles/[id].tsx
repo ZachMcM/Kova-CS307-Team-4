@@ -287,12 +287,14 @@ export default function ProfileScreen() {
                   </Pressable>
                 </HStack>
               </VStack>
-              <Button onPress={() => router.replace("/settings")} className = "w-0 h-0">
-                <Icon as = {MenuIcon} size = "xl" className = "mt-8 ml-8 w-8 h-8"></Icon>
-              </Button>
+              { userId === id && (
+                <Button onPress={() => router.replace("/settings")} className = "w-0 h-0">
+                  <Icon as = {MenuIcon} size = "xl" className = "mt-8 ml-8 w-8 h-8"></Icon>
+                </Button>
+              )}
             </HStack>
             <VStack>
-              { isPublicProfile(profile) && (
+              { isPublicProfile(profile) && (profile.location || profile.goal || profile.bio) && (
                 <Box className = "border border-gray-300 rounded p-2 mt-2">
                   { isEditingProfile && !locationDisabled ? (
                     <HStack>

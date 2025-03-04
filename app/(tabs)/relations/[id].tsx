@@ -11,13 +11,15 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFollowers, getFriends, getFollowing, followUser, unfollowUser } from "@/services/profileServices";
 import { Avatar, AvatarImage, AvatarFallbackText } from "@/components/ui/avatar";
-import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
 import { useToast } from "@/components/ui/toast";
 import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
 
 export default function RelationsView() {
   const { id, type } = useLocalSearchParams();
+  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -76,10 +78,21 @@ export default function RelationsView() {
     }
   };
 
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+
+    fetchUserId();
+  }, []);
+
   const friendIds = friends?.map((friend: any) => friend.userId);
   const followingIds = following?.map((following: any) => following.userId);
   const relations = selectedTab === "friends" ? friends : selectedTab === "followers" ? followers : following;
-  console.log(selectedTab + " " + friendIds)
+  console.log(userId + " " + id)
 
   return (
     <StaticContainer className = "flex px-6 py-16">
@@ -116,7 +129,7 @@ export default function RelationsView() {
                         <AvatarFallbackText className="text-white">{relation.name[0]}</AvatarFallbackText>
                       )}
                     </Avatar>
-                    <HStack className="flex-1">
+                    <HStack className="relative flex-auto">
                       <Text className="self-center">{relation.name}</Text>
                       {(selectedTab === "friends" || friendIds?.includes(relation.userId)) && (
                         <Badge size="md" variant="solid" action="muted" className = "bg-none text-none m-2 rounded-2xl">
@@ -124,17 +137,17 @@ export default function RelationsView() {
                           <Text className = "ml-1 text-[#4d7599] text-sm">Friend</Text>
                         </Badge>
                       )}
-                      {selectedTab === "followers" && !followingIds?.includes(relation.userId) && (
+                      {selectedTab === "followers" && !followingIds?.includes(relation.userId) && userId === id && (
                         <Button
-                          className="mt-2"
+                          className="absolute mt-2 right-0 mb-2"
                           onPress={() => handleFollowBack(relation)}
                         >
                           <ButtonText>Follow Back</ButtonText>
                         </Button>
                       )}
-                      {selectedTab === "following" && (
+                      {(selectedTab === "following" && userId === id) && (
                         <Button
-                          className="mt-2"
+                          className="absolute mt-2 right-0 mb-2"
                           onPress={() => handleUnfollow(relation)}
                         >
                           <ButtonText>Unfollow</ButtonText>
