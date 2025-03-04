@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
 import { useToast } from "@/components/ui/toast";
 import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
+import { Input, InputField } from "@/components/ui/input";
 
 export default function RelationsView() {
   const { id, type } = useLocalSearchParams();
@@ -25,6 +26,8 @@ export default function RelationsView() {
   const queryClient = useQueryClient();
 
   const selectedTab:string = type as string;
+
+  const [profileQuery, setProfileQuery] = useState("");
 
   const { data: friends, isPending } = useQuery({
     queryKey: ["friends", id],
@@ -102,7 +105,6 @@ export default function RelationsView() {
   //const friendIds = friends?.map((friend: any) => friend.userId);
   const followingIds = following?.map((following: any) => following.userId);
   const relations = selectedTab === "friends" ? friends : selectedTab === "followers" ? followers : following;
-  console.log(followingIds)
 
   return (
     <StaticContainer className = "flex px-6 py-16">
@@ -124,12 +126,14 @@ export default function RelationsView() {
             <ButtonText className={selectedTab === 'following' ? 'text-white' : 'text-black'}>Following</ButtonText>
           </Button>
         </HStack>
-        <ScrollView className = "h-[80vh]">
+        <Input className = "mt-2">
+          <InputField onChangeText = {setProfileQuery} value = {profileQuery} placeholder="Search for a user"/>
+        </Input>
+        <ScrollView className = "h-full">
           <VStack>
             {isLoading ? (
               <Text>Loading...</Text>
-            ) : (
-              relations?.map((relation: any) => (
+            ) : (relations?.filter((relation) => (relation.name.toLowerCase().includes(profileQuery?.toLowerCase()))).map((relation: any) => (
                 <Pressable key={relation.userId} onPress={() => router.replace(`/profiles/${relation.userId}`)}>
                   <HStack space="md" className="p-2 border-b border-gray-300 mb-0">
                     <Avatar className="bg-indigo-600" size="md">
