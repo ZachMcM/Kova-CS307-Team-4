@@ -17,6 +17,8 @@ import { useSession } from "@/components/SessionContext";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -58,6 +60,30 @@ export default function RegisterScreen() {
         </VStack>
         <VStack space="sm">
           <Text size="lg" className="ml-3 mt-5">
+            Username
+          </Text>
+          <Input className="ml-3 mr-5">
+            <InputField
+              value={username.trim()}
+              onChangeText={setUsername}
+              placeholder="Enter Username"
+            />
+          </Input>
+        </VStack>
+        <VStack space="sm">
+          <Text size="lg" className="ml-3 mt-5">
+            Display Name
+          </Text>
+          <Input className="ml-3 mr-5">
+            <InputField
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Enter Display Name: John Kova"
+            />
+          </Input>
+        </VStack>
+        <VStack space="sm">
+          <Text size="lg" className="ml-3 mt-5">
             Password
           </Text>
           <Input className="ml-3 mr-5">
@@ -65,6 +91,7 @@ export default function RegisterScreen() {
               value={password.trim()}
               onChangeText={setPassword}
               placeholder="Enter Password"
+              type="password"
             />
           </Input>
           <Text size="lg" className="ml-3 mt-5">
@@ -75,6 +102,7 @@ export default function RegisterScreen() {
               value={confirmPassword.trim()}
               onChangeText={setConfirmPassword}
               placeholder="Enter Password"
+              type="password"
             />
           </Input>
           <Button
@@ -83,7 +111,7 @@ export default function RegisterScreen() {
             action="secondary"
             className="mt-5 mb-5 bg-[#6FA8DC]"
             onPress={() => {
-              createAccount(email, password, confirmPassword).then(() => {
+              createAccount(email, password, confirmPassword, username, displayName).then(() => {
                 signInUser(email, password);
               }).then(() => { 
                 router.replace("/(tabs)/profile");

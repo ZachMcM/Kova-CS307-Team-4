@@ -51,6 +51,7 @@ export default function LoginScreen() {
               value={password.trim()}
               onChangeText={setPassword}
               placeholder="Enter Password"
+              type="password"
             />
           </Input>
           <Button
