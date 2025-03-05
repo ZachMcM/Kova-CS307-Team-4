@@ -186,7 +186,7 @@ export default function LiveWorkoutForm() {
         <ModalContent>
           <ModalBody>
             <VStack space="xl" className="items-center">
-              <Feather name="award" size={46} color="yellow" />
+              <Text size="4xl">🏆</Text>
               <VStack className="items-center">
                 <Heading size="2xl">Workout Complete</Heading>
                 <Text>Great job on finishing your workout!</Text>
