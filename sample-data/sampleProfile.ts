@@ -1,1 +1,0 @@
-export const sampleProfileId = process.env.EXPO_PUBLIC_SAMPLE_PROFILE_ID

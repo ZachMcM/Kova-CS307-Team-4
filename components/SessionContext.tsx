@@ -1,35 +1,48 @@
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { AuthAccountResponse } from "@/types/extended-types";
 import { AuthResponse, AuthWeakPasswordError } from "@supabase/supabase-js";
 
 type SessionContextValues = {
-  session: Session | null,
-  sessionLoading: boolean,
-  setSessionLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  createAccount: (userEmail: string, userPassword: string, confirmPassword: string, username: string, displayName: string) => Promise<AuthAccountResponse>,
-  signInUser: (userEmail: string, userPassword: string) => Promise<AuthAccountResponse>,
-  signOutUser: () => Promise<void>
-}
+  session: Session | null;
+  sessionLoading: boolean;
+  setSessionLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  createAccount: (
+    userEmail: string,
+    userPassword: string,
+    confirmPassword: string,
+    username: string,
+    displayName: string
+  ) => Promise<AuthAccountResponse>;
+  signInUser: (
+    userEmail: string,
+    userPassword: string
+  ) => Promise<AuthAccountResponse>;
+  signOutUser: () => Promise<void>;
+};
 
-const SessionContext = createContext<SessionContextValues | null>(
-  null
-);
+const SessionContext = createContext<SessionContextValues | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [sessionLoading, setSessionLoading] = useState(false)
+  const [session, setSession] = useState<Session | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+      setSession(session);
+    });
 
     supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-  }, [])
+      setSession(session);
+    });
+  }, []);
 
   // put all other sign in related functions in here
 
@@ -49,24 +62,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     if (userUsername == "") {
-      throw new Error("Username cannot be blank")
+      throw new Error("Username cannot be blank");
     }
 
-    if (userUsername.includes(' ')) {
-      throw new Error("Username cannot include spaces")
+    if (userUsername.includes(" ")) {
+      throw new Error("Username cannot include spaces");
     }
 
     if (
       (await supabase.from("profile").select().eq("username", userUsername))
         .data?.length != 0
     ) {
-      throw new Error("Username is already in use!")
+      throw new Error("Username is already in use!");
     }
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: userEmail,
-      password: userPassword,
-    });
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
+      {
+        email: userEmail,
+        password: userPassword,
+      }
+    );
 
     if (signUpError) {
       console.log(signUpError.message);
@@ -83,19 +98,31 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     console.log("create default profile");
     //Create default profile
-    userDisplayName = userDisplayName.trim()
-    if (userDisplayName == "") { userDisplayName = "John Kova" }
-    const { error: insertionError } = await supabase.from("profile").insert({
+    userDisplayName = userDisplayName.trim();
+    if (userDisplayName == "") {
+      userDisplayName = "John Kova";
+    }
+    const { data: profileData, error: insertionError } = await supabase.from("profile").insert({
       userId: signUpData.user?.id,
       username: userUsername,
-      name: userDisplayName
-    });
+      name: userDisplayName,
+    }).select().single();
     if (insertionError) throw new Error(insertionError.message);
-  
+
+    const { data: updatedUser, error: metadataError } = await supabase.auth.updateUser({
+      data: {
+        profileId: profileData?.id
+      }
+    }) 
+    
+    if (metadataError) {
+      throw new Error(metadataError.message)
+    }
+
     console.log("created account");
-    return signUpData as AuthAccountResponse;
+    return updatedUser as AuthAccountResponse;
   };
-  
+
   const signInUser = async (
     userEmail: string,
     userPassword: string
@@ -114,32 +141,33 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       throw new Error(passwordError.message);
     }
     console.log("signing in");
-  
+
     return signInData as AuthAccountResponse;
   };
-  
+
   const signOutUser = async () => {
     const { error } = await supabase.auth.signOut();
     console.log("signed out user");
-  
+
     if (error) throw new Error(error.message);
   };
 
-
   return (
-    <SessionContext.Provider value={{
-      session,
-      sessionLoading,
-      setSessionLoading,
-      createAccount,
-      signInUser,
-      signOutUser
-    }}>
+    <SessionContext.Provider
+      value={{
+        session,
+        sessionLoading,
+        setSessionLoading,
+        createAccount,
+        signInUser,
+        signOutUser,
+      }}
+    >
       {children}
     </SessionContext.Provider>
-  )
+  );
 }
 
 export function useSession() {
-  return useContext(SessionContext) as SessionContextValues
+  return useContext(SessionContext) as SessionContextValues;
 }
