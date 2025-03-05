@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { Profile, PrivateProfile, PublicProfile } from "@/types/profile-types";
+import { useState } from "react";
 
 // Get profile based on provided user_id
 export const getProfile = async (id: string): Promise<Profile> => {
@@ -43,7 +44,7 @@ export const getProfile = async (id: string): Promise<Profile> => {
   }
 }
 
-export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string) => {
+export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, privacy: string, name: string) => {
   const { error } = await supabase
     .from("profile")
     .update({
@@ -51,6 +52,8 @@ export const updateProfile = async (id:string, goal: string, bio: string, locati
       bio: bio,
       location: location,
       achievement: achievement,
+      private: privacy,
+      name: name
     })
     .eq("id", id);
 

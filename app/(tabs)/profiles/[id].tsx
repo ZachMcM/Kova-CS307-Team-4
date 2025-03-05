@@ -8,7 +8,7 @@ import { Box } from "@/components/ui/box";
 import { Pressable } from "@/components/ui/pressable";
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input";
 import { Button, ButtonText } from "@/components/ui/button";
-import { Icon, MenuIcon, TrashIcon, CheckCircleIcon } from "@/components/ui/icon";
+import { Icon, MenuIcon, TrashIcon, CheckCircleIcon, CircleIcon, AlertCircleIcon, EditIcon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
 import { getProfile, updateProfile, isProfileFollowed, isProfileFollowing, followUser, unfollowUser, uploadProfilePicture } from "@/services/profileServices";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +23,7 @@ import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import * as ImagePicker from 'expo-image-picker';
 import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
 import { View } from "react-native";
-import { set } from "zod";
+import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio"
 
 export default function ProfileScreen() {
 
@@ -51,6 +51,9 @@ export default function ProfileScreen() {
   const [storedAchievement, setStoredAchievement] = useState("");
   const [achievement, setAchievement] = useState("");
 
+  const [storedName, setStoredName] = useState("");
+  const [nameValue, setNameValue] = useState("");
+
   const [goalDisabled, setGoalDisabled] = useState(false);
   const [bioDisabled, setBioDisabled] = useState(false);
   const [locationDisabled, setLocationDisabled] = useState(false);
@@ -62,11 +65,15 @@ export default function ProfileScreen() {
 
   const isFriend = isFollowing && isFollower;
 
+  const [privacyValues, setPrivacyValue] = useState("PRIVATE");
+  const [storedPrivacyValue, setStoredPrivacyValues] = useState("");
+
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
-      const profile = (await getProfile(id as string) || null);
+      const profile = (await getProfile(id as string));
+      console.log(profile);
       return profile;
     },
   });
@@ -109,7 +116,9 @@ export default function ProfileScreen() {
   }, []);
 
   useEffect(() => {
-    if (profile && getProfileAccess(profile, isFriend)) {
+    setPrivacyValue(profile?.private || "");
+    setNameValue(profile?.name || "")
+    if (profile) {
       setGoal(profile.goal || "");
       setBio(profile.bio || "");
       setAvatar(profile.avatar || "");
@@ -124,14 +133,16 @@ export default function ProfileScreen() {
   // Functions related to editing the profile
   const handleSave = async () => {
     try {
-      if (profile && getProfileAccess(profile, isFriend)) {
+      if (profile) {
         // If the user has disabled the input, set the value to an empty string
         if (locationDisabled) { setLocation(""); }
         if (goalDisabled) { setGoal(""); }
         if (bioDisabled) { setBio(""); }
         if (achievementDisabled) { setAchievement(""); }
 
-        await updateProfile(profile.id, goal, bio, location, achievement);
+        console.log(nameValue);
+
+        await updateProfile(profile.id, goal, bio, location, achievement, privacyValues, nameValue);
         setIsEditingProfile(false);
         showSuccessToast(toast, "Profile updated successfully");
 
@@ -141,6 +152,8 @@ export default function ProfileScreen() {
         profile.bio = bio;
         profile.avatar = avatar;
         profile.achievement = achievement;
+        profile.private = privacyValues;
+        profile.name = nameValue;
 
         // Re-enable the inputs
         setGoalDisabled(false);
@@ -155,6 +168,11 @@ export default function ProfileScreen() {
   };
 
   const saveValuesAndEditProfile = () => {
+
+    if (profile) {
+      setStoredPrivacyValues(profile.private);
+      setStoredName(profile.name);
+    }
 
     if (profile && getProfileAccess(profile, isFriend)) {
       setStoredAvatar(profile.avatar);
@@ -182,12 +200,16 @@ export default function ProfileScreen() {
     setGoal(storedGoal);
     setBio(storedBio);
     setAchievement(storedAchievement);
+    setPrivacyValue(storedPrivacyValue);
+    setNameValue(storedName);
     if (profile && getProfileAccess(profile, isFriend)) { 
       profile.avatar = storedAvatar;
       profile.location = storedLocation;
       profile.goal = storedGoal;
       profile.bio = storedBio;
       profile.achievement = storedAchievement;
+      profile.private = storedPrivacyValue;
+      profile.name = storedName;
     }
   };
 
@@ -204,6 +226,10 @@ export default function ProfileScreen() {
   const disableAchievementInput = () => {
     setAchievementDisabled(true); 
     setAchievement("");
+  }
+
+  const updateName = () => {
+
   }
 
   // Friends and Following functionality
@@ -281,7 +307,7 @@ export default function ProfileScreen() {
    <StaticContainer className = "flex px-6 py-16">
       <VStack space = "md">
         <Box className = "border-b border-gray-300 pb-2">
-          {isPending ? (
+          {isPending || isFollowingPending || isFollowerPending ? (
             <Spinner />
           )
           : profile && (
@@ -296,6 +322,9 @@ export default function ProfileScreen() {
                       <AvatarFallbackText className="text-white">{profile.name}</AvatarFallbackText>
                     )}
                   </Avatar>
+                  <Box className="absolute b-0 t-0 bg-gray-700 p-2 rounded-full flex justify-items-center content-center">
+                    <Icon as={EditIcon} color="white" size="lg" />
+                  </Box>
                 </Pressable>
               ) : (
                 <Avatar className="bg-indigo-600 mt-1" size = "xl">
@@ -308,8 +337,18 @@ export default function ProfileScreen() {
               )}
               <VStack space = "xs">
                 <VStack>
-                  <HStack>
-                    <Heading size="xl" className = "mb-0 h-8 w-56">{profile.name}</Heading>
+                  <HStack className = "text-wrap">
+                    { isEditingProfile && nameValue.trim() !== "" ? (
+                      <Input className = "w-72 h-8">
+                        <InputField value={nameValue} onChangeText={setNameValue} maxLength = {30} placeholder = "Required"></InputField>
+                      </Input>
+                    ) : isEditingProfile && nameValue.trim() === "" ? (
+                      <Input isInvalid = {true} className = "w-72 h-8">
+                        <InputField value={nameValue} onChangeText={setNameValue} maxLength = {30} placeholder = "Required"></InputField>
+                      </Input>
+                    ) : (
+                      <Heading size="xl" className = "mb-0 h-8 w-56">{profile.name}</Heading>
+                    )}
                     { isFriend && (
                       <Badge size="md" variant="solid" action="muted" className = "bg-none text-none rounded-2xl">
                         <BadgeIcon as={CheckCircleIcon} className = "text-[#4d7599]"></BadgeIcon>
@@ -347,7 +386,36 @@ export default function ProfileScreen() {
               )}
             </HStack>
             <VStack>
-              { (getProfileAccess(profile, isFriend) || userId === id) && (isEditingProfile || (profile.location || profile.goal || profile.bio)) && (
+              { isEditingProfile && (
+                <Box className = "p-2 border rounded border-gray-300">
+                  <HStack>
+                    <Text size = "md" className = "mr-4">🔒 Privacy</Text>
+                    <RadioGroup value = {privacyValues} onChange = {setPrivacyValue}>
+                      <HStack space = "xl">
+                        <Radio value = "PRIVATE" isInvalid = {false} isDisabled = {false}>
+                          <RadioIndicator>
+                            <RadioIcon as = {CircleIcon}></RadioIcon>
+                          </RadioIndicator>
+                          <RadioLabel>Private</RadioLabel>
+                        </Radio>
+                        <Radio value = "FRIENDS" isInvalid = {false} isDisabled = {false}>
+                          <RadioIndicator>
+                            <RadioIcon as = {CircleIcon}></RadioIcon>
+                          </RadioIndicator>
+                          <RadioLabel>Friends</RadioLabel>
+                        </Radio>
+                        <Radio value = "PUBLIC" isInvalid = {false} isDisabled = {false}>
+                          <RadioIndicator>
+                            <RadioIcon as = {CircleIcon}></RadioIcon>
+                          </RadioIndicator>
+                          <RadioLabel>Public</RadioLabel>
+                        </Radio>
+                      </HStack>
+                    </RadioGroup>
+                  </HStack>
+                </Box>
+              )}
+              { (getProfileAccess(profile, isFriend) || userId === id) && (isEditingProfile || (profile.location || profile.goal || profile.bio)) ? (
                 <Box className = "border border-gray-300 rounded p-2 mt-2">
                   { isEditingProfile && !locationDisabled ? (
                     <HStack>
@@ -417,16 +485,31 @@ export default function ProfileScreen() {
                     <Text className = "mt-2">{profile.bio}</Text>
                   )}
                 </Box>
+              ) : profile && (
+                <Badge size="md" variant="solid" action="muted" className = "bg-none text-none rounded-2xl">
+                  <BadgeIcon as={AlertCircleIcon} className = "text-[#4d7599]"></BadgeIcon>
+                  {profile.private === "FRIENDS" ? (
+                    <Text className = "ml-1 text-[#4d7599] text-sm">This user's profile is only visible to friends</Text>
+                  ) : (
+                    <Text className = "ml-1 text-[#4d7599] text-sm">This user's profile is private</Text>
+                  )}
+                </Badge>
               )}
-            </VStack>
+              </VStack>
             { userId === id && isEditingProfile ? (
               <HStack>
                 <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#db5b4d] mr-2 flex-auto" onPress={cancelEdits}>
                   <ButtonText className = "text-white">Cancel</ButtonText>
                 </Button>
-                <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#397a2c] flex-auto" onPress={saveAndSetEditingProfile}>
-                  <ButtonText className = "text-white">Save</ButtonText>
-                </Button>
+                { nameValue.trim() !== "" ? (
+                  <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#397a2c] flex-auto" onPress={saveAndSetEditingProfile}>
+                    <ButtonText className = "text-white">Save</ButtonText>
+                  </Button>
+                ) : (
+                  <Button isDisabled = {true} size = "lg" variant = "solid" action = "primary" className = "bg-[#397a2c] flex-auto" onPress={saveAndSetEditingProfile}>
+                    <ButtonText className = "text-white">Save</ButtonText>
+                  </Button>
+                )}
               </HStack>
             ) : userId === id ? (
               <Button size = "lg" variant = "outline" action = "primary" className = "border-[#6FA8DC]" onPress={saveValuesAndEditProfile}>
