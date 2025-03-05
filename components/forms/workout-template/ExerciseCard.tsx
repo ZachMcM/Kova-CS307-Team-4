@@ -7,6 +7,8 @@ import { Tables } from "@/types/database.types";
 import { ExtendedExercise } from "@/types/extended-types";
 
 export default function ExerciseCard({ exercise }: { exercise: ExtendedExercise }) {
+  console.log(exercise)
+
   return (
     <Card variant="outline">
     <VStack space="md">
