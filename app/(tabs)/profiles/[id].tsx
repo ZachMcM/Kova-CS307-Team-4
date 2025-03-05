@@ -168,13 +168,9 @@ export default function ProfileScreen() {
   };
 
   const saveValuesAndEditProfile = () => {
-
     if (profile) {
       setStoredPrivacyValues(profile.private);
       setStoredName(profile.name);
-    }
-
-    if (profile && getProfileAccess(profile, isFriend)) {
       setStoredAvatar(profile.avatar);
       setStoredLocation(profile.location);
       setStoredGoal(profile.goal);
