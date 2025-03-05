@@ -110,20 +110,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         password: userPassword,
       });
   
-    //Checking if profile exists for this user
-    if (
-      (await supabase.from("profile").select().eq("userId", signInData.user?.id))
-        .data?.length == 0
-    ) {
-      //Create default profile
-      console.log("create default profile");
-      const { error: insertionError } = await supabase.from("profile").insert({
-        userId: signInData.user?.id,
-        username: "New Kova User",
-      });
-      if (insertionError) throw new Error(insertionError.message);
-    }
-  
     if (passwordError) {
       throw new Error(passwordError.message);
     }
