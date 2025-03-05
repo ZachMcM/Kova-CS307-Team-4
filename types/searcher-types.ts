@@ -3,6 +3,8 @@
 import ExerciseDataForm from "@/components/forms/workout-template/ExerciseDataForm";
 import { Tables } from "./database.types";
 import { ExtendedExercise } from "./extended-types";
+import { PublicProfile } from "./profile-types";
+import { Workout } from "./workout-types";
 
 /** A simple search item with an id and a name.
  * * name -- the name of item.
@@ -108,6 +110,9 @@ export function createWordCounter(terms: string[]): WordCounter {
     let counter = {frequencies: new Map<string, number>(),
         totalItems: 0, 
         getInverseFrequency: (name: string) => {
+            if (!counter.frequencies.has(name)) {
+                return 0;
+            }
             return counter.totalItems - counter.frequencies.get(name)!;
         }};
     terms.forEach((term) => {
@@ -136,6 +141,9 @@ export function createTagCounter(items: TaggedSearchItem[]): TagCounter {
     let counter = {tagFrequencies: new Map<string, number>(),
         totalItems: 0,
         getInverseFrequency: (tag: string) => {
+            if (!counter.tagFrequencies.has(tag)) {
+                return 0;
+            }
             return counter.totalItems - counter.tagFrequencies.get(tag)!;
         }};
     items.forEach((taggedItem) => {
@@ -160,10 +168,10 @@ export function createTagCounter(items: TaggedSearchItem[]): TagCounter {
  * 
  * @returns a list of SearchItems
  */
-export function followerToSearch(followers: any[]) : SearchItem[] {
+export function followerToSearch(followers: PublicProfile[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
     followers.forEach((follower) => {
-        sItems.push(createSearchItem(follower.username, follower.userId));
+        sItems.push(createSearchItem(follower.username, follower.user_id));
     });
     return sItems;
 }
@@ -175,10 +183,10 @@ export function followerToSearch(followers: any[]) : SearchItem[] {
  * 
  * @returns a list of SearchItems
  */
-export function friendsToSearch(friends: any[]) : SearchItem[] {
+export function friendsToSearch(friends: PublicProfile[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
     friends.forEach((friend) => {
-        sItems.push(createSearchItem(friend.username, friend.userId));
+        sItems.push(createSearchItem(friend.username, friend.user_id));
     });
     return sItems;
 }
@@ -190,10 +198,10 @@ export function friendsToSearch(friends: any[]) : SearchItem[] {
  * 
  * @returns a list of SearchItems
  */
-export function templatesToSearch(templates: any[]) : SearchItem[] {
+export function templatesToSearch(templates: Workout[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
     templates.forEach((template) => {
-        sItems.push(createSearchItem(template.name, template.id));
+        sItems.push(createSearchItem(template.templateName, template.templateId));
     });
     return sItems;
 }
@@ -238,7 +246,7 @@ function compareToQuery(query: string,
     let terms = query.split(" ");
     terms.forEach( (term) => {
         if (item.name.includes(term)) {
-            score += counter.getInverseFrequency(term);
+            score += counter.getInverseFrequency(term) + term.length;
         }
     });
     return score;
@@ -277,7 +285,7 @@ function compareToTaggedQuery(query: string,
         terms.forEach( (term) => {
             item.tags.forEach( (tag) => {
                 if (tag.name.includes(term)) {
-                    score += tagCounter.getInverseFrequency(tag.name);
+                    score += 2 * (tagCounter.getInverseFrequency(tag.name) + term.length);
                 }
             });
         });

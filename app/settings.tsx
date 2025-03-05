@@ -9,6 +9,7 @@ import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { Heading } from "@/components/ui/heading";
 import { useState, useEffect } from "react";
 import { supabase } from '@/lib/supabase';
+import ExerciseSearchView from '@/components/search-views/ExerciseSearchView';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -75,8 +76,8 @@ export default function SettingsScreen() {
             size = "lg"
             action = "primary"
             onPress={() => router.replace({
-              pathname: "/(tabs)/profile",
-              params: { id: userId }
+              pathname: "/(tabs)/profiles/[id]",
+              params: { id: userId! }
             })}
             className = "p-3"
           >
