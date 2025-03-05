@@ -8,6 +8,11 @@ export type PrivateProfile = {
   friends: number;
   following: number;
   followers: number;
+  age: number;
+  location: string;
+  goal: string;
+  bio: string;
+  achievement: string;
 };
 
 export type PublicProfile = {

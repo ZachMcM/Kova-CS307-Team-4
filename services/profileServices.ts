@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { Profile, PrivateProfile, PublicProfile } from "@/types/profile-types";
+import { useState } from "react";
 
 // Get profile based on provided user_id
 export const getProfile = async (id: string): Promise<Profile> => {
@@ -11,39 +12,38 @@ export const getProfile = async (id: string): Promise<Profile> => {
 
   if (error) throw new Error(error.message);
 
-  if (profile.private === "PRIVATE") {
-    return {
-      id: profile.id,
-      user_id: profile.user_id,
-      name: profile.name,
-      username: profile.username,
-      avatar: profile.avatar,
-      private: profile.private,
-      friends: profile.friends,
-      following: profile.following,
-      followers: profile.followers
-    } as PrivateProfile;
-  } else {
-    return {
-      id: profile.id,
-      user_id: profile.user_id,
-      name: profile.name,
-      username: profile.username,
-      avatar: profile.avatar,
-      private: profile.private,
-      friends: profile.friends,
-      following: profile.following,
-      followers: profile.followers,
-      age: profile.age,
-      location: profile.location,
-      goal: profile.goal,
-      bio: profile.bio,
-      achievement: profile.achievement
-    } as PublicProfile;
-  }
+  //if (profile.private === "PRIVATE") {
+  //  return {
+  //    id: profile.id,
+  //    user_id: profile.user_id,
+  //    name: profile.name,
+  //    username: profile.username,
+  //    avatar: profile.avatar,
+  //    private: profile.private,
+  //    friends: profile.friends,
+  //    following: profile.following,
+  //    followers: profile.followers
+  //  } as PrivateProfile;
+  //}
+  return {
+    id: profile.id,
+    user_id: profile.user_id,
+    name: profile.name,
+    username: profile.username,
+    avatar: profile.avatar,
+    private: profile.private,
+    friends: profile.friends,
+    following: profile.following,
+    followers: profile.followers,
+    age: profile.age,
+    location: profile.location,
+    goal: profile.goal,
+    bio: profile.bio,
+    achievement: profile.achievement
+  } as PublicProfile;
 }
 
-export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string) => {
+export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, privacy: string, name: string) => {
   const { error } = await supabase
     .from("profile")
     .update({
@@ -51,6 +51,8 @@ export const updateProfile = async (id:string, goal: string, bio: string, locati
       bio: bio,
       location: location,
       achievement: achievement,
+      private: privacy,
+      name: name
     })
     .eq("id", id);
 
