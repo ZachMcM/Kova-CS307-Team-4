@@ -1,4 +1,5 @@
 import Container from "@/components/Container";
+import { useSession } from "@/components/SessionContext";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
@@ -8,9 +9,7 @@ import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { supabase } from "@/lib/supabase";
-import { signInUser } from "@/services/loginServices";
 import { showErrorToast } from "@/services/toastServices";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 
@@ -20,10 +19,10 @@ export default function LoginScreen() {
 
   const toast = useToast();
   const router = useRouter();
+  const { signInUser } = useSession();
 
   return (
     <Container>
-      {/*login_state === "true" ? <Redirect href={"/"}></Redirect> : <></>*/}
       <Card variant="ghost" className="p-10 mb-50">
         <VStack space="sm" className="mb-50">
           <Heading size="4xl">Sign In</Heading>
@@ -52,6 +51,7 @@ export default function LoginScreen() {
               value={password.trim()}
               onChangeText={setPassword}
               placeholder="Enter Password"
+              type="password"
             />
           </Input>
           <Button
@@ -60,18 +60,17 @@ export default function LoginScreen() {
             action="secondary"
             className="mt-5 mb-5 bg-[#6FA8DC]"
             onPress={() => {
-              signInUser(email, password).then(() => {
-                router.replace("/(tabs)");
+              signInUser(email, password). then(() => {
+                router.replace("/(tabs)")
               }).catch(error => {
-                console.log(error);
-                showErrorToast(toast, error.message);
-              })
+                  console.log(error);
+                  showErrorToast(toast, error.message);
+                })
             }}
           >
             <ButtonText className="text-white">Sign In</ButtonText>
           </Button>
-          <Link>
-            {/* TODO actually add this link to a new page */}
+          <Link onPress= {() => router.replace("/password-recovery")}>
             <LinkText>Forgot Password?</LinkText>
           </Link>
         </VStack>

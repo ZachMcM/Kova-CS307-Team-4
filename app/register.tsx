@@ -11,18 +11,34 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { createAccount } from "@/services/loginServices";
+import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
+import { HStack } from "@/components/ui/hstack";
+import { useSession } from "@/components/SessionContext";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const toast = useToast();
   const router = useRouter();
+  const { createAccount, signInUser} = useSession();
 
   return (
     <Container>
+      <Button
+        variant = "outline"
+        size = "md"
+        action = "primary"
+        onPress={() => router.replace("/login")}
+        className = "p-3">
+        <HStack>
+        <Icon as={ChevronLeftIcon} className="mt-0"></Icon>
+        <ButtonText>Back to Login</ButtonText>
+        </HStack>
+    </Button>
       <Card variant="ghost" className="p-10 mb-50">
         <VStack space="sm" className="mb-50">
           <Heading size="4xl">Account Registration</Heading>
@@ -44,6 +60,30 @@ export default function RegisterScreen() {
         </VStack>
         <VStack space="sm">
           <Text size="lg" className="ml-3 mt-5">
+            Username
+          </Text>
+          <Input className="ml-3 mr-5">
+            <InputField
+              value={username.trim()}
+              onChangeText={setUsername}
+              placeholder="Enter Username"
+            />
+          </Input>
+        </VStack>
+        <VStack space="sm">
+          <Text size="lg" className="ml-3 mt-5">
+            Display Name
+          </Text>
+          <Input className="ml-3 mr-5">
+            <InputField
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Enter Display Name: John Kova"
+            />
+          </Input>
+        </VStack>
+        <VStack space="sm">
+          <Text size="lg" className="ml-3 mt-5">
             Password
           </Text>
           <Input className="ml-3 mr-5">
@@ -51,6 +91,7 @@ export default function RegisterScreen() {
               value={password.trim()}
               onChangeText={setPassword}
               placeholder="Enter Password"
+              type="password"
             />
           </Input>
           <Text size="lg" className="ml-3 mt-5">
@@ -61,6 +102,7 @@ export default function RegisterScreen() {
               value={confirmPassword.trim()}
               onChangeText={setConfirmPassword}
               placeholder="Enter Password"
+              type="password"
             />
           </Input>
           <Button
@@ -69,7 +111,9 @@ export default function RegisterScreen() {
             action="secondary"
             className="mt-5 mb-5 bg-[#6FA8DC]"
             onPress={() => {
-              createAccount(email, password, confirmPassword).then(() => { 
+              createAccount(email, password, confirmPassword, username, displayName).then(() => {
+                signInUser(email, password);
+              }).then(() => { 
                 router.replace("/(tabs)/profile");
                 showSuccessToast(toast, "Welcome to Kova!")
               }).catch(error => {
