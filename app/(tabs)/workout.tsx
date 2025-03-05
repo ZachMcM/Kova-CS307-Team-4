@@ -19,7 +19,7 @@ export default function Workout() {
   const { data: templates, isPending } = useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      const templates = await getUserTemplates(session?.user.id!);
+      const templates = await getUserTemplates(session?.user.user_metadata.profileId);
       return templates;
     },
   });

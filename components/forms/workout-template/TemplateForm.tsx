@@ -54,9 +54,9 @@ export default function TemplateForm() {
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
       if (values.id) {
-        await updateTemplate(values, session?.user.id!);
+        await updateTemplate(values, session?.user.user_metadata.profileId);
       } else {
-        await newTemplate(values, session?.user?.id!);
+        await newTemplate(values, session?.user.user_metadata.profileId);
       }
     },
     onSuccess: () => {

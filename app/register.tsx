@@ -111,10 +111,11 @@ export default function RegisterScreen() {
             action="secondary"
             className="mt-5 mb-5 bg-[#6FA8DC]"
             onPress={() => {
-              createAccount(email, password, confirmPassword, username, displayName).then(() => {
-                signInUser(email, password);
-              }).then(() => { 
-                router.replace("/(tabs)/profile");
+              createAccount(email, password, confirmPassword, username, displayName).then((signUpData) => { 
+                router.replace({
+                  pathname: "/(tabs)/profiles/[id]",
+                  params: { id: signUpData.user.id}
+                });
                 showSuccessToast(toast, "Welcome to Kova!")
               }).catch(error => {
                 console.log(error);

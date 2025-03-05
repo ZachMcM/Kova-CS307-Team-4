@@ -102,15 +102,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (userDisplayName == "") {
       userDisplayName = "John Kova";
     }
-    const { error: insertionError } = await supabase.from("profile").insert({
+    const { data: profileData, error: insertionError } = await supabase.from("profile").insert({
       userId: signUpData.user?.id,
       username: userUsername,
       name: userDisplayName,
-    });
+    }).select().single();
     if (insertionError) throw new Error(insertionError.message);
 
+    const { data: updatedUser, error: metadataError } = await supabase.auth.updateUser({
+      data: {
+        profileId: profileData?.id
+      }
+    }) 
+    
+    if (metadataError) {
+      throw new Error(metadataError.message)
+    }
+
     console.log("created account");
-    return signUpData as AuthAccountResponse;
+    return updatedUser as AuthAccountResponse;
   };
 
   const signInUser = async (
