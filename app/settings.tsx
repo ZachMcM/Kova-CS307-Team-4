@@ -35,24 +35,14 @@ export default function SettingsScreen() {
       content: "/app/(tabs)/profile"
     },
     {
-      attribute: "Social profile",
+      attribute: "Debug: Unit Testing",
       type: "banner"
     },
     {
-      attribute: "Display age",
-      type: "privacy-tri",
-      content: "false"
-    },
-    {
-      attribute: "Display weight",
-      type: "privacy-tri",
-      content: "false"
-    },
-    {
-      attribute: "Display bio",
-      type: "privacy-tri",
-      content: "false"
-    },
+      attribute: "Unit testing page",
+      type: "redirect",
+      content: "/app/unit-tests"
+    }
   ];
 
   useEffect(() => {
