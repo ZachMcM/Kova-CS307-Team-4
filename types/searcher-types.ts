@@ -1,5 +1,9 @@
 // Contains search item types, as well as some helper methods for sorting.
 
+import ExerciseDataForm from "@/components/forms/workout-template/ExerciseDataForm";
+import { Tables } from "./database.types";
+import { ExtendedExercise } from "./extended-types";
+
 /** A simple search item with an id and a name.
  * * name -- the name of item.
  * * id -- the id of the item.
@@ -159,7 +163,7 @@ export function createTagCounter(items: TaggedSearchItem[]): TagCounter {
 export function followerToSearch(followers: any[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
     followers.forEach((follower) => {
-        sItems.push(createSearchItem(follower.name, follower.userID));
+        sItems.push(createSearchItem(follower.username, follower.userId));
     });
     return sItems;
 }
@@ -174,7 +178,7 @@ export function followerToSearch(followers: any[]) : SearchItem[] {
 export function friendsToSearch(friends: any[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
     friends.forEach((friend) => {
-        sItems.push(createSearchItem(friend.name, friend.userID));
+        sItems.push(createSearchItem(friend.username, friend.userId));
     });
     return sItems;
 }
@@ -201,19 +205,19 @@ export function templatesToSearch(templates: any[]) : SearchItem[] {
  * 
  * @returns a list of TaggedSearchItems.
  */
-export function exercisesToSearch(exercises: any[]) : TaggedSearchItem[] {
+export function exercisesToSearch(exercises: ExtendedExercise[]) : TaggedSearchItem[] {
     let tSItems: TaggedSearchItem[] = [];
     let nameToTag = new Map<string, SearchTag>();
     exercises.forEach((exercise) => {
         let searchTags: SearchTag[] = [];
-        exercise.tags.forEach((tag: { name: string; id: string; }) => {
-            if (!nameToTag.has(tag.name)) {
-                nameToTag.set(tag.name, createSearchTag(tag.name, tag.id));
-                tSItems.push(createSearchTaggedItem(tag.name, [], tag.id, true));
+        exercise.tags.forEach((tag: Tables<'tag'>) => {
+            if (!nameToTag.has(tag.name!)) {
+                nameToTag.set(tag.name!, createSearchTag(tag.name!, tag.id));
+                // tSItems.push(createSearchTaggedItem(tag.name, [], tag.id, true));
             }
-            searchTags.push(nameToTag.get(tag.name)!);
+            searchTags.push(nameToTag.get(tag.name!)!);
         });
-        tSItems.push(createSearchTaggedItem(exercise.name, searchTags, exercise.id, false));
+        tSItems.push(createSearchTaggedItem(exercise.name!, searchTags, exercise.id, false));
     });
     return tSItems;
 }

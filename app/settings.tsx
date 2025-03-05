@@ -74,7 +74,10 @@ export default function SettingsScreen() {
             variant = "outline"
             size = "lg"
             action = "primary"
-            onPress={() => router.replace(`/(tabs)/profiles/${userId}`)}
+            onPress={() => router.replace({
+              pathname: "/(tabs)/profile",
+              params: { id: userId }
+            })}
             className = "p-3"
           >
             <Icon as={ChevronLeftIcon} className = "m-0"></Icon>
