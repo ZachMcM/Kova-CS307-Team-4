@@ -347,7 +347,7 @@ export default function ProfileScreen() {
               )}
             </HStack>
             <VStack>
-              { getProfileAccess(profile, isFriend) && (isEditingProfile || (profile.location || profile.goal || profile.bio)) && (
+              { (getProfileAccess(profile, isFriend) || userId === id) && (isEditingProfile || (profile.location || profile.goal || profile.bio)) && (
                 <Box className = "border border-gray-300 rounded p-2 mt-2">
                   { isEditingProfile && !locationDisabled ? (
                     <HStack>
