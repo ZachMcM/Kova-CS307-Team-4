@@ -2,7 +2,6 @@ import { SessionProvider } from "@/components/SessionContext";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { ToastProvider } from "@gluestack-ui/toast";
 import {
   DarkTheme,
   DefaultTheme,
@@ -72,10 +71,12 @@ export default function RootLayout() {
     <SessionProvider>
     <QueryClientProvider client={queryClient}>
       <QueryClientProvider client={queryClient}>
-      <GluestackUIProvider mode={(colorScheme ?? "light") as "light" | "dark"}>
-          <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        <GluestackUIProvider
+          mode={(colorScheme ?? "light") as "light" | "dark"}
         >
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" />
@@ -91,7 +92,7 @@ export default function RootLayout() {
             <StatusBar style="auto" />
           </ThemeProvider>
         </GluestackUIProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
     </QueryClientProvider>
     </SessionProvider>
   );

@@ -23,7 +23,6 @@ export async function getWorkout(): Promise<Workout | null> {
       return null
     }
     const workout = JSON.parse(stringVal)
-    console.log(workout)
     return workout
   } catch (e) {
     console.log(e)

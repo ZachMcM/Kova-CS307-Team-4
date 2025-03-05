@@ -1,20 +1,11 @@
-import Tag from "@/components/Tag";
-import { Box } from "@/components/ui/box";
-import {
-  Button,
-  ButtonIcon,
-  ButtonSpinner,
-  ButtonText,
-} from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useToast } from "@/components/ui/toast";
 import { sampleExercises } from "@/sample-data/exercises";
 import { newTemplate, updateTemplate } from "@/services/templateServices";
 import { showErrorToast } from "@/services/toastServices";
-import { Tables } from "@/types/database.types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
@@ -26,11 +17,13 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "../../ui/form-control";
-import { SearchIcon, TrashIcon } from "../../ui/icon";
+import { Icon, SearchIcon, TrashIcon } from "../../ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
+import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
+import { getExercises } from "@/services/exerciseServices";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -45,6 +38,15 @@ export default function TemplateForm() {
   const queryClient = useQueryClient();
 
   const router = useRouter();
+
+  const { data: allExercises, isPending: exercisesLoading } = useQuery({
+    queryKey: ['exercises'],
+    queryFn: async () => {
+      const exercises = await getExercises()
+      console.log("Exercises", JSON.stringify(exercises))
+      return exercises
+    }
+  })
 
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
@@ -136,12 +138,12 @@ export default function TemplateForm() {
             sampleExercises
               .filter(
                 (exercise) =>
-                  (exercise.name
-                    .toLowerCase()
+                  (exercise
+                    .name!.toLowerCase()
                     .includes(exerciseQuery.toLowerCase()) ||
                     exercise.tags.filter((tag) =>
-                      tag.name
-                        .toLowerCase()
+                      tag
+                        .name!.toLowerCase()
                         .includes(exerciseQuery.toLowerCase())
                     ).length != 0) &&
                   !isExerciseAdded(exercise.id)
@@ -152,7 +154,10 @@ export default function TemplateForm() {
                   onPress={() => {
                     setExerciseQuery("");
                     addExercise({
-                      info: exercise,
+                      info: {
+                        name: exercise.id,
+                        id: exercise.id,
+                      },
                       sets: [
                         {
                           reps: 0,
@@ -163,39 +168,24 @@ export default function TemplateForm() {
                   }}
                   className="flex flex-1"
                 >
-                  <Card variant="outline">
-                    <VStack space="md">
-                      <Heading size="md">{exercise.name}</Heading>
-                      <Box className="flex flex-row flex-wrap gap-2">
-                        {exercise.tags.map((tag: Tables<"tag">) => (
-                          <Tag key={tag.id} tag={tag} />
-                        ))}
-                      </Box>
-                    </VStack>
-                  </Card>
+                  <ExerciseCard exercise={exercise} />
                 </Pressable>
               ))}
-          {exercises.map((exercise, i) => (
-            <VStack space="md" key={exercise.info.id}>
-              <HStack className="justify-between items-center">
-                <Heading className="text-kova-500">
-                  {exercise.info.name}
-                </Heading>
-                <Button
-                  size="xs"
-                  onPress={() => {
-                    removeExercise(i);
-                  }}
-                  variant="outline"
-                  action="primary"
-                  className="border-0"
-                >
-                  <ButtonIcon as={TrashIcon} size="lg" color="red" />
-                </Button>
-              </HStack>
-              <ExerciseDataForm key={exercise.info.id} index={i} />
-            </VStack>
-          ))}
+          <VStack space="4xl">
+            {exercises.map((exercise, i) => (
+              <VStack space="md" key={exercise.info.id}>
+                <HStack className="justify-between items-center">
+                  <Heading className="text-kova-500">
+                    {exercise.info.name}
+                  </Heading>
+                  <Pressable onPress={() => removeExercise(i)}>
+                    <Icon as={TrashIcon} size="xl" color="red" />
+                  </Pressable>
+                </HStack>
+                <ExerciseDataForm key={exercise.info.id} index={i} />
+              </VStack>
+            ))}
+          </VStack>
           <Controller
             control={control}
             name="data"

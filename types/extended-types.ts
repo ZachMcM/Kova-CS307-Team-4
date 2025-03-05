@@ -8,6 +8,10 @@ export type ExtendedTemplateWithCreator = Omit<Tables<'template'>, 'data'> & {
   creatorProfile: Tables<'profile'>
 }
 
+  export type ExtendedExercise = Tables<'exercise'> & {
+    tags: Tables<'tag'>[]
+  }
+
 export type AuthAccountResponse = {
   user: User,
   session: Session,
