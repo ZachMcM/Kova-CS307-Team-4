@@ -17,3 +17,7 @@ export type AuthAccountResponse = {
   session: Session,
   weakPassword?: WeakPassword
 }
+
+export type ExtendedExercise = Tables<'exercise'> & {
+  tags: Tables<'tag'>[]
+}
