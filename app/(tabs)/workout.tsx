@@ -20,7 +20,6 @@ export default function Workout() {
     queryKey: ["templates"],
     queryFn: async () => {
       const templates = await getUserTemplates(session?.user.id!);
-      console.log(templates);
       return templates;
     },
   });

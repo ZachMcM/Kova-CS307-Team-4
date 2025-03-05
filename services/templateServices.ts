@@ -27,14 +27,19 @@ export const getTemplate = async (
 export const getUserTemplates = async (userId: string): Promise<
   ExtendedTemplateWithCreator[]
 > => {
+  const { data: profile, error: profileErr } = await supabase.from("profile").select().eq("userId", userId).single()
+
+  if (profileErr) {
+    throw new Error(profileErr.message)
+  }
+
   const { data: templates, error: templateError } = await supabase
     .from("template")
     .select(`
       *,
-      creatorProfile:creatorProfileId(*),
-      profile!Template_profileId_fkey(userId)
+      creatorProfile:creatorProfileId(*)
     `)
-    .eq("profile.userId", userId);
+    .eq("profileId", profile.id);
 
   if (templateError) {
     console.log(templateError)
