@@ -8,4 +8,6 @@ export default function ExerciseSearchView({ data, selectionCallback, displayGet
         { data: ExtendedExercise[], selectionCallback: (id: string) => void, displayGetter: (id:string) => View}){
     TaggedSearchItem[]
     return ;
+=======
+>>>>>>> Stashed changes
 }
