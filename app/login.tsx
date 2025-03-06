@@ -60,8 +60,8 @@ export default function LoginScreen() {
           <Button
             variant="solid"
             size="xl"
-            action="secondary"
-            className="mt-5 mb-5 bg-[#6FA8DC]"
+            action="kova"
+            className="mt-5 mb-5"
             onPress={() => {
               setSessionLoading(true);
               signInUser(email, password)
@@ -88,7 +88,9 @@ export default function LoginScreen() {
         <Heading className="text-center">New To Kova?</Heading>
         <Button
           size="xl"
-          className="ml-[38px] mr-[38px] bg-[#6FA8DC]"
+          action="kova"
+          variant="solid"
+          className="ml-[38px] mr-[38px]"
           onPress={() => router.replace("./register")}
         >
           <ButtonText className="text-white">Register for Account</ButtonText>

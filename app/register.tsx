@@ -108,8 +108,8 @@ export default function RegisterScreen() {
           <Button
             variant="solid"
             size="xl"
-            action="secondary"
-            className="mt-5 mb-5 bg-[#6FA8DC]"
+            action="kova"
+            className="mt-5 mb-5"
             onPress={() => {
               setSessionLoading(true)
               createAccount(email, password, confirmPassword, username, displayName).then((signUpData) => { 
