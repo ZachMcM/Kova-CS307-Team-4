@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { AuthAccountResponse } from "@/types/extended-types";
 import { Session } from "@supabase/supabase-js";
 import {
   createContext,
@@ -7,8 +8,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { AuthAccountResponse } from "@/types/extended-types";
-import { AuthResponse, AuthWeakPasswordError } from "@supabase/supabase-js";
 
 type SessionContextValues = {
   session: Session | null;
@@ -102,21 +101,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (userDisplayName == "") {
       userDisplayName = "John Kova";
     }
-    const { data: profileData, error: insertionError } = await supabase.from("profile").insert({
-      userId: signUpData.user?.id,
-      username: userUsername,
-      name: userDisplayName,
-    }).select().single();
+    const { data: profileData, error: insertionError } = await supabase
+      .from("profile")
+      .insert({
+        userId: signUpData.user?.id,
+        username: userUsername,
+        name: userDisplayName,
+      })
+      .select()
+      .single();
     if (insertionError) throw new Error(insertionError.message);
 
-    const { data: updatedUser, error: metadataError } = await supabase.auth.updateUser({
-      data: {
-        profileId: profileData?.id
-      }
-    }) 
-    
+    const { data: updatedUser, error: metadataError } =
+      await supabase.auth.updateUser({
+        data: {
+          profileId: profileData?.id,
+        },
+      });
+
     if (metadataError) {
-      throw new Error(metadataError.message)
+      throw new Error(metadataError.message);
     }
 
     console.log("created account");
@@ -136,7 +140,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         email: userEmail,
         password: userPassword,
       });
-  
+
     if (passwordError) {
       throw new Error(passwordError.message);
     }

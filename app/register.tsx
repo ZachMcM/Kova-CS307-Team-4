@@ -1,5 +1,5 @@
 import Container from "@/components/Container";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export default function RegisterScreen() {
 
   const toast = useToast();
   const router = useRouter();
-  const { createAccount, signInUser} = useSession();
+  const { createAccount, setSessionLoading, sessionLoading } = useSession();
 
   return (
     <Container>
@@ -111,19 +111,23 @@ export default function RegisterScreen() {
             action="secondary"
             className="mt-5 mb-5 bg-[#6FA8DC]"
             onPress={() => {
+              setSessionLoading(true)
               createAccount(email, password, confirmPassword, username, displayName).then((signUpData) => { 
                 router.replace({
                   pathname: "/(tabs)/profiles/[id]",
                   params: { id: signUpData.user.id}
                 });
+                setSessionLoading(false)
                 showSuccessToast(toast, "Welcome to Kova!")
               }).catch(error => {
                 console.log(error);
+                setSessionLoading(false)
                 showErrorToast(toast, error.message);
               })
             }}
           >
             <ButtonText className="text-white">Register For Account</ButtonText>
+            {sessionLoading && <ButtonSpinner color="#FFF" />}
           </Button>
         </VStack>
       </Card>
