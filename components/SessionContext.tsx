@@ -57,7 +57,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       throw new Error("Please enter a valid email address");
     }
     if (userPassword != confirmPassword) {
-      throw new Error("Password and confirmed password\n must match");
+      throw new Error("Password and confirmed password\nmust match");
     }
 
     if (userUsername == "") {
@@ -67,12 +67,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (userUsername.includes(" ")) {
       throw new Error("Username cannot include spaces");
     }
-
+    //TODO check if we want to make usernames all lowercase / case insensitive
     if (
       (await supabase.from("profile").select().eq("username", userUsername))
         .data?.length != 0
     ) {
-      throw new Error("Username is already in use!");
+      throw new Error("Username is already in use");
     }
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
@@ -83,8 +83,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
 
     if (signUpError) {
-      console.log(signUpError.message);
-      if (signUpError.message == "Password should be at least 6 characters.") {
+      if (signUpError.message.includes("Password")) {
         throw new Error(
           "Password must be at least 6 characters\n and include a letter and number"
         );
@@ -134,6 +133,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
     if (!emailRegex.test(userEmail)) {
       throw new Error("Please enter a valid email address");
+    }
+    if (userPassword.length == 0) {
+      throw new Error("Password field cannot be empty");
     }
     const { data: signInData, error: passwordError } =
       await supabase.auth.signInWithPassword({

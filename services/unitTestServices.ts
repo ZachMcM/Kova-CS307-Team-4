@@ -1,4 +1,9 @@
+import { useSession } from "@/components/SessionContext";
 import { updateProfile, getProfile, unfollowUser, getFollowing, getFriends, followUser } from "./profileServices";
+import { signOutUser } from "./loginServices";
+import { Session } from "@supabase/supabase-js";
+import { AuthAccountResponse } from "@/types/extended-types";
+import { supabase } from "@/lib/supabase";
 
 const burnerProfileIds = ["3f82585e-31f1-435e-a095-92cee396f2a4", "4c6d95cd-bb19-46b5-8c0a-44c58c89243b"];
 const burnerProfileUserIds = ["5a8349d7-f315-4d56-a9d0-412d2621550c", "8b4644bf-4bdb-4a14-9902-ed7d41b1365e"];
@@ -17,6 +22,111 @@ export const exampleTests = (num: number) => {
 
   return output;
 };
+
+export type LoginTestParams = {
+  signInUser: (userEmail: string, userPassword: string) => Promise<AuthAccountResponse>,
+  testCaseName: string
+  testEmail: string,
+  testPassword: string,
+  expectedError: string | null,
+}
+
+//Login tests
+export const loginTests = async (params: LoginTestParams) => {
+  
+  let valid = true;
+  let output = ""
+  let error_message = ""
+  
+  const cur_session_refresh_token = (await supabase.auth.getSession()).data.session?.refresh_token!
+  await params.signInUser(params.testEmail, params.testPassword)
+    .then( async () => {
+      if (params.expectedError == null) {
+        output += "SUCCESS"
+      } else {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Did not throw expected error " + params.expectedError;
+      }
+      await supabase.auth.refreshSession({ refresh_token: cur_session_refresh_token })
+    }).catch((error: Error) => {
+      if (params.expectedError == null) {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Error was thrown when success was expected " + error.message;
+      } else if (params.expectedError !== error.message) {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Unexpected error was thrown '" + error.message + "' expected was '" + params.expectedError + "'";
+      } else {
+        output += "SUCCESS"
+      }
+    })
+
+    if (valid == true) {
+      output += " | " + params.testCaseName
+    } else {
+      output += " | " + params.testCaseName + ": " + error_message  
+    }
+    return output
+}
+
+export type RegisterTestParams = {
+  createAccount: (userEmail: string, userPassword: string, confirmPassword: string, username: string, displayName: string) => Promise<AuthAccountResponse>,
+  testCaseName: string,
+  addRandom: boolean,
+  testEmail: string,
+  testPassword: string,
+  testConfirmPassword: string,
+  testUsername: string,
+  testDisplayName: string,
+  expectedError: string | null,
+}
+
+//Registration tests
+export const registrationTests = async (params: RegisterTestParams) => {
+  
+  let valid = true;
+  let output = ""
+  let error_message = ""
+  let randNum = ""
+  if (params.addRandom == true) {
+    randNum = Math.floor(Math.random() * (999_999_999 + 1)).toString()
+  }
+  
+  const cur_session_refresh_token = (await supabase.auth.getSession()).data.session?.refresh_token!
+  await params.createAccount(randNum + params.testEmail, params.testPassword, params.testConfirmPassword, randNum + params.testUsername, params.testDisplayName)
+    .then( async () => {
+      if (params.expectedError == null) {
+        output += "SUCCESS"
+      } else {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Did not throw expected error " + params.expectedError;
+      }
+      await supabase.auth.refreshSession({ refresh_token: cur_session_refresh_token })
+    }).catch((error: Error) => {
+      if (params.expectedError == null) {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Error was thrown when success was expected " + error.message;
+      } else if (params.expectedError !== error.message) {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Unexpected error was thrown '" + error.message + "' expected was '" + params.expectedError + "'";
+      } else {
+        output += "SUCCESS"
+      }
+    })
+
+    if (valid == true) {
+      output += " | " + params.testCaseName
+    } else {
+      output += " | " + params.testCaseName + ": " + error_message  
+    }
+    return output
+}
+
 
 export const followerTests = async () => {
   let valid = true;
