@@ -255,14 +255,6 @@ export default function FeedScreen() {
           </Text>
         </View>
 
-        {/* Logout Button */}
-        <VStack style={styles.logoutContainer}>
-          <Button onPress={handleLogout}>
-            <ButtonText className="text-white">Logout</ButtonText>
-            {sessionLoading && <ButtonSpinner />}
-          </Button>
-        </VStack>
-
         {isLoading && !refreshing && (
           <Text style={styles.statusMessage}>Loading posts...</Text>
         )}

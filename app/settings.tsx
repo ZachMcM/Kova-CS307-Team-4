@@ -10,10 +10,17 @@ import { Heading } from "@/components/ui/heading";
 import { useState, useEffect } from "react";
 import { supabase } from '@/lib/supabase';
 import ExerciseSearchView from '@/components/search-views/ExerciseSearchView';
+import { useToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/services/toastServices";
+import { useSession } from "@/components/SessionContext";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
+
+  const toast = useToast();
+
+  const { signOutUser, sessionLoading, setSessionLoading, session } = useSession();
 
   const settingsData = [
     {
@@ -57,6 +64,20 @@ export default function SettingsScreen() {
       fetchUserId();
     }, []);
 
+  const handleLogout = () => {
+    setSessionLoading(true);
+    signOutUser()
+      .then(() => {
+        router.replace("/login");
+        setSessionLoading(false)
+      })
+      .catch((error) => {
+        console.log(error);
+        setSessionLoading(false)
+        showErrorToast(toast, error.message);
+      });
+  };
+
   return (
     <StaticContainer className = "flex px-6 py-16">
       <VStack>
@@ -76,12 +97,15 @@ export default function SettingsScreen() {
           </Button>
           <Heading size = "2xl" className = "mt-1 ml-16 pl-2">Settings</Heading>
         </HStack>
-        <ScrollView>
+        <ScrollView className = "h-screen">
           <VStack>
             {settingsData.map((setting) => (
               <SettingsCard key={setting.attribute} setting={setting}></SettingsCard>
             ))}
           </VStack>
+          <Button onPress={handleLogout} className = "mt-6 bg-red-500">
+            <ButtonText className="text-white" size = "xl">Logout</ButtonText>
+          </Button>
         </ScrollView>
       </VStack>
     </StaticContainer>
