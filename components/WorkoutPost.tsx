@@ -1,8 +1,18 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Animated, Modal, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export type Exercise = {
   name: string;
+  reps?: number;
+  sets?: number;
+  weight?: string;
+};
+
+export type TaggedFriend = {
+  userId: string;
+  name: string;
+  avatar?: string;
 };
 
 type WorkoutPostProps = {
@@ -14,6 +24,12 @@ type WorkoutPostProps = {
   likes: number;
   comments: number;
   imageUrl?: string;
+  workoutDuration?: string;
+  workoutCalories?: string;
+  isOwnPost?: boolean;
+  postId?: string;
+  taggedFriends?: TaggedFriend[];
+  onUpdatePost?: (postId: string, title: string, description: string) => Promise<any>;
 };
 
 export const WorkoutPost = ({
@@ -25,75 +41,310 @@ export const WorkoutPost = ({
   likes,
   comments,
   imageUrl,
+  workoutDuration,
+  workoutCalories,
+  isOwnPost = false,
+  postId,
+  taggedFriends = [],
+  onUpdatePost,
 }: WorkoutPostProps) => {
+  const [expanded, setExpanded] = useState(false);
+  const [animation] = useState(new Animated.Value(0));
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(title);
+  const [editedDescription, setEditedDescription] = useState(description);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const toggleExpand = () => {
+    const toValue = expanded ? 0 : 1;
+    setExpanded(!expanded);
+    Animated.spring(animation, {
+      toValue,
+      useNativeDriver: false,
+      friction: 8,
+      tension: 40
+    }).start();
+  };
+
+  const expandedHeight = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%']
+  });
+
+  const handleEdit = () => {
+    setEditedTitle(title);
+    setEditedDescription(description);
+    setEditModalVisible(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!postId || !onUpdatePost) return;
+    
+    setIsSubmitting(true);
+    try {
+      await onUpdatePost(postId, editedTitle, editedDescription);
+      setEditModalVisible(false);
+    } catch (error) {
+      console.error('Error updating post:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {username.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <View>
-            <Text style={styles.username}>@{username}</Text>
-            <Text style={styles.date}>{date}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
-        
-        {/* Exercise Tags */}
-        <View style={styles.exerciseTags}>
-          {exercises.map((exercise, index) => (
-            <View key={index} style={styles.tag}>
-              <Text style={styles.tagText}>{exercise.name}</Text>
+    <>
+      <TouchableOpacity 
+        style={styles.container} 
+        onPress={toggleExpand}
+        activeOpacity={0.9}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {username.charAt(0).toUpperCase()}
+              </Text>
             </View>
-          ))}
+            <View>
+              <Text style={styles.username}>@{username}</Text>
+              <Text style={styles.date}>{date}</Text>
+            </View>
+          </View>
+          <View style={styles.headerActions}>
+            {isOwnPost && (
+              <TouchableOpacity 
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleEdit();
+                }}
+                style={styles.editButton}
+              >
+                <Ionicons name="pencil" size={18} color="#007AFF" />
+              </TouchableOpacity>
+            )}
+            <Ionicons 
+              name={expanded ? "chevron-up" : "chevron-down"} 
+              size={24} 
+              color="#666"
+            />
+          </View>
         </View>
 
-        {/* Workout Image */}
-        {imageUrl && (
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        )}
+        {/* Content */}
+        <View style={styles.content}>
+          <Text style={styles.title}>{title}</Text>
+          <Text 
+            style={[
+              styles.description,
+              expanded ? styles.expandedDescription : styles.collapsedDescription
+            ]}
+            numberOfLines={expanded ? undefined : 2}
+          >
+            {description}
+          </Text>
+          
+          {/* Tagged Friends */}
+          {taggedFriends.length > 0 && (
+            <View style={styles.taggedFriendsContainer}>
+              <Text style={styles.taggedWithText}>
+                With{' '}
+                {taggedFriends.map((friend, index) => (
+                  <Text key={friend.userId} style={styles.taggedFriendName}>
+                    {friend.name}
+                    {index < taggedFriends.length - 1 ? ', ' : ''}
+                  </Text>
+                ))}
+              </Text>
+            </View>
+          )}
+          
+          {/* Exercise Tags */}
+          <View style={styles.exerciseTags}>
+            {exercises.map((exercise, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{exercise.name}</Text>
+              </View>
+            ))}
+          </View>
 
-        {/* Engagement */}
-        <View style={styles.engagement}>
-          <TouchableOpacity style={styles.engagementItem}>
-            <Text>❤️ {likes}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.engagementItem}>
-            <Text>💬 {comments}</Text>
-          </TouchableOpacity>
+          {/* Workout Image */}
+          {imageUrl && (
+            <Image
+              source={{ uri: imageUrl }}
+              style={[styles.image, expanded && styles.expandedImage]}
+              resizeMode="cover"
+            />
+          )}
+
+          {/* Expanded Details */}
+          <Animated.View 
+            style={[
+              styles.expandedDetails,
+              { maxHeight: expandedHeight }
+            ]}
+          >
+            {/* Workout Summary */}
+            {(workoutDuration || workoutCalories) && (
+              <View style={styles.detailsSection}>
+                <Text style={styles.sectionTitle}>Workout Summary</Text>
+                <View style={styles.summaryContainer}>
+                  {workoutDuration && (
+                    <View style={styles.summaryItem}>
+                      <View>
+                        <Ionicons name="time-outline" size={18} color="#007AFF" />
+                      </View>
+                      <Text style={styles.summaryText}>{workoutDuration}</Text>
+                    </View>
+                  )}
+                  {workoutCalories && (
+                    <View style={styles.summaryItem}>
+                      <View>
+                        <Ionicons name="flame-outline" size={18} color="#FF9500" />
+                      </View>
+                      <Text style={styles.summaryText}>{workoutCalories}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* Tagged Friends Details (in expanded view) */}
+            {taggedFriends.length > 0 && (
+              <View style={styles.detailsSection}>
+                <Text style={styles.sectionTitle}>Workout Partners</Text>
+                <View style={styles.taggedFriendsDetails}>
+                  {taggedFriends.map((friend) => (
+                    <View key={friend.userId} style={styles.taggedFriendDetail}>
+                      <View style={styles.friendAvatar}>
+                        <Text style={styles.friendAvatarText}>
+                          {friend.name.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <Text style={styles.friendName}>{friend.name}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Exercise Details */}
+            <View style={styles.detailsSection}>
+              <Text style={styles.sectionTitle}>Exercise Details</Text>
+              {exercises.map((exercise, index) => (
+                <View key={index} style={styles.exerciseDetail}>
+                  <Text style={styles.exerciseName}>{exercise.name}</Text>
+                  <View style={styles.exerciseStats}>
+                    {exercise.sets !== undefined && (
+                      <Text style={styles.exerciseStat}>
+                        <Text style={styles.statLabel}>Sets: </Text>
+                        <Text>{String(exercise.sets)}</Text>
+                      </Text>
+                    )}
+                    {exercise.reps !== undefined && (
+                      <Text style={styles.exerciseStat}>
+                        <Text style={styles.statLabel}>Reps: </Text>
+                        <Text>{String(exercise.reps)}</Text>
+                      </Text>
+                    )}
+                    {exercise.weight && (
+                      <Text style={styles.exerciseStat}>
+                        <Text style={styles.statLabel}>Weight: </Text>
+                        <Text>{exercise.weight}</Text>
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
+          {/* Engagement */}
+          <View style={styles.engagement}>
+            <TouchableOpacity style={styles.engagementItem}>
+              <Text>❤️ <Text>{likes}</Text></Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.engagementItem}>
+              <Text>💬 <Text>{comments}</Text></Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </View>
+      </TouchableOpacity>
+
+      {/* Edit Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Post</Text>
+            
+            <Text style={styles.inputLabel}>Title</Text>
+            <TextInput
+              style={styles.input}
+              value={editedTitle}
+              onChangeText={setEditedTitle}
+              placeholder="Enter post title"
+            />
+            
+            <Text style={styles.inputLabel}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={editedDescription}
+              onChangeText={setEditedDescription}
+              placeholder="Enter post description"
+              multiline
+              numberOfLines={4}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.modalButton, 
+                  styles.saveButton,
+                  isSubmitting && styles.disabledButton
+                ]} 
+                onPress={handleSaveEdit}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSubmitting ? 'Saving...' : 'Save'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    marginHorizontal: 16,
-    marginVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: 'hidden',
   },
   header: {
-    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
@@ -105,26 +356,33 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#6FA8DC',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   avatarText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
   username: {
+    fontWeight: 'bold',
     fontSize: 16,
-    fontWeight: '600',
   },
   date: {
-    fontSize: 14,
     color: '#666',
+    fontSize: 12,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editButton: {
+    marginRight: 16,
   },
   content: {
-    padding: 12,
+    padding: 16,
   },
   title: {
     fontSize: 18,
@@ -132,9 +390,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   description: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#333',
     marginBottom: 12,
+  },
+  collapsedDescription: {
+    lineHeight: 20,
+  },
+  expandedDescription: {
+    lineHeight: 20,
+  },
+  taggedFriendsContainer: {
+    marginBottom: 12,
+  },
+  taggedWithText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  taggedFriendName: {
+    fontWeight: 'bold',
+    color: '#007AFF',
   },
   exerciseTags: {
     flexDirection: 'row',
@@ -142,30 +417,174 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   tag: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
     marginRight: 8,
     marginBottom: 8,
   },
   tagText: {
-    color: 'white',
-    fontSize: 14,
+    fontSize: 12,
+    color: '#333',
   },
   image: {
     width: '100%',
     height: 200,
-    borderRadius: 10,
+    borderRadius: 8,
     marginBottom: 12,
+  },
+  expandedImage: {
+    height: 250,
+  },
+  expandedDetails: {
+    overflow: 'hidden',
+  },
+  detailsSection: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
+  },
+  summaryContainer: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  summaryText: {
+    marginLeft: 6,
+    fontSize: 14,
+  },
+  taggedFriendsDetails: {
+    marginTop: 8,
+  },
+  taggedFriendDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  friendAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#6FA8DC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  friendAvatarText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  friendName: {
+    fontSize: 14,
+    color: '#333',
+  },
+  exerciseDetail: {
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  exerciseName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  exerciseStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  exerciseStat: {
+    marginRight: 12,
+    fontSize: 14,
+  },
+  statLabel: {
+    color: '#666',
   },
   engagement: {
     flexDirection: 'row',
+    marginTop: 8,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
-    paddingTop: 12,
   },
   engagementItem: {
-    marginRight: 20,
+    marginRight: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    marginRight: 8,
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    marginLeft: 8,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 }); 
