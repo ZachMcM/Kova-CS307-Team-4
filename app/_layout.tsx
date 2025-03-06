@@ -1,3 +1,4 @@
+import { SessionProvider } from "@/components/SessionContext";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -67,12 +68,15 @@ export default function RootLayout() {
   // auto
 
   return (
+    <SessionProvider>
     <QueryClientProvider client={queryClient}>
       <QueryClientProvider client={queryClient}>
-      <GluestackUIProvider mode={(colorScheme ?? "light") as "light" | "dark"}>
-          <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        <GluestackUIProvider
+          mode={(colorScheme ?? "light") as "light" | "dark"}
         >
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" />
@@ -82,11 +86,15 @@ export default function RootLayout() {
             />
               <Stack.Screen name="register" options={{headerShown: false}} />
             <Stack.Screen name="login" options={{headerShown: false}} />
+            <Stack.Screen name="password-recovery" options={{headerShown: false}} />
+            <Stack.Screen name="settings" options={{headerShown: false}} />
+            <Stack.Screen name="unit-tests" options={{headerShown: false}} />
           </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>
         </GluestackUIProvider>
+      </QueryClientProvider>
     </QueryClientProvider>
-    </QueryClientProvider>
+    </SessionProvider>
   );
 }

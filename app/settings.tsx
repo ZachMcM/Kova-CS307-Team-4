@@ -7,9 +7,13 @@ import { Button, ButtonText } from "@/components/ui/button";
 import { useRouter } from "expo-router";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { Heading } from "@/components/ui/heading";
+import { useState, useEffect } from "react";
+import { supabase } from '@/lib/supabase';
+import ExerciseSearchView from '@/components/search-views/ExerciseSearchView';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const [userId, setUserId] = useState<string | null>(null);
 
   const settingsData = [
     {
@@ -32,25 +36,26 @@ export default function SettingsScreen() {
       content: "/app/(tabs)/profile"
     },
     {
-      attribute: "Social profile",
+      attribute: "Debug: Unit Testing",
       type: "banner"
     },
     {
-      attribute: "Display age",
-      type: "privacy-tri",
-      content: "false"
-    },
-    {
-      attribute: "Display weight",
-      type: "privacy-tri",
-      content: "false"
-    },
-    {
-      attribute: "Display bio",
-      type: "privacy-tri",
-      content: "false"
-    },
+      attribute: "Unit testing page",
+      type: "redirect",
+      content: "/app/unit-tests"
+    }
   ];
+
+  useEffect(() => {
+      const fetchUserId = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setUserId(session.user.id);
+        }
+      };
+  
+      fetchUserId();
+    }, []);
 
   return (
     <StaticContainer className = "flex px-6 py-16">
@@ -60,7 +65,11 @@ export default function SettingsScreen() {
             variant = "outline"
             size = "lg"
             action = "primary"
-            onPress={() => router.replace("/(tabs)/profile")}
+            onPress={() => router.replace(`/(tabs)/profiles/${userId}`)}
+            // onPress={() => router.replace({
+            //   pathname: "/(tabs)/profiles/[id]",
+            //   params: { id: userId! }
+            // })}
             className = "p-3"
           >
             <Icon as={ChevronLeftIcon} className = "m-0"></Icon>

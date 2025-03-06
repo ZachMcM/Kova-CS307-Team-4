@@ -1,20 +1,13 @@
-import Tag from "@/components/Tag";
-import { Box } from "@/components/ui/box";
-import {
-  Button,
-  ButtonIcon,
-  ButtonSpinner,
-  ButtonText,
-} from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { useSession } from "@/components/SessionContext";
+import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/toast";
-import { sampleExercises } from "@/sample-data/exercises";
+import { getExercises } from "@/services/exerciseServices";
 import { newTemplate, updateTemplate } from "@/services/templateServices";
 import { showErrorToast } from "@/services/toastServices";
-import { Tables } from "@/types/database.types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
@@ -26,9 +19,10 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "../../ui/form-control";
-import { SearchIcon, TrashIcon } from "../../ui/icon";
+import { Icon, SearchIcon, TrashIcon } from "../../ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "../../ui/input";
 import { VStack } from "../../ui/vstack";
+import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
 
@@ -46,17 +40,26 @@ export default function TemplateForm() {
 
   const router = useRouter();
 
+  const { session } = useSession();
+
+  const { data: allExercises, isPending: exercisesLoading } = useQuery({
+    queryKey: ["exercises"],
+    queryFn: async () => {
+      const exercises = await getExercises();
+      console.log("Exercises", JSON.stringify(exercises));
+      return exercises;
+    },
+  });
+
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
-      // TODO implement db call
       if (values.id) {
-        await updateTemplate(values);
+        await updateTemplate(values, session?.user.user_metadata.profileId);
       } else {
-        await newTemplate(values);
+        await newTemplate(values, session?.user.user_metadata.profileId);
       }
     },
     onSuccess: () => {
-      // TODO redirect to antoher page
       queryClient.invalidateQueries({
         queryKey: ["template", templateId],
       });
@@ -92,35 +95,35 @@ export default function TemplateForm() {
     saveTemplate(values as TemplateFormValues);
   }
 
-  return (
-    <VStack space="4xl">
-      <VStack space="2xl">
-        <Controller
-          control={control}
-          name="name"
-          rules={{ required: true }}
-          render={({ field, fieldState }) => (
-            <FormControl isInvalid={fieldState.invalid} size="md">
-              <FormControlLabel>
-                <FormControlLabelText>Name</FormControlLabelText>
-              </FormControlLabel>
-              <Input>
-                <InputField
-                  placeholder="Enter a template name"
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                />
-              </Input>
-              <FormControlError>
-                <FormControlErrorText>
-                  {fieldState.error?.message}
-                </FormControlErrorText>
-              </FormControlError>
-            </FormControl>
-          )}
-        />
+  return !exercisesLoading ? (
+    allExercises && (
+      <VStack space="4xl">
         <VStack space="xl">
+          <Controller
+            control={control}
+            name="name"
+            rules={{ required: true }}
+            render={({ field, fieldState }) => (
+              <FormControl isInvalid={fieldState.invalid} size="md">
+                <FormControlLabel>
+                  <FormControlLabelText>Name</FormControlLabelText>
+                </FormControlLabel>
+                <Input>
+                  <InputField
+                    placeholder="Enter a template name"
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                </Input>
+                <FormControlError>
+                  <FormControlErrorText>
+                    {fieldState.error?.message}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
+          />
           {/* TODO replace with actual search bar @AreebE */}
           <Input size="md">
             <InputField
@@ -133,15 +136,15 @@ export default function TemplateForm() {
             </InputSlot>
           </Input>
           {exerciseQuery.length != 0 &&
-            sampleExercises
+            allExercises
               .filter(
                 (exercise) =>
-                  (exercise.name
-                    .toLowerCase()
+                  (exercise
+                    .name!.toLowerCase()
                     .includes(exerciseQuery.toLowerCase()) ||
                     exercise.tags.filter((tag) =>
-                      tag.name
-                        .toLowerCase()
+                      tag
+                        .name!.toLowerCase()
                         .includes(exerciseQuery.toLowerCase())
                     ).length != 0) &&
                   !isExerciseAdded(exercise.id)
@@ -152,7 +155,10 @@ export default function TemplateForm() {
                   onPress={() => {
                     setExerciseQuery("");
                     addExercise({
-                      info: exercise,
+                      info: {
+                        name: exercise.name!,
+                        id: exercise.id,
+                      },
                       sets: [
                         {
                           reps: 0,
@@ -163,63 +169,50 @@ export default function TemplateForm() {
                   }}
                   className="flex flex-1"
                 >
-                  <Card variant="outline">
-                    <VStack space="md">
-                      <Heading size="md">{exercise.name}</Heading>
-                      <Box className="flex flex-row flex-wrap gap-2">
-                        {exercise.tags.map((tag: Tables<"tag">) => (
-                          <Tag key={tag.id} tag={tag} />
-                        ))}
-                      </Box>
-                    </VStack>
-                  </Card>
+                  <ExerciseCard exercise={exercise} />
                 </Pressable>
               ))}
+        </VStack>
+        <VStack space="4xl">
           {exercises.map((exercise, i) => (
             <VStack space="md" key={exercise.info.id}>
               <HStack className="justify-between items-center">
                 <Heading className="text-kova-500">
                   {exercise.info.name}
                 </Heading>
-                <Button
-                  size="xs"
-                  onPress={() => {
-                    removeExercise(i);
-                  }}
-                  variant="outline"
-                  action="primary"
-                  className="border-0"
-                >
-                  <ButtonIcon as={TrashIcon} size="lg" color="red" />
-                </Button>
+                <Pressable onPress={() => removeExercise(i)}>
+                  <Icon as={TrashIcon} size="xl" color="red" />
+                </Pressable>
               </HStack>
               <ExerciseDataForm key={exercise.info.id} index={i} />
             </VStack>
           ))}
-          <Controller
-            control={control}
-            name="data"
-            rules={{ required: true }}
-            render={({ fieldState }) => (
-              <FormControl isInvalid={fieldState.invalid} size="md">
-                <FormControlError>
-                  <FormControlErrorText>
-                    {fieldState.error?.message ||
-                      formState.errors.data?.message ||
-                      formState.errors.data?.root?.message ||
-                      formState.errors.root?.message ||
-                      "Invalid exercises"}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
-            )}
-          />
         </VStack>
+        <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
+          <ButtonText>Save Template</ButtonText>
+          {isPending && <ButtonSpinner color={"FFF"} />}
+        </Button>
+        <Controller
+          control={control}
+          name="data"
+          rules={{ required: true }}
+          render={({ fieldState }) => (
+            <FormControl isInvalid={fieldState.invalid} size="md">
+              <FormControlError>
+                <FormControlErrorText>
+                  {fieldState.error?.message ||
+                    formState.errors.data?.message ||
+                    formState.errors.data?.root?.message ||
+                    formState.errors.root?.message ||
+                    "Invalid exercises"}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
       </VStack>
-      <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
-        <ButtonText>Save Template</ButtonText>
-        {isPending && <ButtonSpinner color={"FFF"} />}
-      </Button>
-    </VStack>
+    )
+  ) : (
+    <Spinner />
   );
 }

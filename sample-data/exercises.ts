@@ -1,4 +1,6 @@
-export const sampleExercises = [
+import { ExtendedExercise } from "@/types/extended-types";
+
+export const sampleExercises: ExtendedExercise[] = [
   {
     id: "1234",
     name: "Chest Flies",
