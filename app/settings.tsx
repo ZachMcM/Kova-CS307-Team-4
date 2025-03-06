@@ -36,24 +36,14 @@ export default function SettingsScreen() {
       content: "/app/(tabs)/profile"
     },
     {
-      attribute: "Social profile",
+      attribute: "Debug: Unit Testing",
       type: "banner"
     },
     {
-      attribute: "Display age",
-      type: "privacy-tri",
-      content: "false"
-    },
-    {
-      attribute: "Display weight",
-      type: "privacy-tri",
-      content: "false"
-    },
-    {
-      attribute: "Display bio",
-      type: "privacy-tri",
-      content: "false"
-    },
+      attribute: "Unit testing page",
+      type: "redirect",
+      content: "/app/unit-tests"
+    }
   ];
 
   useEffect(() => {
@@ -75,10 +65,11 @@ export default function SettingsScreen() {
             variant = "outline"
             size = "lg"
             action = "primary"
-            onPress={() => router.replace({
-              pathname: "/(tabs)/profiles/[id]",
-              params: { id: userId! }
-            })}
+            onPress={() => router.replace(`/(tabs)/profiles/${userId}`)}
+            // onPress={() => router.replace({
+            //   pathname: "/(tabs)/profiles/[id]",
+            //   params: { id: userId! }
+            // })}
             className = "p-3"
           >
             <Icon as={ChevronLeftIcon} className = "m-0"></Icon>
