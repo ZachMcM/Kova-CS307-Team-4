@@ -5,96 +5,202 @@ import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { WorkoutPost } from "@/components/WorkoutPost";
-import {
-  fetchFeed,
-  resetFeed,
-  updateFeed,
-} from "@/services/asyncStorageServices";
-import { showErrorToast } from "@/services/toastServices";
-import { PostAsyncStorage } from "@/types/post.types";
+import { supabase } from "@/lib/supabase";
+import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 
-// Mock data for the feed
-// type Post = {
-//   id: string;
-//   username: string;
-//   date: string;
-//   title: string;
-//   description: string;
-//   exercises: {
-//       name: string;
-//   }[];
-//   likes: number;
-//   comments: number;
-//   imageUrl: string;
-// }
+// Define the post type based on what we get from Supabase
+type Post = {
+  id: string;
+  profileId: string;
+  title: string;
+  description: string;
+  location: string | null;
+  isPublic: boolean;
+  imageUrl: string | null;
+  workoutData: {
+    calories?: string;
+    duration?: string;
+    exercises: Array<
+      | {
+          info: {
+            id: string;
+            name: string;
+          };
+          sets: Array<any>;
+        }
+      | {
+          name: string;
+          reps?: number;
+          sets?: number;
+          weight?: string;
+        }
+    >;
+  } | null;
+  taggedFriends?: string[] | null;
+  taggedFriendsData?: Array<{
+    userId: string;
+    name: string;
+    avatar?: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+  profile?: {
+    username: string;
+    userId: string;
+  };
+};
 
-// const mockPosts = [
-//   {
-//     id: '1',
-//     username: 'fitness_enthusiast',
-//     date: 'May 15, 2023',
-//     title: 'Morning Cardio Session',
-//     description: 'Started my day with an intense 30-minute HIIT session. Feeling energized!',
-//     exercises: [
-//       { name: 'Burpees' },
-//       { name: 'Mountain Climbers' },
-//       { name: 'Jumping Jacks' }
-//     ],
-//     likes: 24,
-//     comments: 5,
-//     imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'
-//   },
-//   {
-//     id: '2',
-//     username: 'strength_trainer',
-//     date: 'May 14, 2023',
-//     title: 'Leg Day Completed',
-//     description: 'Pushed through a challenging leg workout today. My quads are on fire!',
-//     exercises: [
-//       { name: 'Squats' },
-//       { name: 'Deadlifts' },
-//       { name: 'Lunges' }
-//     ],
-//     likes: 42,
-//     comments: 8,
-//     imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'
-//   },
-//   {
-//     id: '3',
-//     username: 'yoga_master',
-//     date: 'May 13, 2023',
-//     title: 'Peaceful Yoga Flow',
-//     description: 'Found my center with a 60-minute yoga session. Perfect way to end the week.',
-//     exercises: [
-//       { name: 'Downward Dog' },
-//       { name: 'Warrior Pose' },
-//       { name: 'Child\'s Pose' }
-//     ],
-//     likes: 36,
-//     comments: 4,
-//     imageUrl: 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'
-//   }
-// ];
+// Helper function to format date
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+};
 
 export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const postsPerPage = 4;
+
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { signOutUser, sessionLoading, setSessionLoading } = useSession();
+  const { signOutUser, sessionLoading, setSessionLoading, session } = useSession();
+  const userId = session?.user?.id;
+
+  // Fetch initial posts
+  const fetchPosts = async (pageNumber = 0, append = false) => {
+    try {
+      setIsLoading(!append);
+      if (append) setLoadingMore(true);
+
+      // First get the current user's profile
+      if (!userId) {
+        throw new Error("User not logged in");
+      }
+
+      // Get the user's profile and the profiles they follow
+      const { data: profileData } = await supabase
+        .from("profile")
+        .select("id")
+        .eq("userId", userId)
+        .single();
+
+      if (!profileData) {
+        throw new Error("Profile not found");
+      }
+
+      // Get the IDs of profiles the user follows
+      const { data: followingData } = await supabase
+        .from("followingRel")
+        .select("targetId")
+        .eq("sourceId", userId);
+
+      const followingUserIds = followingData?.map(item => item.targetId) || [];
+      
+      // Add the user's own ID to see their own posts
+      followingUserIds.push(userId);
+
+      // Get the profile IDs from the user IDs
+      const { data: followingProfiles } = await supabase
+        .from("profile")
+        .select("id")
+        .in("userId", followingUserIds);
+
+      const followingProfileIds = followingProfiles?.map(profile => profile.id) || [];
+
+      // Fetch posts from followed profiles and public posts with pagination
+      const from = pageNumber * postsPerPage;
+      const to = from + postsPerPage - 1;
+
+      const { data: postsData, error: postsError } = await supabase
+        .from("post")
+        .select(`
+          *,
+          profile:profileId (
+            username,
+            userId
+          )
+        `)
+        .in("profileId", followingProfileIds)
+        .eq("isPublic", true)
+        .order("createdAt", { ascending: false })
+        .range(from, to);
+
+      if (postsError) {
+        throw postsError;
+      }
+
+      // Check if we have more posts to load
+      setHasMore(postsData.length === postsPerPage);
+      
+      // Fetch tagged friends for each post
+      const postsWithTaggedFriends = await Promise.all(postsData.map(async (post) => {
+        if (post.taggedFriends && post.taggedFriends.length > 0) {
+          const { data: friendsData, error: friendsError } = await supabase
+            .from('profile')
+            .select('userId, name, avatar')
+            .in('userId', post.taggedFriends);
+            
+          if (!friendsError && friendsData) {
+            return {
+              ...post,
+              taggedFriendsData: friendsData
+            };
+          }
+        }
+        return post;
+      }));
+      
+      // Update posts state
+      if (append) {
+        setPosts(prevPosts => [...prevPosts, ...postsWithTaggedFriends]);
+      } else {
+        setPosts(postsWithTaggedFriends);
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching posts:", err);
+      setError(err instanceof Error ? err : new Error('Unknown error occurred'));
+    } finally {
+      setIsLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // Load initial posts
+  React.useEffect(() => {
+    if (session?.user?.id) {
+      fetchPosts();
+    }
+  }, [session?.user?.id]);
+
+  const loadMorePosts = () => {
+    if (!loadingMore && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchPosts(nextPage, true);
+    }
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await resetFeed();
-    queryClient.invalidateQueries({ queryKey: ["feed-data"] });
-    // In a real app, you would fetch new data here
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    setPage(0);
+    await fetchPosts(0);
+    setRefreshing(false);
   }, []);
 
   const handleLogout = () => {
@@ -111,22 +217,45 @@ export default function FeedScreen() {
       });
   };
 
-  const { data: feed_data } = useQuery({
-    queryKey: ["feed-data"],
-    queryFn: async () => {
-      const feed_data = await fetchFeed();
-      console.log(feed_data);
-      return feed_data;
-    },
-  });
+  // Function to update a post
+  const updatePost = async (postId: string, title: string, description: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('post')
+        .update({ 
+          title, 
+          description,
+          updatedAt: new Date().toISOString()
+        })
+        .eq('id', postId)
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update the post in the local state
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { ...post, title, description, updatedAt: new Date().toISOString() } 
+            : post
+        )
+      );
+      
+      showSuccessToast(toast, 'Post updated successfully');
+      return data;
+    } catch (error) {
+      console.error('Error updating post:', error);
+      showErrorToast(toast, 'Failed to update post');
+      throw error;
+    }
+  };
 
-  const { mutate: load_data } = useMutation({
-    mutationFn: async () => {
-      await fetchFeed();
-      await updateFeed();
-      queryClient.invalidateQueries({ queryKey: ["feed-data"] });
-    },
-  });
+  // Check if a post belongs to the current user
+  const isOwnPost = (post: Post) => {
+    return post.profile?.userId === userId;
+  };
 
   return (
     <ScrollView
@@ -150,32 +279,78 @@ export default function FeedScreen() {
           </Button>
         </VStack>
 
-        {feed_data != null ? (
-          JSON.parse(feed_data).map((post: PostAsyncStorage) => (
-            <WorkoutPost
-              key={post.id}
-              username={post.username}
-              date={post.date}
-              title={post.title}
-              description={post.description}
-              exercises={(post.exerciseData || []).map((exerciseData) => ({
-                name: exerciseData.info.name,
-              }))}
-              likes={post.likes}
-              comments={post.comments}
-              imageUrl={post.imageUrl}
-            />
-          ))
-        ) : (
-          <></>
+        {isLoading && !refreshing && (
+          <Text style={styles.statusMessage}>Loading posts...</Text>
         )}
-        <Button
-          onPress={() => {
-            load_data();
-          }}
-        >
-          <ButtonText>Load more posts</ButtonText>
-        </Button>
+
+        {error && (
+          <Text style={styles.statusMessage}>Error loading posts. Pull down to refresh.</Text>
+        )}
+
+        {posts && posts.length === 0 && !isLoading && (
+          <Text style={styles.statusMessage}>No posts found. Follow some users to see their posts!</Text>
+        )}
+
+        {posts && posts.map((post) => (
+          <WorkoutPost
+            key={post.id}
+            postId={post.id}
+            username={post.profile?.username || "Unknown user"}
+            date={formatDate(post.createdAt)}
+            title={post.title || ""}
+            description={post.description || ""}
+            exercises={
+              post.workoutData?.exercises ? 
+                post.workoutData.exercises.map(exercise => {
+                  // Check if this is the nested structure with info.name
+                  if ('info' in exercise && exercise.info && exercise.info.name) {
+                    return { 
+                      name: exercise.info.name,
+                      // Add any available set data if present
+                      ...(exercise.sets && exercise.sets.length > 0 ? {
+                        sets: exercise.sets.length,
+                        // If there's detailed set data, we could extract reps and weight
+                        // This is just an example assuming sets might have reps and weight
+                        reps: exercise.sets[0]?.reps,
+                        weight: exercise.sets[0]?.weight ? String(exercise.sets[0].weight) : undefined
+                      } : {})
+                    };
+                  }
+                  // Check if this is the direct structure with name
+                  else if ('name' in exercise) {
+                    return { 
+                      name: exercise.name,
+                      sets: exercise.sets,
+                      reps: exercise.reps,
+                      weight: exercise.weight ? String(exercise.weight) : undefined
+                    };
+                  }
+                  // Fallback
+                  return { name: 'Unknown exercise' };
+                })
+              : []
+            }
+            workoutDuration={post.workoutData?.duration || undefined}
+            workoutCalories={post.workoutData?.calories || undefined}
+            likes={10} // Default value since we don't have real likes count yet
+            comments={5} // Default value since we don't have real comments count yet
+            imageUrl={post.imageUrl || undefined}
+            isOwnPost={isOwnPost(post)}
+            onUpdatePost={updatePost}
+            taggedFriends={post.taggedFriendsData}
+          />
+        ))}
+
+        {posts && posts.length > 0 && hasMore && (
+          <Button
+            onPress={loadMorePosts}
+            style={styles.loadMoreButton}
+            disabled={loadingMore}
+          >
+            <ButtonText>{loadingMore ? 'Loading...' : 'Load more posts'}</ButtonText>
+            {loadingMore && <ButtonSpinner />}
+          </Button>
+        )}
       </Container>
     </ScrollView>
   );
@@ -197,5 +372,15 @@ const styles = StyleSheet.create({
   logoutContainer: {
     marginHorizontal: 16,
     marginBottom: 16,
+  },
+  statusMessage: {
+    textAlign: "center",
+    marginVertical: 20,
+    paddingHorizontal: 16,
+    color: "#666",
+  },
+  loadMoreButton: {
+    marginVertical: 16,
+    marginHorizontal: 16,
   },
 });
