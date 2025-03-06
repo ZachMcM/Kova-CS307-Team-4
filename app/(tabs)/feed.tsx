@@ -12,7 +12,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 
-// Define the post type based on what we get from Supabase
 type Post = {
   id: string;
   profileId: string;
@@ -54,7 +53,6 @@ type Post = {
   };
 };
 
-// Helper function to format date
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { 
@@ -80,18 +78,15 @@ export default function FeedScreen() {
   const { signOutUser, sessionLoading, setSessionLoading, session } = useSession();
   const userId = session?.user?.id;
 
-  // Fetch initial posts
   const fetchPosts = async (pageNumber = 0, append = false) => {
     try {
       setIsLoading(!append);
       if (append) setLoadingMore(true);
 
-      // First get the current user's profile
       if (!userId) {
         throw new Error("User not logged in");
       }
 
-      // Get the user's profile and the profiles they follow
       const { data: profileData } = await supabase
         .from("profile")
         .select("id")
@@ -102,7 +97,6 @@ export default function FeedScreen() {
         throw new Error("Profile not found");
       }
 
-      // Get the IDs of profiles the user follows
       const { data: followingData } = await supabase
         .from("followingRel")
         .select("targetId")
@@ -110,10 +104,8 @@ export default function FeedScreen() {
 
       const followingUserIds = followingData?.map(item => item.targetId) || [];
       
-      // Add the user's own ID to see their own posts
       followingUserIds.push(userId);
 
-      // Get the profile IDs from the user IDs
       const { data: followingProfiles } = await supabase
         .from("profile")
         .select("id")
@@ -121,7 +113,6 @@ export default function FeedScreen() {
 
       const followingProfileIds = followingProfiles?.map(profile => profile.id) || [];
 
-      // Fetch posts from followed profiles and public posts with pagination
       const from = pageNumber * postsPerPage;
       const to = from + postsPerPage - 1;
 
@@ -143,10 +134,8 @@ export default function FeedScreen() {
         throw postsError;
       }
 
-      // Check if we have more posts to load
       setHasMore(postsData.length === postsPerPage);
       
-      // Fetch tagged friends for each post
       const postsWithTaggedFriends = await Promise.all(postsData.map(async (post) => {
         if (post.taggedFriends && post.taggedFriends.length > 0) {
           const { data: friendsData, error: friendsError } = await supabase
@@ -164,7 +153,6 @@ export default function FeedScreen() {
         return post;
       }));
       
-      // Update posts state
       if (append) {
         setPosts(prevPosts => [...prevPosts, ...postsWithTaggedFriends]);
       } else {
@@ -181,7 +169,6 @@ export default function FeedScreen() {
     }
   };
 
-  // Load initial posts
   React.useEffect(() => {
     if (session?.user?.id) {
       fetchPosts();
@@ -217,7 +204,6 @@ export default function FeedScreen() {
       });
   };
 
-  // Function to update a post
   const updatePost = async (postId: string, title: string, description: string) => {
     try {
       const { data, error } = await supabase
@@ -234,7 +220,6 @@ export default function FeedScreen() {
         throw error;
       }
       
-      // Update the post in the local state
       setPosts(prevPosts => 
         prevPosts.map(post => 
           post.id === postId 
@@ -252,7 +237,6 @@ export default function FeedScreen() {
     }
   };
 
-  // Check if a post belongs to the current user
   const isOwnPost = (post: Post) => {
     return post.profile?.userId === userId;
   };
@@ -302,21 +286,16 @@ export default function FeedScreen() {
             exercises={
               post.workoutData?.exercises ? 
                 post.workoutData.exercises.map(exercise => {
-                  // Check if this is the nested structure with info.name
                   if ('info' in exercise && exercise.info && exercise.info.name) {
                     return { 
                       name: exercise.info.name,
-                      // Add any available set data if present
                       ...(exercise.sets && exercise.sets.length > 0 ? {
                         sets: exercise.sets.length,
-                        // If there's detailed set data, we could extract reps and weight
-                        // This is just an example assuming sets might have reps and weight
                         reps: exercise.sets[0]?.reps,
                         weight: exercise.sets[0]?.weight ? String(exercise.sets[0].weight) : undefined
                       } : {})
                     };
                   }
-                  // Check if this is the direct structure with name
                   else if ('name' in exercise) {
                     return { 
                       name: exercise.name,
@@ -325,15 +304,14 @@ export default function FeedScreen() {
                       weight: exercise.weight ? String(exercise.weight) : undefined
                     };
                   }
-                  // Fallback
                   return { name: 'Unknown exercise' };
                 })
               : []
             }
             workoutDuration={post.workoutData?.duration || undefined}
             workoutCalories={post.workoutData?.calories || undefined}
-            likes={10} // Default value since we don't have real likes count yet
-            comments={5} // Default value since we don't have real comments count yet
+            likes={10}
+            comments={5}
             imageUrl={post.imageUrl || undefined}
             isOwnPost={isOwnPost(post)}
             onUpdatePost={updatePost}

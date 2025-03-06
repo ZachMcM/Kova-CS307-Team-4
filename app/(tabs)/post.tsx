@@ -18,7 +18,6 @@ import { Checkbox, CheckboxIndicator, CheckboxLabel, CheckboxIcon } from '@/comp
 import { CheckIcon } from '@/components/ui/icon';
 import { Avatar, AvatarImage, AvatarFallbackText } from '@/components/ui/avatar';
 
-// Replace mock workout data with empty default data
 const defaultWorkoutData = {
   duration: '0 minutes',
   calories: '0 kcal',
@@ -39,14 +38,11 @@ export default function PostScreen() {
   const [titleError, setTitleError] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
   
-  // Get the session from the SessionContext
   const { session } = useSession();
   const userId = session?.user?.id || null;
   
-  // Get workout data from params if available
   const params = useLocalSearchParams();
   
-  // Fetch user's friends
   const { data: friends, isLoading: isLoadingFriends } = useQuery({
     queryKey: ["friends", userId],
     queryFn: async () => {
@@ -57,14 +53,9 @@ export default function PostScreen() {
   });
 
   useEffect(() => {
-    console.log("Post screen mounted/updated");
-    console.log("Session:", session);
-    console.log("User ID from session:", userId);
-    
-    // Additional check to verify session directly from Supabase
+
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
-      console.log("Direct Supabase session check:", data.session);
       if (data.session) {
         console.log("Direct Supabase user ID:", data.session.user.id);
       } else {
@@ -74,42 +65,30 @@ export default function PostScreen() {
     
     checkSession();
     
-    // Check for workout data in params
     const workoutDataParam = params.workoutData || (params.params && JSON.parse(params.params as string).workoutData);
     
     if (workoutDataParam) {
-      console.log("Received workout data:", workoutDataParam);
       try {
         const parsedData = JSON.parse(workoutDataParam as string);
-        console.log("Parsed workout data:", parsedData);
-        
-        // Create a workout data object with the structure expected by the UI
         const processedWorkoutData = {
           duration: parsedData.duration || '0 minutes',
           calories: '0 kcal',
           exercises: []
         };
         
-        // Process stats for calories if available
         if (parsedData.stats) {
-          // Calculate approximate calories based on total reps
-          // This is a simple estimation, can be refined later
           if (typeof parsedData.stats.totalReps === 'number') {
             processedWorkoutData.calories = `${Math.round(parsedData.stats.totalReps * 0.5)} kcal`;
           }
         }
         
-        // Process exercises if they exist
         if (parsedData.exercises && Array.isArray(parsedData.exercises)) {
           processedWorkoutData.exercises = parsedData.exercises.map((exercise: any) => {
-            // Calculate total reps across all sets
             let totalReps = 0;
             let lastWeight = 0;
             
             if (Array.isArray(exercise.sets)) {
-              // Sum up all reps from all sets
               totalReps = exercise.sets.reduce((acc: number, set: any) => {
-                // Keep track of the last weight used for this exercise
                 if (set.weight) lastWeight = set.weight;
                 return acc + (set.reps || 0);
               }, 0);
@@ -124,11 +103,9 @@ export default function PostScreen() {
           });
         }
         
-        // Set the processed workout data
         setWorkoutData(processedWorkoutData);
         setIncludeWorkoutData(true);
         
-        // Auto-generate a title based on the workout
         if (parsedData.exercises && Array.isArray(parsedData.exercises) && parsedData.exercises.length > 0) {
           try {
             const exerciseNames = parsedData.exercises
@@ -150,17 +127,14 @@ export default function PostScreen() {
         }
       } catch (error) {
         console.error('Error parsing workout data:', error);
-        // Set empty workout data if no workout data is provided
         setWorkoutData(defaultWorkoutData);
         setTitle('My Workout');
       }
     } else {
-      // Set empty workout data if no workout data is provided
       setWorkoutData(defaultWorkoutData);
     }
   }, [session, userId, params.workoutData]);
 
-  // Function to toggle a friend in the tagged list
   const toggleFriend = (friendId: string) => {
     setTaggedFriends(prev => {
       if (prev.includes(friendId)) {
@@ -171,13 +145,11 @@ export default function PostScreen() {
     });
   };
 
-  // Function to validate text for illegal characters
   const validateText = (text: string): boolean => {
     const illegalCharactersRegex = /[<>{}[\]\\^~|`]/g;
     return !illegalCharactersRegex.test(text);
   };
 
-  // Update title with validation
   const handleTitleChange = (text: string) => {
     setTitle(text);
     if (!validateText(text)) {
@@ -187,7 +159,6 @@ export default function PostScreen() {
     }
   };
 
-  // Update description with validation
   const handleDescriptionChange = (text: string) => {
     setDescription(text);
     if (!validateText(text)) {
@@ -197,12 +168,9 @@ export default function PostScreen() {
     }
   };
 
-  // Function to handle post submission
   const handleSubmit = async () => {
-    // Prevent multiple submissions
     if (isSubmitting) return;
     
-    // Validate title and description for illegal characters
     const illegalCharactersRegex = /[<>{}[\]\\^~|`]/g;
     
     if (illegalCharactersRegex.test(title)) {
@@ -221,7 +189,6 @@ export default function PostScreen() {
       return;
     }
     
-    // Check if title is empty
     if (!title.trim()) {
       Alert.alert(
         "Missing Title",
@@ -234,12 +201,10 @@ export default function PostScreen() {
     
     try {
       console.log("User ID from session:", userId);
-      // Get the user's profile ID from the session
       if (!userId) {
         throw new Error('You must be logged in to create a post');
       }
     
-      // Fetch the profile ID from the profile table using userId
       const { data: profileData, error: profileError } = await supabase
         .from("profile")
         .select("id")
@@ -256,9 +221,7 @@ export default function PostScreen() {
       }
       
       const profileId = profileData.id;
-      console.log("Retrieved profile ID:", profileId);
       
-      // Prepare the post data
       const postData = {
         profileId: profileId,
         title,
@@ -271,10 +234,7 @@ export default function PostScreen() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
-      console.log('Attempting to save post data:', postData);
 
-      // Make the actual API call to save the post
       const { data, error } = await supabase
         .from('post')
         .insert(postData)
@@ -287,7 +247,6 @@ export default function PostScreen() {
       
       console.log('Post created successfully:', data);
 
-      // Show success message
       Alert.alert(
         "Post Created",
         "Your workout has been posted successfully!",
@@ -295,14 +254,12 @@ export default function PostScreen() {
           {
             text: "OK",
             onPress: () => {
-              // Navigate back to feed only after user acknowledges
               router.push('/(tabs)/feed');
             }
           }
         ]
       );
       
-      // Reset form
       setTitle('');
       setDescription('');
       setLocation('');
@@ -313,7 +270,6 @@ export default function PostScreen() {
       
     } catch (error: any) {
       console.error('Error creating post:', error);
-      // Show detailed error message
       Alert.alert(
         "Error",
         `Failed to create post: ${error.message || 'Unknown error'}`
@@ -323,7 +279,6 @@ export default function PostScreen() {
     }
   };
 
-  // Filter friends based on search
   const filteredFriends = friends?.filter(friend => 
     friend.name.toLowerCase().includes(friendSearch.toLowerCase())
   ) || [];
@@ -336,7 +291,6 @@ export default function PostScreen() {
         </View>
 
         <VStack space="md" style={styles.formContainer}>
-          {/* Title Input */}
           <VStack space="xs">
             <Text size="sm" bold>Title</Text>
             <Input variant="outline" isInvalid={!!titleError}>
@@ -349,7 +303,6 @@ export default function PostScreen() {
             {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
           </VStack>
 
-          {/* Description Input */}
           <VStack space="xs">
             <Text size="sm" bold>Description</Text>
             <Textarea isInvalid={!!descriptionError}>
@@ -362,7 +315,6 @@ export default function PostScreen() {
             {descriptionError ? <Text style={styles.errorText}>{descriptionError}</Text> : null}
           </VStack>
 
-          {/* Workout Data Toggle */}
           <VStack space="xs">
             <HStack style={styles.toggleContainer} space="md">
               <Text size="sm" bold>Include Workout Data</Text>
@@ -374,7 +326,6 @@ export default function PostScreen() {
             </HStack>
           </VStack>
 
-          {/* Workout Data Display (if toggled on) */}
           {includeWorkoutData && (
             <View style={styles.workoutDataContainer}>
               <Text size="sm" bold style={styles.sectionTitle}>Workout Summary</Text>
@@ -400,7 +351,6 @@ export default function PostScreen() {
             </View>
           )}
 
-          {/* Tag Friends Section */}
           <VStack space="xs">
             <HStack style={styles.toggleContainer} space="md">
               <Text size="sm" bold>Tag Friends</Text>
@@ -413,7 +363,6 @@ export default function PostScreen() {
               </Button>
             </HStack>
             
-            {/* Display selected friends */}
             {taggedFriends.length > 0 && (
               <HStack style={styles.selectedFriendsContainer} space="sm" className="flex-wrap">
                 {taggedFriends.map(friendId => {
@@ -437,7 +386,6 @@ export default function PostScreen() {
               </HStack>
             )}
             
-            {/* Friend selector */}
             {showFriendSelector && (
               <VStack style={styles.friendSelectorContainer} space="sm">
                 <Input variant="outline">
@@ -481,7 +429,6 @@ export default function PostScreen() {
             )}
           </VStack>
 
-          {/* Location Input */}
           <VStack space="xs">
             <Text size="sm" bold>Location</Text>
             <Input variant="outline">
@@ -492,8 +439,6 @@ export default function PostScreen() {
               />
             </Input>
           </VStack>
-
-          {/* Public/Private Toggle */}
           <VStack space="xs">
             <HStack style={styles.toggleContainer} space="md">
               <Text size="sm" bold>Make Post Public</Text>
@@ -510,7 +455,6 @@ export default function PostScreen() {
             </Text>
           </VStack>
 
-          {/* Submit Button */}
           <Button
             size="lg"
             action="kova"
