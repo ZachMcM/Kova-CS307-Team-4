@@ -1,16 +1,22 @@
 import { templatesToSearch } from "@/types/searcher-types";
 import { Workout } from "@/types/workout-types";
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import SearchView from "./skeletons/SearchView";
 import { Card } from "../ui/card";
+import { Text } from "../ui/text";
+import { VStack } from "../ui/vstack";
 
-export default function FollowerSearchView({ data, selectionCallback, displayGetter} : 
-        { data: Workout[], selectionCallback: (id: string) => void, displayGetter: (id:string) => View}){
+export default function FollowerSearchView({ data, selectionCallback} : 
+        { data: Workout[], selectionCallback: (id: string) => void}){
     let items = templatesToSearch(data);
     return SearchView(items, selectionCallback, (id) => {
-        for (let i = 0; i < data.length; i++) {
-            if (data[i].templateId = id) {
-                
+        for (const element of data) {
+            if (element.templateId == id) {
+                return (<TouchableOpacity onPress={() => {selectionCallback(element.templateId);}}>
+                            <VStack>
+                                <Text>{element.templateName}</Text>
+                            </VStack>
+                        </TouchableOpacity>);
             }
         }
         return (<Card></Card>);

@@ -106,7 +106,7 @@ function createSearchTaggedItem(name: string,
  * @param terms -- the terms to build the word counter from.
  * @returns a WordCounter
  */
-export function createWordCounter(terms: string[]): WordCounter {
+export function createWordCounter(terms: SearchItem[]): WordCounter {
     let counter = {frequencies: new Map<string, number>(),
         totalItems: 0, 
         getInverseFrequency: (name: string) => {
@@ -116,7 +116,7 @@ export function createWordCounter(terms: string[]): WordCounter {
             return counter.totalItems - counter.frequencies.get(name)!;
         }};
     terms.forEach((term) => {
-        let words = term.split(" ");
+        let words = term.name.split(" ");
         let wordsPresent = new Set<string>();
         counter.totalItems++;
         words.forEach((word) => {
