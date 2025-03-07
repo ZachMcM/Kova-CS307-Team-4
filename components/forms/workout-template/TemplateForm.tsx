@@ -33,7 +33,7 @@ export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
-  const { control, handleSubmit, watch, formState } = useTemplateForm();
+  const { control, handleSubmit, watch, formState, reset } = useTemplateForm();
 
   const templateId = watch("id");
 
@@ -94,6 +94,11 @@ export default function TemplateForm() {
   }
 
   async function onSubmit(values: FieldValues) {
+    reset({
+      name: "",
+      id: "",
+      data: undefined
+    });
     saveTemplate(values as TemplateFormValues);
   }
 

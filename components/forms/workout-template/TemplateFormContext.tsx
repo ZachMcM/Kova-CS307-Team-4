@@ -20,6 +20,8 @@ export function TemplateFormProvider({
   children: ReactNode;
   template?: ExtendedTemplateWithCreator;
 }) {
+  console.log(template)
+
   const form = useForm<TemplateFormValues>({
     resolver: zodResolver(templateFormSchema),
     defaultValues:
@@ -40,12 +42,20 @@ export function TemplateFormProvider({
 
   // Reset form when template changes
   useEffect(() => {
-    if (template) {
+    if (template?.data && template.data.length > 0) {
       form.reset({
-        name: template.name || "",
-        id: template.id || "",
+        name: template.name!,
+        id: template.id,
         data: template.data,
       });
+    } else {
+      form.reset(
+        {
+          name: "",
+          id: null,
+          data: [],
+        }
+      )
     }
   }, [template, pathname]);
 

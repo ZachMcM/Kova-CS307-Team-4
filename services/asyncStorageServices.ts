@@ -52,7 +52,7 @@ export async function setWorkoutEndTime(endTime: number) {
 // clears the workout once its finished
 
 export async function clearWorkout() {
-  await AsyncStorage.clear()
+  await AsyncStorage.setItem("live-workout", "")
 }
 
 const mockPosts = [
