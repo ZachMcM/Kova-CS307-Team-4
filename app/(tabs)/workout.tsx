@@ -70,15 +70,7 @@ export default function Workout() {
               .map((_, i) => <TemplateCardSkeleton key={i} />)
           : templates &&
             templates
-              .sort((a: ExtendedTemplateWithCreator, b: ExtendedTemplateWithCreator) => {
-                let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
-                let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
-                let diff = compareToQuery(templateQuery, bSearch,
-                  wordCounter!) 
-                    - compareToQuery(templateQuery, aSearch,
-                      wordCounter!);
-                return diff;
-              })
+              .filter(template => template.name?.includes(templateQuery))
               .map((template) => (
                 <TemplateCard key={template.id} template={template} />
               ))}
@@ -95,3 +87,14 @@ export default function Workout() {
     </Container>
   );
 }
+
+/* Areeb unfortunately this code is not working
+.sort((a: ExtendedTemplateWithCreator, b: ExtendedTemplateWithCreator) => {
+  let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
+  let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
+  let diff = compareToQuery(templateQuery, bSearch,
+    wordCounter!) 
+      - compareToQuery(templateQuery, aSearch,
+        wordCounter!);
+  return diff;
+}) */
