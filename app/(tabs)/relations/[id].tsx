@@ -65,35 +65,35 @@ export default function RelationsView() {
 
   const handleFollowBack = async (relation: any) => {
     try {
-      setVisible(false);
+      //setVisible(false);
       await followUser(id as string, relation.userId);
       router.replace(`/relations/${id}?type=followers`);
       showFollowToast(toast, relation.name, true);
       queryClient.invalidateQueries({ queryKey: ["following", id as string] });
       queryClient.invalidateQueries({ queryKey: ["friends", id as string] });
       queryClient.invalidateQueries({ queryKey: ["profile", id as string] });
-      setVisible(true);
+      //setVisible(true);
     } catch (error) {
       console.error("Failed to follow back:", error);
       showErrorToast(toast, "Failed to follow user");
-      setVisible(true);
+      //setVisible(true);
     }
   };
 
   const handleUnfollow = async (relation: any) => {
     try {
-      setVisible(false);
+      //setVisible(false);
       await unfollowUser(id as string, relation.userId);
       router.replace(`/relations/${id}?type=following`);
       showFollowToast(toast, relation.name, false);
       queryClient.invalidateQueries({ queryKey: ["following", id as string] });
       queryClient.invalidateQueries({ queryKey: ["friends", id as string] });
       queryClient.invalidateQueries({ queryKey: ["profile", id as string] });
-      setVisible(true);
+      //setVisible(true);
     } catch (error) {
       console.error("Failed to unfollow:", error);
       showErrorToast(toast, "Failed to unfollow user");
-      setVisible(true);
+      //setVisible(true);
     }
   };
 
