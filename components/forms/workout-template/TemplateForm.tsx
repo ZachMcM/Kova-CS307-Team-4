@@ -96,6 +96,7 @@ export default function TemplateForm() {
   async function onSubmit(values: FieldValues) {
     saveTemplate(values as TemplateFormValues);
   }
+  
   let searchItems = undefined;
   let wordCounter = undefined;
   let tagCounter = undefined;
