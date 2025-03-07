@@ -10,7 +10,8 @@
     "web": "DARK_MODE=media expo start --web",
     "test": "jest --watchAll",
     "test-coverage": "jest --coverage",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "clear-async": "npx expo start --ios && node scripts/reset-async-storage.js"
   },
   "jest": {
     "preset": "jest-expo",
