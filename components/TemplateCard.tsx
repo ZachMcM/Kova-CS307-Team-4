@@ -14,6 +14,7 @@ import { Menu, MenuItem, MenuItemLabel } from "./ui/menu";
 import { Text } from "./ui/text";
 import { useToast } from "./ui/toast";
 import { VStack } from "./ui/vstack";
+import { Pressable } from "./ui/pressable";
 
 export default function TemplateCard({
   template,
@@ -51,35 +52,16 @@ export default function TemplateCard({
         <VStack space="sm">
           <Box className="flex flex-row justify-between">
             <Heading>{template.name}</Heading>
-            <Menu
-              placement="top"
-              trigger={({ ...triggerProps }) => {
-                return (
-                  <Button variant="link" size="xs" {...triggerProps}>
-                    <ButtonIcon size="xl" as={ThreeDotsIcon} />
-                  </Button>
-                );
-              }}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/templates/[id]",
+                  params: { id: template.id },
+                })
+              }
             >
-              <MenuItem
-                key="edit"
-                textValue="Edit template"
-                onPress={() =>
-                  router.push({
-                    pathname: "/templates/[id]",
-                    params: { id: template.id },
-                  })
-                }
-              >
-                <Icon as={EditIcon} size="sm" className="mr-2" />
-                <MenuItemLabel size="sm">Edit template</MenuItemLabel>
-              </MenuItem>
-              {/* TODO this in a later sprint  */}
-              {/* <MenuItem key="share" textValue="Share">
-                <Icon as={ShareIcon} size="sm" className="mr-2" />
-                <MenuItemLabel size="sm">Share</MenuItemLabel>
-              </MenuItem> */}
-            </Menu>
+              <Icon size="xl" as={EditIcon}/>
+            </Pressable>
           </Box>
           <Link
             href={{
