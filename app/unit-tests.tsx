@@ -12,7 +12,7 @@ import { Text } from "@/components/ui/text"
 import { Spinner } from "@/components/ui/spinner"
 
 // Remember to import your tests from services
-import { followerTests, LoginTestParams, loginTests, RegisterTestParams, registrationTests, socialInformationTests } from '@/services/unitTestServices';
+import { followerTests, LoginTestParams, loginTests, RegisterTestParams, registrationTests, socialInformationTests, testCounters } from '@/services/unitTestServices';
 import { useSession } from '@/components/SessionContext';
 
 export default function SettingsScreen() {
@@ -81,7 +81,29 @@ export default function SettingsScreen() {
         {createAccount: createAccount, testCaseName: "Successful registration", addRandom: true, testEmail: "unittester@test.com", testPassword: "Aaa123", testConfirmPassword: "Aaa123", testUsername: "unittester", testDisplayName: "unitTest Display Name", expectedError: null},
       ] as RegisterTestParams[],
       totalTests: 10
-    }
+    },
+    {
+      id: "5",
+      name: "Counter tests",
+      function: testCounters,
+      params: [],
+      totalTests: 1
+    },
+    {
+      id: "6",
+      name: "Creator tests",
+      function: testCounters,
+      params: [],
+      totalTests: 1
+    },
+    {
+      id: "7",
+      name: "Scorer tests",
+      function: testCounters,
+      params: [],
+      totalTests: 1
+    },
+    
   ]
 
   const runTest = async (test: any) => {

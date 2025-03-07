@@ -79,7 +79,7 @@ function createSearchItem(name: string, id: string) : SearchItem {
  * @param id -- The id of the tag.
  * @returns a SearchTag
  */
-export function createSearchTag(name: string, id: string) : SearchTag {
+function createSearchTag(name: string, id: string) : SearchTag {
     let tag = {name: name};
     return tag;
 }
@@ -230,10 +230,14 @@ export function compareToQuery(query: string,
     query = query.toLowerCase();
     let score = 0;
     let terms = query.split(" ");
+    const itemParts = item.name.toLowerCase().split(" ");
     terms.forEach( (term) => {
         term = term.toLowerCase();
-        if (item.name.toLowerCase().includes(term)) {
-            score += counter.getInverseFrequency(term) + term.length;
+        for (let i = 0; i < itemParts.length; i++) {
+            let itemPart = itemParts[i];
+            if (itemPart.includes(term)) {
+                score += counter.getInverseFrequency(itemPart) + term.length;
+            }
         }
     });
     return score;
