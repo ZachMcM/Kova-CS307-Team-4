@@ -17,7 +17,6 @@ import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/to
 import { useToast } from "@/components/ui/toast";
 import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
 import { Input, InputField } from "@/components/ui/input";
-import { compareToQuery, createWordCounter, profilesToSearch } from "@/types/searcher-types";
 
 export default function RelationsView() {
   const { id, type } = useLocalSearchParams();
@@ -25,6 +24,8 @@ export default function RelationsView() {
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
+
+  const [visible, setVisible] = useState(true);
 
   const selectedTab:string = type as string;
 
@@ -64,29 +65,35 @@ export default function RelationsView() {
 
   const handleFollowBack = async (relation: any) => {
     try {
+      setVisible(false);
       await followUser(id as string, relation.userId);
       router.replace(`/relations/${id}?type=followers`);
       showFollowToast(toast, relation.name, true);
       queryClient.invalidateQueries({ queryKey: ["following", id as string] });
       queryClient.invalidateQueries({ queryKey: ["friends", id as string] });
       queryClient.invalidateQueries({ queryKey: ["profile", id as string] });
+      setVisible(true);
     } catch (error) {
       console.error("Failed to follow back:", error);
       showErrorToast(toast, "Failed to follow user");
+      setVisible(true);
     }
   };
 
   const handleUnfollow = async (relation: any) => {
     try {
+      setVisible(false);
       await unfollowUser(id as string, relation.userId);
       router.replace(`/relations/${id}?type=following`);
       showFollowToast(toast, relation.name, false);
       queryClient.invalidateQueries({ queryKey: ["following", id as string] });
       queryClient.invalidateQueries({ queryKey: ["friends", id as string] });
       queryClient.invalidateQueries({ queryKey: ["profile", id as string] });
+      setVisible(true);
     } catch (error) {
       console.error("Failed to unfollow:", error);
       showErrorToast(toast, "Failed to unfollow user");
+      setVisible(true);
     }
   };
 
@@ -106,21 +113,6 @@ export default function RelationsView() {
   //const friendIds = friends?.map((friend: any) => friend.userId);
   const followingIds = following?.map((following: any) => following.userId);
   const relations = selectedTab === "friends" ? friends : selectedTab === "followers" ? followers : following;
-
-  let searchItems = undefined;
-  let wordCounter = undefined;
-  let searchIdToIndex = undefined;
-
-  if ((selectedTab === "friends" && !isPending)
-        || (selectedTab == "followers" && !isFetching)
-        || (selectedTab == "following" && !isLoading)) {
-    searchItems = profilesToSearch(relations!);
-    wordCounter = createWordCounter(searchItems);
-    searchIdToIndex = new Map<string, number>();
-    for (let i = 0; i < searchItems.length; i++) {
-      searchIdToIndex.set(searchItems[i].id, i);
-    }
-  }
 
   return (
     <StaticContainer className = "flex px-6 py-16">
@@ -149,18 +141,7 @@ export default function RelationsView() {
           <VStack>
             {isLoading ? (
               <Text>Loading...</Text>
-            ) : (
-            relations?.filter((relation) => (relation.name.toLowerCase().includes(profileQuery?.toLowerCase())))
-            .sort((a, b) => {
-                let aSearch = searchItems![searchIdToIndex!.get(a.userId)!];
-                let bSearch = searchItems![searchIdToIndex!.get(b.userId)!];
-                let diff = compareToQuery(profileQuery, bSearch,
-                  wordCounter!) 
-                    - compareToQuery(profileQuery, aSearch,
-                      wordCounter!);
-                return diff;
-              })
-            .map((relation: any) => (
+            ) : (relations?.filter((relation) => (relation.name.toLowerCase().includes(profileQuery?.toLowerCase()))).map((relation: any) => (
                 <Pressable key={relation.userId} onPress={() => router.replace(`/profiles/${relation.userId}`)}>
                   <HStack space="md" className="p-2 border-b border-gray-300 mb-0">
                     <Avatar className="bg-indigo-600" size="md">
@@ -178,7 +159,7 @@ export default function RelationsView() {
                           <Text className = "ml-1 text-[#4d7599] text-sm">Friend</Text>
                         </Badge>
                       )}
-                      {selectedTab === "followers" && !followingIds?.includes(relation.userId) && userId === id && (
+                      {selectedTab === "followers" && !followingIds?.includes(relation.userId) && userId === id && visible && (
                         <Button
                           className="absolute mt-1 right-0"
                           onPress={() => handleFollowBack(relation)}
@@ -186,7 +167,7 @@ export default function RelationsView() {
                           <ButtonText>Follow Back</ButtonText>
                         </Button>
                       )}
-                      {(followingIds?.includes(relation.userId) && userId === id) && (
+                      {(followingIds?.includes(relation.userId) && userId === id) && visible && (
                         <Button className="absolute mt-1 right-0" onPress={() => handleUnfollow(relation)} variant = "outline" action = "secondary">
                           <ButtonText>Unfollow</ButtonText>
                         </Button>
