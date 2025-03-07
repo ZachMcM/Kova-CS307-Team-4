@@ -94,11 +94,6 @@ export default function TemplateForm() {
   }
 
   async function onSubmit(values: FieldValues) {
-    reset({
-      name: "",
-      id: "",
-      data: undefined
-    });
     saveTemplate(values as TemplateFormValues);
   }
 
