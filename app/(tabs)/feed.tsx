@@ -50,6 +50,8 @@ type Post = {
   profile?: {
     username: string;
     userId: string;
+    name: string;
+    avatar?: string;
   };
 };
 
@@ -122,7 +124,9 @@ export default function FeedScreen() {
           *,
           profile:profileId (
             username,
-            userId
+            userId,
+            name,
+            avatar
           )
         `)
         .in("profileId", followingProfileIds)
@@ -269,9 +273,12 @@ export default function FeedScreen() {
 
         {posts && posts.map((post) => (
           <WorkoutPost
+            id={post.profile?.userId || ""}
             key={post.id}
             postId={post.id}
             username={post.profile?.username || "Unknown user"}
+            name={post.profile?.name || "Unkown user"}
+            avatar={post.profile?.avatar || ""}
             date={formatDate(post.createdAt)}
             title={post.title || ""}
             description={post.description || ""}
