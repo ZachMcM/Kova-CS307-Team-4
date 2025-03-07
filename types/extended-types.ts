@@ -21,5 +21,6 @@ export type AuthAccountResponse = {
 export type LikeRelation = {
   postId: string;
   userId: string;
+  name: string
 }
 

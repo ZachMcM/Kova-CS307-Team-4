@@ -1,18 +1,30 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Animated, Modal, TextInput, Touchable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
-import { addUserLike, doesUserLike, getLikes, getNumOfLikes, removeUserLike } from '@/services/likeServices';
-import { Spinner } from './ui/spinner';
-import { Box } from './ui/box';
-import { LikeRelation } from "@/types/extended-types";
-import { HStack } from './ui/hstack';
-import { Text as GText } from '@/components/ui/text'
-import { Heading } from '@/components/ui/heading'
-import { Avatar, AvatarFallbackText, AvatarImage } from './ui/avatar';
-import { Pressable } from '@/components/ui/pressable'
+import { Heading } from "@/components/ui/heading";
+import { Pressable } from "@/components/ui/pressable";
+import { Text as GText } from "@/components/ui/text";
+import {
+  addUserLike,
+  doesUserLike,
+  getLikes,
+  getNumOfLikes,
+  removeUserLike,
+} from "@/services/likeServices";
+import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Animated,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
+import { HStack } from "./ui/hstack";
+import { Spinner } from "./ui/spinner";
 
 export type Exercise = {
   name: string;
@@ -44,7 +56,11 @@ type WorkoutPostProps = {
   isOwnPost?: boolean;
   postId?: string;
   taggedFriends?: TaggedFriend[];
-  onUpdatePost?: (postId: string, title: string, description: string) => Promise<any>;
+  onUpdatePost?: (
+    postId: string,
+    title: string,
+    description: string
+  ) => Promise<any>;
 };
 
 export const WorkoutPost = ({
@@ -73,14 +89,14 @@ export const WorkoutPost = ({
   const [editedDescription, setEditedDescription] = useState(description);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
   const [userHasLiked, changeUserLike] = useState(false);
   const [knowUserLikeStatus, changeKnowledgeStatus] = useState(false);
 
-  const {data: likes, isLoading } = useQuery({
-    queryKey: ["likeRel", {id: postId}],
-    queryFn: async() => {
+  const { data: likes, isLoading } = useQuery({
+    queryKey: ["likeRel", { id: postId }],
+    queryFn: async () => {
       let items = getLikes(postId!);
+      console.log(items);
       return items;
     },
   });
@@ -99,13 +115,13 @@ export const WorkoutPost = ({
       toValue,
       useNativeDriver: false,
       friction: 8,
-      tension: 40
+      tension: 40,
     }).start();
   };
 
   const expandedHeight = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '100%']
+    outputRange: ["0%", "100%"],
   });
 
   const handleEdit = () => {
@@ -116,34 +132,32 @@ export const WorkoutPost = ({
 
   const queryClient = useQueryClient();
 
-  const {isPending: isChanging, mutate: changeLikeStatus} = useMutation(
-    {
-      mutationFn: async() => {
-          console.log("Seeing if it is changing: " + isChanging);
-          if (!isChanging) {
-            if (userHasLiked) {
-              await removeUserLike(postId!, userId);
-            }
-            else {
-              await addUserLike(postId!, userId);
-            }
-            changeUserLike(!userHasLiked);
-          }
-        },
-        onSuccess: () => {
-          queryClient.invalidateQueries({queryKey: ["likeRel", {id: postId}]})
+  const { isPending: isChanging, mutate: changeLikeStatus } = useMutation({
+    mutationFn: async () => {
+      console.log("Seeing if it is changing: " + isChanging);
+      if (!isChanging) {
+        if (userHasLiked) {
+          await removeUserLike(postId!, userId);
+        } else {
+          await addUserLike(postId!, userId);
         }
-    })
+        changeUserLike(!userHasLiked);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["likeRel", { id: postId }] });
+    },
+  });
 
   const handleSaveEdit = async () => {
     if (!postId || !onUpdatePost) return;
-    
+
     setIsSubmitting(true);
     try {
       await onUpdatePost(postId, editedTitle, editedDescription);
       setEditModalVisible(false);
     } catch (error) {
-      console.error('Error updating post:', error);
+      console.error("Error updating post:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -154,21 +168,29 @@ export const WorkoutPost = ({
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => {router.replace(`/profiles/${id}`)}}>
+          <TouchableOpacity
+            onPress={() => {
+              router.replace(`/profiles/${id}`);
+            }}
+          >
             <View style={styles.userInfo}>
               <View style={styles.avatar}>
-                <Avatar className = "bg-indigo-600">
+                <Avatar className="bg-indigo-600">
                   {avatar ? (
                     <AvatarImage source={{ uri: avatar }}></AvatarImage>
                   ) : (
-                    <AvatarFallbackText className="text-white">{name}</AvatarFallbackText>
+                    <AvatarFallbackText className="text-white">
+                      {name}
+                    </AvatarFallbackText>
                   )}
                 </Avatar>
               </View>
               <View>
-                <HStack space = "sm">
+                <HStack space="sm">
                   <Heading>{name}</Heading>
-                  <GText size = "sm" className = "mt-1">(@{username})</GText>
+                  <GText size="sm" className="mt-1">
+                    (@{username})
+                  </GText>
                 </HStack>
                 <Text style={styles.date}>{date}</Text>
               </View>
@@ -176,7 +198,7 @@ export const WorkoutPost = ({
           </TouchableOpacity>
           <View style={styles.headerActions}>
             {isOwnPost && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={(e) => {
                   e.stopPropagation();
                   handleEdit();
@@ -186,13 +208,10 @@ export const WorkoutPost = ({
                 <Ionicons name="pencil" size={18} color="#007AFF" />
               </TouchableOpacity>
             )}
-            <TouchableOpacity  
-              onPress={toggleExpand}
-              activeOpacity={0.9}
-            >
-              <Ionicons 
-                name={expanded ? "chevron-up" : "chevron-down"} 
-                size={24} 
+            <TouchableOpacity onPress={toggleExpand} activeOpacity={0.9}>
+              <Ionicons
+                name={expanded ? "chevron-up" : "chevron-down"}
+                size={24}
                 color="#666"
               />
             </TouchableOpacity>
@@ -202,33 +221,40 @@ export const WorkoutPost = ({
         {/* Content */}
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
-          <Text 
+          <Text
             style={[
               styles.description,
-              expanded ? styles.expandedDescription : styles.collapsedDescription
+              expanded
+                ? styles.expandedDescription
+                : styles.collapsedDescription,
             ]}
             numberOfLines={expanded ? undefined : 2}
           >
             {description}
           </Text>
-          
+
           {/* Tagged Friends */}
           {taggedFriends.length > 0 && (
             <View style={styles.taggedFriendsContainer}>
               <HStack>
                 <GText>With </GText>
                 {taggedFriends.map((friend, index) => (
-                  <Pressable key={friend.userId} onPress={() => {router.replace(`/profiles/${friend.userId}`)}}>
-                    <GText className = "font-bold text-blue-500">
+                  <Pressable
+                    key={friend.userId}
+                    onPress={() => {
+                      router.replace(`/profiles/${friend.userId}`);
+                    }}
+                  >
+                    <GText className="font-bold text-blue-500">
                       {friend.name}
-                      {index < taggedFriends.length - 1 ? ', ' : ''}
+                      {index < taggedFriends.length - 1 ? ", " : ""}
                     </GText>
                   </Pressable>
                 ))}
               </HStack>
             </View>
           )}
-          
+
           {/* Exercise Tags */}
           <View style={styles.exerciseTags}>
             {exercises.map((exercise, index) => (
@@ -248,11 +274,8 @@ export const WorkoutPost = ({
           )}
 
           {/* Expanded Details */}
-          <Animated.View 
-            style={[
-              styles.expandedDetails,
-              { maxHeight: expandedHeight }
-            ]}
+          <Animated.View
+            style={[styles.expandedDetails, { maxHeight: expandedHeight }]}
           >
             {/* Workout Summary */}
             {(workoutDuration || workoutCalories) && (
@@ -262,7 +285,11 @@ export const WorkoutPost = ({
                   {workoutDuration && (
                     <View style={styles.summaryItem}>
                       <View>
-                        <Ionicons name="time-outline" size={18} color="#007AFF" />
+                        <Ionicons
+                          name="time-outline"
+                          size={18}
+                          color="#007AFF"
+                        />
                       </View>
                       <Text style={styles.summaryText}>{workoutDuration}</Text>
                     </View>
@@ -270,7 +297,11 @@ export const WorkoutPost = ({
                   {workoutCalories && (
                     <View style={styles.summaryItem}>
                       <View>
-                        <Ionicons name="flame-outline" size={18} color="#FF9500" />
+                        <Ionicons
+                          name="flame-outline"
+                          size={18}
+                          color="#FF9500"
+                        />
                       </View>
                       <Text style={styles.summaryText}>{workoutCalories}</Text>
                     </View>
@@ -285,16 +316,25 @@ export const WorkoutPost = ({
                 <Text style={styles.sectionTitle}>Workout Partners</Text>
                 <View style={styles.taggedFriendsDetails}>
                   {taggedFriends.map((friend) => (
-                    <Pressable key={friend.userId} onPress = {() => {router.replace(`/profiles/${friend.userId}`)}}>
+                    <Pressable
+                      key={friend.userId}
+                      onPress={() => {
+                        router.replace(`/profiles/${friend.userId}`);
+                      }}
+                    >
                       <View style={styles.taggedFriendDetail}>
-                        <Avatar size = "sm" className = "mr-2">
+                        <Avatar size="sm" className="mr-2">
                           {friend.avatar ? (
-                            <AvatarImage source={{ uri: friend.avatar }}></AvatarImage>
+                            <AvatarImage
+                              source={{ uri: friend.avatar }}
+                            ></AvatarImage>
                           ) : (
-                            <AvatarFallbackText className="text-white">{friend.name}</AvatarFallbackText>
+                            <AvatarFallbackText className="text-white">
+                              {friend.name}
+                            </AvatarFallbackText>
                           )}
                         </Avatar>
-                        <GText className = "font-bold">{friend.name}</GText>
+                        <GText className="font-bold">{friend.name}</GText>
                       </View>
                     </Pressable>
                   ))}
@@ -337,13 +377,39 @@ export const WorkoutPost = ({
 
           {/* Engagement */}
           <View style={styles.engagement}>
-            <TouchableOpacity style={styles.engagementItem} onPress={(event) => {changeLikeStatus()}}>
-              {isLoading ? <Spinner/>: 
-                <Text>{userHasLiked? '❤️' : '♡'} {getNumOfLikes(likes!, userId, userHasLiked)}</Text>}
+            <TouchableOpacity
+              style={styles.engagementItem}
+              onPress={(event) => {
+                changeLikeStatus();
+              }}
+            >
+              {isLoading ? (
+                <Spinner />
+              ) : (
+                <Text>
+                  {userHasLiked ? "❤️" : "♡"}{" "}
+                  {getNumOfLikes(likes!, userId, userHasLiked)}
+                </Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity style={styles.engagementItem}>
-              <Text>💬 <Text>{comments}</Text></Text>
+              <Text>
+                💬 <Text>{comments}</Text>
+              </Text>
             </TouchableOpacity>
+            {likes?.length && likes.length > 0 ? (
+              <Text>
+                Liked By:{" "}
+                {likes
+                  ?.slice(0, 2)
+                  ?.map(
+                    (like, i) =>
+                      `${like.name}${i != likes.length - 1 ? "," : ""} `
+                  )}
+              </Text>
+            ) : (
+              <></>
+            )}
           </View>
         </View>
       </View>
@@ -358,7 +424,7 @@ export const WorkoutPost = ({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Edit Post</Text>
-            
+
             <Text style={styles.inputLabel}>Title</Text>
             <TextInput
               style={styles.input}
@@ -366,7 +432,7 @@ export const WorkoutPost = ({
               onChangeText={setEditedTitle}
               placeholder="Enter post title"
             />
-            
+
             <Text style={styles.inputLabel}>Description</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -376,25 +442,25 @@ export const WorkoutPost = ({
               multiline
               numberOfLines={4}
             />
-            
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setEditModalVisible(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.modalButton, 
+                  styles.modalButton,
                   styles.saveButton,
-                  isSubmitting && styles.disabledButton
-                ]} 
+                  isSubmitting && styles.disabledButton,
+                ]}
                 onPress={handleSaveEdit}
                 disabled={isSubmitting}
               >
                 <Text style={styles.saveButtonText}>
-                  {isSubmitting ? 'Saving...' : 'Save'}
+                  {isSubmitting ? "Saving..." : "Save"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -407,53 +473,53 @@ export const WorkoutPost = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#6FA8DC',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#6FA8DC",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   avatarText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   username: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 16,
   },
   date: {
-    color: '#666',
+    color: "#666",
     fontSize: 12,
   },
   headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   editButton: {
     marginRight: 16,
@@ -463,12 +529,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   description: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
     marginBottom: 12,
   },
   collapsedDescription: {
@@ -482,19 +548,19 @@ const styles = StyleSheet.create({
   },
   taggedWithText: {
     fontSize: 14,
-    color: '#555',
+    color: "#555",
   },
   taggedFriendName: {
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontWeight: "bold",
+    color: "#007AFF",
   },
   exerciseTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginBottom: 12,
   },
   tag: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -503,10 +569,10 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 12,
-    color: '#333',
+    color: "#333",
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 200,
     borderRadius: 8,
     marginBottom: 12,
@@ -515,24 +581,24 @@ const styles = StyleSheet.create({
     height: 250,
   },
   expandedDetails: {
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   detailsSection: {
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
-    color: '#333',
+    color: "#333",
   },
   summaryContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 8,
   },
   summaryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginRight: 16,
   },
   summaryText: {
@@ -543,89 +609,89 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   taggedFriendDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   friendAvatar: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#6FA8DC',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#6FA8DC",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 8,
   },
   friendAvatarText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   friendName: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   exerciseDetail: {
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   exerciseName: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 4,
   },
   exerciseStats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   exerciseStat: {
     marginRight: 12,
     fontSize: 14,
   },
   statLabel: {
-    color: '#666',
+    color: "#666",
   },
   engagement: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 8,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: "#f0f0f0",
   },
   engagementItem: {
     marginRight: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 20,
-    width: '90%',
+    width: "90%",
     maxWidth: 400,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     padding: 10,
     marginBottom: 16,
@@ -633,35 +699,35 @@ const styles = StyleSheet.create({
   },
   textArea: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   modalButton: {
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     marginRight: 8,
   },
   cancelButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
+    color: "#333",
+    fontWeight: "bold",
   },
   saveButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     marginLeft: 8,
   },
   saveButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   disabledButton: {
     opacity: 0.6,
   },
-}); 
+});
