@@ -2,7 +2,7 @@
 
 import ExerciseDataForm from "@/components/forms/workout-template/ExerciseDataForm";
 import { Tables } from "./database.types";
-import { ExtendedExercise } from "./extended-types";
+import { ExtendedExercise, ExtendedTemplateWithCreator } from "./extended-types";
 import { PublicProfile } from "./profile-types";
 import { Workout } from "./workout-types";
 
@@ -106,7 +106,7 @@ function createSearchTaggedItem(name: string,
  * @param terms -- the terms to build the word counter from.
  * @returns a WordCounter
  */
-export function createWordCounter(terms: string[]): WordCounter {
+export function createWordCounter(terms: SearchItem[]): WordCounter {
     let counter = {frequencies: new Map<string, number>(),
         totalItems: 0, 
         getInverseFrequency: (name: string) => {
@@ -116,7 +116,7 @@ export function createWordCounter(terms: string[]): WordCounter {
             return counter.totalItems - counter.frequencies.get(name)!;
         }};
     terms.forEach((term) => {
-        let words = term.split(" ");
+        let words = term.name.split(" ");
         let wordsPresent = new Set<string>();
         counter.totalItems++;
         words.forEach((word) => {
@@ -162,32 +162,17 @@ export function createTagCounter(items: TaggedSearchItem[]): TagCounter {
 // ADVANCED CREATORS [For user stories]
 
 /**
- * Converts a list of followers to a list of search items.
+ * Converts a list of profiles to a list of search items.
  * 
- * @param followers -- the followers to create the list from.
- * 
- * @returns a list of SearchItems
- */
-export function followerToSearch(followers: PublicProfile[]) : SearchItem[] {
-    let sItems: SearchItem[] = [];
-    followers.forEach((follower) => {
-        sItems.push(createSearchItem(follower.username, follower.user_id));
-    });
-    return sItems;
-}
-
-/**
- * Converts a list of friends to a list of search items.
- * 
- * @param friends -- the friends to create the list from.
+ * @param profiles -- the profiles to create the list from.
  * 
  * @returns a list of SearchItems
  */
-export function friendsToSearch(friends: PublicProfile[]) : SearchItem[] {
+export function profilesToSearch(profiles: any[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
-    friends.forEach((friend) => {
-        sItems.push(createSearchItem(friend.username, friend.user_id));
-    });
+    for (const profile of profiles) {
+        sItems.push(createSearchItem(profile.name, profile.userId));
+    }
     return sItems;
 }
 
@@ -198,10 +183,10 @@ export function friendsToSearch(friends: PublicProfile[]) : SearchItem[] {
  * 
  * @returns a list of SearchItems
  */
-export function templatesToSearch(templates: Workout[]) : SearchItem[] {
+export function templatesToSearch(templates: ExtendedTemplateWithCreator[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
     templates.forEach((template) => {
-        sItems.push(createSearchItem(template.templateName, template.templateId));
+        sItems.push(createSearchItem(template.name!, template.id));
     });
     return sItems;
 }
@@ -239,13 +224,15 @@ export function exercisesToSearch(exercises: ExtendedExercise[]) : TaggedSearchI
  * @param item -- the item to compare to.
  * @param counter -- the counter that helps to find the frequency.
  */
-function compareToQuery(query: string, 
+export function compareToQuery(query: string, 
         item: SearchItem, 
         counter: WordCounter): number {
+    query = query.toLowerCase();
     let score = 0;
     let terms = query.split(" ");
     terms.forEach( (term) => {
-        if (item.name.includes(term)) {
+        term = term.toLowerCase();
+        if (item.name.toLowerCase().includes(term)) {
             score += counter.getInverseFrequency(term) + term.length;
         }
     });
@@ -261,7 +248,7 @@ function compareToQuery(query: string,
  * @param selectedTags -- the selected tags to filter by. If blank, ignore.
  * @returns the score of the given item.
  */
-function compareToTaggedQuery(query: string,
+export function compareToTaggedQuery(query: string,
         item: TaggedSearchItem,
         wordCounter: WordCounter,
         tagCounter: TagCounter,
@@ -275,7 +262,7 @@ function compareToTaggedQuery(query: string,
     if (!containsATag && !item.isTag) {
         return -1;
     }
-
+    query = query.toLowerCase();
     let score = compareToQuery(query, item, wordCounter);
     if (item.isTag) {
         score *= 2;
@@ -283,8 +270,9 @@ function compareToTaggedQuery(query: string,
     else {
         let terms = query.split(" ");
         terms.forEach( (term) => {
+            term = term.toLowerCase();
             item.tags.forEach( (tag) => {
-                if (tag.name.includes(term)) {
+                if (tag.name.toLowerCase().includes(term)) {
                     score += 2 * (tagCounter.getInverseFrequency(tag.name) + term.length);
                 }
             });

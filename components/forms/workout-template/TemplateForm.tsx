@@ -25,6 +25,9 @@ import { VStack } from "../../ui/vstack";
 import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
+import ExerciseSearchView from "@/components/search-views/ExerciseSearchView";
+import { ExtendedExercise } from "@/types/extended-types";
+import { compareToTaggedQuery, createTagCounter, createWordCounter, exercisesToSearch } from "@/types/searcher-types";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -46,7 +49,6 @@ export default function TemplateForm() {
     queryKey: ["exercises"],
     queryFn: async () => {
       const exercises = await getExercises();
-      console.log("Exercises", JSON.stringify(exercises));
       return exercises;
     },
   });
@@ -95,6 +97,21 @@ export default function TemplateForm() {
     saveTemplate(values as TemplateFormValues);
   }
 
+  let searchItems = undefined;
+  let wordCounter = undefined;
+  let tagCounter = undefined;
+  let searchIdToIndex = undefined;
+
+  if (!exercisesLoading) {
+    searchItems = exercisesToSearch(allExercises!);
+    wordCounter = createWordCounter(searchItems);
+    tagCounter = createTagCounter(searchItems);
+    searchIdToIndex = new Map<string, number>();
+    for (let i = 0; i < searchItems.length; i++) {
+      searchIdToIndex.set(searchItems[i].id, i);
+    }
+  }
+  
   return !exercisesLoading ? (
     allExercises && (
       <VStack space="4xl">
@@ -135,20 +152,18 @@ export default function TemplateForm() {
               <InputIcon as={SearchIcon} />
             </InputSlot>
           </Input>
+
           {exerciseQuery.length != 0 &&
             allExercises
-              .filter(
-                (exercise) =>
-                  (exercise
-                    .name!.toLowerCase()
-                    .includes(exerciseQuery.toLowerCase()) ||
-                    exercise.tags.filter((tag) =>
-                      tag
-                        .name!.toLowerCase()
-                        .includes(exerciseQuery.toLowerCase())
-                    ).length != 0) &&
-                  !isExerciseAdded(exercise.id)
-              )
+              .sort((a: ExtendedExercise, b: ExtendedExercise) => {
+                let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
+                let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
+                let diff = compareToTaggedQuery(exerciseQuery, bSearch,
+                  wordCounter!, tagCounter!, []) 
+                    - compareToTaggedQuery(exerciseQuery, aSearch,
+                      wordCounter!, tagCounter!, []);
+                return diff;
+              })
               .map((exercise) => (
                 <Pressable
                   key={exercise.id}

@@ -1,18 +1,24 @@
 import { PublicProfile } from "@/types/profile-types";
 import { friendsToSearch } from "@/types/searcher-types";
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { Card } from "../ui/card";
 import SearchView from "./skeletons/SearchView";
+import { VStack } from "../ui/vstack";
+import { Text } from "../ui/text";
 
-export default function FollowerSearchView({ data, selectionCallback, displayGetter} : 
-        { data: PublicProfile[], selectionCallback: (id: string) => void, displayGetter: (id:string) => View}){
+export default function FriendSearchView({ data, selectionCallback} : 
+    { data: PublicProfile[], selectionCallback: (id: string) => void,}){
     let items = friendsToSearch(data);
     return SearchView(items, selectionCallback, (id) => {
-        for (let i = 0; i < data.length; i++) {
-            if (data[i].user_id = id) {
-                
-            }
+    for (const element of data) {
+        if (element.user_id == id) {
+            return (<TouchableOpacity onPress={() => {selectionCallback(element.user_id);}}>
+                        <VStack>
+                            <Text>{element.username}</Text>
+                        </VStack>
+                    </TouchableOpacity>);
         }
-        return (<Card></Card>);
-    });
+    }
+    return (<Card></Card>);
+});
 }

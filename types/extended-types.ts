@@ -18,6 +18,8 @@ export type AuthAccountResponse = {
   weakPassword?: WeakPassword
 }
 
-export type ExtendedExercise = Tables<'exercise'> & {
-  tags: Tables<'tag'>[]
+export type LikeRelation = {
+  postId: string;
+  userId: string;
 }
+
