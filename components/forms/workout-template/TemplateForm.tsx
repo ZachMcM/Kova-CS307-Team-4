@@ -24,6 +24,7 @@ import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
 import { getExercises } from "@/services/exerciseServices";
+import ExerciseSearchView from "@/components/search-views/ExerciseSearchView";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -123,7 +124,10 @@ export default function TemplateForm() {
           )}
         />
         <VStack space="xl">
-          {/* TODO replace with actual search bar @AreebE */}
+          <ExerciseSearchView data={allExercises!} 
+            selectionCallback={(id:string) => {
+                // Supposed to do something
+              }}/>
           <Input size="md">
             <InputField
               placeholder="Search exercises"
