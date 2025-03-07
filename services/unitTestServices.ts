@@ -5,8 +5,8 @@ import { Session } from "@supabase/supabase-js";
 import { AuthAccountResponse } from "@/types/extended-types";
 import { supabase } from "@/lib/supabase";
 
-const burnerProfileIds = ["3f82585e-31f1-435e-a095-92cee396f2a4", "4c6d95cd-bb19-46b5-8c0a-44c58c89243b"];
-const burnerProfileUserIds = ["5a8349d7-f315-4d56-a9d0-412d2621550c", "8b4644bf-4bdb-4a14-9902-ed7d41b1365e"];
+const burnerProfileIds = ["36a95bc3-ccfc-4b6c-a1f4-b37ee68ba40a", "11e43cae-f818-42a9-97af-52125d09b85e"];
+const burnerProfileUserIds = ["e849d723-76bb-4b95-a028-9f7a382299da", "e159c552-2c1c-40a4-9505-49655e09593b"];
 
 // This is just an example
 export const exampleTests = (num: number) => {
