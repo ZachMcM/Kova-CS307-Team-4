@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Animated, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams } from 'expo-router';
+import { addUserLike, doesUserLike, getLikes, getNumOfLikes, removeUserLike } from '@/services/likeServices';
+import { Spinner } from './ui/spinner';
+import { Box } from './ui/box';
+import { LikeRelation } from "@/types/extended-types";
+
 
 export type Exercise = {
   name: string;
@@ -21,7 +28,7 @@ type WorkoutPostProps = {
   title: string;
   description: string;
   exercises: Exercise[];
-  likes: number;
+  userId: string;
   comments: number;
   imageUrl?: string;
   workoutDuration?: string;
@@ -38,13 +45,13 @@ export const WorkoutPost = ({
   title,
   description,
   exercises,
-  likes,
   comments,
   imageUrl,
   workoutDuration,
   workoutCalories,
   isOwnPost = false,
   postId,
+  userId,
   taggedFriends = [],
   onUpdatePost,
 }: WorkoutPostProps) => {
@@ -54,6 +61,22 @@ export const WorkoutPost = ({
   const [editedTitle, setEditedTitle] = useState(title);
   const [editedDescription, setEditedDescription] = useState(description);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [userHasLiked, changeUserLike] = useState(false);
+  const [knowUserLikeStatus, changeKnowledgeStatus] = useState(false);
+
+  const {data: likes, isLoading } = useQuery({
+    queryKey: ["likeRel", {id: postId}],
+    queryFn: async() => {
+      let items = getLikes(postId!);
+      return items;
+    },
+  });
+
+  if (!isLoading && !knowUserLikeStatus) {
+    changeKnowledgeStatus(true);
+    changeUserLike(doesUserLike(userId, likes!));
+  }
 
   const toggleExpand = () => {
     const toValue = expanded ? 0 : 1;
@@ -76,6 +99,27 @@ export const WorkoutPost = ({
     setEditedDescription(description);
     setEditModalVisible(true);
   };
+
+  const queryClient = useQueryClient();
+
+  const {isPending: isChanging, mutate: changeLikeStatus} = useMutation(
+    {
+      mutationFn: async() => {
+          console.log("Seeing if it is changing: " + isChanging);
+          if (!isChanging) {
+            if (userHasLiked) {
+              await removeUserLike(postId!, userId);
+            }
+            else {
+              await addUserLike(postId!, userId);
+            }
+            changeUserLike(!userHasLiked);
+          }
+        },
+        onSuccess: () => {
+          queryClient.invalidateQueries({queryKey: ["likeRel", {id: postId}]})
+        }
+    })
 
   const handleSaveEdit = async () => {
     if (!postId || !onUpdatePost) return;
@@ -261,8 +305,9 @@ export const WorkoutPost = ({
 
           {/* Engagement */}
           <View style={styles.engagement}>
-            <TouchableOpacity style={styles.engagementItem}>
-              <Text>❤️ <Text>{likes}</Text></Text>
+            <TouchableOpacity style={styles.engagementItem} onPress={(event) => {changeLikeStatus()}}>
+              {isLoading ? <Spinner/>: 
+                <Text>{userHasLiked? '❤️' : '♡'} {getNumOfLikes(likes!, userId, userHasLiked)}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.engagementItem}>
               <Text>💬 <Text>{comments}</Text></Text>

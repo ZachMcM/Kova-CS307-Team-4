@@ -302,7 +302,7 @@ export default function FeedScreen() {
             }
             workoutDuration={post.workoutData?.duration || undefined}
             workoutCalories={post.workoutData?.calories || undefined}
-            likes={10}
+            userId={userId!}
             comments={5}
             imageUrl={post.imageUrl || undefined}
             isOwnPost={isOwnPost(post)}
