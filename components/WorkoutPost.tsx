@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Animated, Modal, TextInput } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Animated, Modal, TextInput, Touchable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
@@ -7,7 +7,12 @@ import { addUserLike, doesUserLike, getLikes, getNumOfLikes, removeUserLike } fr
 import { Spinner } from './ui/spinner';
 import { Box } from './ui/box';
 import { LikeRelation } from "@/types/extended-types";
-
+import { HStack } from './ui/hstack';
+import { Text as GText } from '@/components/ui/text'
+import { Heading } from '@/components/ui/heading'
+import { Avatar, AvatarFallbackText, AvatarImage } from './ui/avatar';
+import { Pressable } from '@/components/ui/pressable'
+import { useRouter } from "expo-router";
 
 export type Exercise = {
   name: string;
@@ -23,7 +28,10 @@ export type TaggedFriend = {
 };
 
 type WorkoutPostProps = {
+  id: string;
   username: string;
+  name: string;
+  avatar: string;
   date: string;
   title: string;
   description: string;
@@ -40,7 +48,10 @@ type WorkoutPostProps = {
 };
 
 export const WorkoutPost = ({
+  id,
   username,
+  name,
+  avatar,
   date,
   title,
   description,
@@ -62,6 +73,7 @@ export const WorkoutPost = ({
   const [editedDescription, setEditedDescription] = useState(description);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
   const [userHasLiked, changeUserLike] = useState(false);
   const [knowUserLikeStatus, changeKnowledgeStatus] = useState(false);
 
@@ -77,6 +89,8 @@ export const WorkoutPost = ({
     changeKnowledgeStatus(true);
     changeUserLike(doesUserLike(userId, likes!));
   }
+
+  const router = useRouter();
 
   const toggleExpand = () => {
     const toValue = expanded ? 0 : 1;
@@ -137,24 +151,29 @@ export const WorkoutPost = ({
 
   return (
     <>
-      <TouchableOpacity 
-        style={styles.container} 
-        onPress={toggleExpand}
-        activeOpacity={0.9}
-      >
+      <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.userInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {username.charAt(0).toUpperCase()}
-              </Text>
+          <TouchableOpacity onPress={() => {router.replace(`/profiles/${id}`)}}>
+            <View style={styles.userInfo}>
+              <View style={styles.avatar}>
+                <Avatar className = "bg-indigo-600">
+                  {avatar ? (
+                    <AvatarImage source={{ uri: avatar }}></AvatarImage>
+                  ) : (
+                    <AvatarFallbackText className="text-white">{name}</AvatarFallbackText>
+                  )}
+                </Avatar>
+              </View>
+              <View>
+                <HStack space = "sm">
+                  <Heading>{name}</Heading>
+                  <GText size = "sm" className = "mt-1">(@{username})</GText>
+                </HStack>
+                <Text style={styles.date}>{date}</Text>
+              </View>
             </View>
-            <View>
-              <Text style={styles.username}>@{username}</Text>
-              <Text style={styles.date}>{date}</Text>
-            </View>
-          </View>
+          </TouchableOpacity>
           <View style={styles.headerActions}>
             {isOwnPost && (
               <TouchableOpacity 
@@ -167,11 +186,16 @@ export const WorkoutPost = ({
                 <Ionicons name="pencil" size={18} color="#007AFF" />
               </TouchableOpacity>
             )}
-            <Ionicons 
-              name={expanded ? "chevron-up" : "chevron-down"} 
-              size={24} 
-              color="#666"
-            />
+            <TouchableOpacity  
+              onPress={toggleExpand}
+              activeOpacity={0.9}
+            >
+              <Ionicons 
+                name={expanded ? "chevron-up" : "chevron-down"} 
+                size={24} 
+                color="#666"
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -191,15 +215,17 @@ export const WorkoutPost = ({
           {/* Tagged Friends */}
           {taggedFriends.length > 0 && (
             <View style={styles.taggedFriendsContainer}>
-              <Text style={styles.taggedWithText}>
-                With{' '}
+              <HStack>
+                <GText>With </GText>
                 {taggedFriends.map((friend, index) => (
-                  <Text key={friend.userId} style={styles.taggedFriendName}>
-                    {friend.name}
-                    {index < taggedFriends.length - 1 ? ', ' : ''}
-                  </Text>
+                  <Pressable key={friend.userId} onPress={() => {router.replace(`/profiles/${friend.userId}`)}}>
+                    <GText className = "font-bold text-blue-500">
+                      {friend.name}
+                      {index < taggedFriends.length - 1 ? ', ' : ''}
+                    </GText>
+                  </Pressable>
                 ))}
-              </Text>
+              </HStack>
             </View>
           )}
           
@@ -259,48 +285,54 @@ export const WorkoutPost = ({
                 <Text style={styles.sectionTitle}>Workout Partners</Text>
                 <View style={styles.taggedFriendsDetails}>
                   {taggedFriends.map((friend) => (
-                    <View key={friend.userId} style={styles.taggedFriendDetail}>
-                      <View style={styles.friendAvatar}>
-                        <Text style={styles.friendAvatarText}>
-                          {friend.name.charAt(0).toUpperCase()}
-                        </Text>
+                    <Pressable key={friend.userId} onPress = {() => {router.replace(`/profiles/${friend.userId}`)}}>
+                      <View style={styles.taggedFriendDetail}>
+                        <Avatar size = "sm" className = "mr-2">
+                          {friend.avatar ? (
+                            <AvatarImage source={{ uri: friend.avatar }}></AvatarImage>
+                          ) : (
+                            <AvatarFallbackText className="text-white">{friend.name}</AvatarFallbackText>
+                          )}
+                        </Avatar>
+                        <GText className = "font-bold">{friend.name}</GText>
                       </View>
-                      <Text style={styles.friendName}>{friend.name}</Text>
-                    </View>
+                    </Pressable>
                   ))}
                 </View>
               </View>
             )}
 
             {/* Exercise Details */}
-            <View style={styles.detailsSection}>
-              <Text style={styles.sectionTitle}>Exercise Details</Text>
-              {exercises.map((exercise, index) => (
-                <View key={index} style={styles.exerciseDetail}>
-                  <Text style={styles.exerciseName}>{exercise.name}</Text>
-                  <View style={styles.exerciseStats}>
-                    {exercise.sets !== undefined && (
-                      <Text style={styles.exerciseStat}>
-                        <Text style={styles.statLabel}>Sets: </Text>
-                        <Text>{String(exercise.sets)}</Text>
-                      </Text>
-                    )}
-                    {exercise.reps !== undefined && (
-                      <Text style={styles.exerciseStat}>
-                        <Text style={styles.statLabel}>Reps: </Text>
-                        <Text>{String(exercise.reps)}</Text>
-                      </Text>
-                    )}
-                    {exercise.weight && (
-                      <Text style={styles.exerciseStat}>
-                        <Text style={styles.statLabel}>Weight: </Text>
-                        <Text>{exercise.weight}</Text>
-                      </Text>
-                    )}
+            {exercises.length > 0 && (
+              <View style={styles.detailsSection}>
+                <Text style={styles.sectionTitle}>Exercise Details</Text>
+                {exercises.map((exercise, index) => (
+                  <View key={index} style={styles.exerciseDetail}>
+                    <Text style={styles.exerciseName}>{exercise.name}</Text>
+                    <View style={styles.exerciseStats}>
+                      {exercise.sets !== undefined && (
+                        <Text style={styles.exerciseStat}>
+                          <Text style={styles.statLabel}>Sets: </Text>
+                          <Text>{String(exercise.sets)}</Text>
+                        </Text>
+                      )}
+                      {exercise.reps !== undefined && (
+                        <Text style={styles.exerciseStat}>
+                          <Text style={styles.statLabel}>Reps: </Text>
+                          <Text>{String(exercise.reps)}</Text>
+                        </Text>
+                      )}
+                      {exercise.weight && (
+                        <Text style={styles.exerciseStat}>
+                          <Text style={styles.statLabel}>Weight: </Text>
+                          <Text>{exercise.weight}</Text>
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            )}
           </Animated.View>
 
           {/* Engagement */}
@@ -314,7 +346,7 @@ export const WorkoutPost = ({
             </TouchableOpacity>
           </View>
         </View>
-      </TouchableOpacity>
+      </View>
 
       {/* Edit Modal */}
       <Modal

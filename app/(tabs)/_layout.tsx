@@ -15,23 +15,13 @@ import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
+import { useSession } from "@/components/SessionContext";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
-  // @MilesBrown - Added this to get the user id of the current session to access profile information
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUserId(session.user.id);
-      }
-    };
-
-    fetchUserId();
-  }, []);
+  const { session } = useSession()
 
   // TODO @IanBruch do a very similar thing but with session, the session ternary should wrap the live workout ternary
   const { data: workout, isPending } = useQuery({
@@ -44,7 +34,7 @@ export default function TabLayout() {
 
   return isPending ? (
     // TODO need to figure out what loading state to show
-    <></>
+    <Spinner/>
   ) : !workout ? (
     <Tabs
       screenOptions={{
@@ -103,7 +93,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.fill" color={color} />
           ),
-          href: userId ? `/profiles/${userId}` : undefined,
+          href: session?.user.id ? `/profiles/${session?.user.id}` : undefined,
         }}
       />
       <Tabs.Screen
