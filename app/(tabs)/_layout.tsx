@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useSession } from "@/components/SessionContext";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -33,7 +34,7 @@ export default function TabLayout() {
 
   return isPending ? (
     // TODO need to figure out what loading state to show
-    <></>
+    <Spinner/>
   ) : !workout ? (
     <Tabs
       screenOptions={{
