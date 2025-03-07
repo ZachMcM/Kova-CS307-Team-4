@@ -74,16 +74,17 @@ export default function TemplateCard({
                 <Icon as={EditIcon} size="sm" className="mr-2" />
                 <MenuItemLabel size="sm">Edit template</MenuItemLabel>
               </MenuItem>
-              <MenuItem key="share" textValue="Share">
+              {/* TODO this in a later sprint  */}
+              {/* <MenuItem key="share" textValue="Share">
                 <Icon as={ShareIcon} size="sm" className="mr-2" />
                 <MenuItemLabel size="sm">Share</MenuItemLabel>
-              </MenuItem>
+              </MenuItem> */}
             </Menu>
           </Box>
           <Link
             href={{
               pathname: "/profiles/[id]",
-              params: { id: template.creatorProfile.id! },
+              params: { id: template.creatorProfile.userId! },
             }}
           >
             <Text>By: {template.creatorProfile.username}</Text>

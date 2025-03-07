@@ -160,12 +160,10 @@ const mockPosts = [
 export async function fetchFeed() {
   if (await AsyncStorage.getItem("feed-items") == null) {
     const feed_items = JSON.stringify(mockPosts);
-    console.log("feed-items first time " + feed_items);
     AsyncStorage.setItem("feed-items", feed_items);
     return feed_items;
   } else {
     const feed_items = AsyncStorage.getItem("feed-items");
-  console.log("feed-items " + feed_items);
   return feed_items;
   }
 }
@@ -173,7 +171,6 @@ export async function fetchFeed() {
 export async function updateFeed() {
   const current_item = await AsyncStorage.getItem("feed-items");
   const parsed_item = JSON.parse(current_item!) as PostAsyncStorage[]
-  console.log("parsed item: " + parsed_item);
   try {
     const user_id = (await supabase.auth.getSession()).data.session?.user.id
     const following_list_data = (await supabase.from("followingRel").select("targetId").eq("sourceId", user_id)).data!

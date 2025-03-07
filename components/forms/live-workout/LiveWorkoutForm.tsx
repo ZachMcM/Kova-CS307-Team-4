@@ -40,10 +40,12 @@ import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
+import { useRouter } from "expo-router";
 
 export default function LiveWorkoutForm() {
   const { control, handleSubmit, watch, setValue, formState, getValues } =
     useLiveWorkout();
+  const router = useRouter();
 
   const { fields: exercises } = useFieldArray({
     control,
@@ -109,12 +111,34 @@ export default function LiveWorkoutForm() {
       // TODO interact with post workout (need to omit done because it is not needed in final iteration)
       console.log("Successfully posted workout", JSON.stringify(values));
       await clearWorkout();
+      return values;
     },
-    onSuccess: () => {
-      // TODO redirect to post workout page
-      // we invalidate the queries so a refetch is done
+    onSuccess: (workoutData) => {
+      // Prepare workout data for the post page
+      console.log("Workout completed successfully, preparing to navigate to post page");
       queryClient.invalidateQueries({ queryKey: ["live-workout"] });
-      // TODO need to redirect to post page communicate with jason
+      
+      const workoutStats = getWorkoutStats();
+      const duration = formatCalculateTime(calculateTime(startTime, endTime!));
+      
+      const postData = {
+        duration,
+        exercises: workoutData.exercises,
+        stats: workoutStats
+      };
+      
+      console.log("Navigating to post screen with data:", JSON.stringify(postData));
+      
+      // Add a small delay to ensure any pending operations complete
+      setTimeout(() => {
+        // Use router.push with the correct path format
+        router.push({
+          pathname: "/(tabs)/post",
+          params: {
+            workoutData: JSON.stringify(postData)
+          }
+        });
+      }, 300);
     },
     onError: (e) => {
       console.log(e);
@@ -217,7 +241,17 @@ export default function LiveWorkoutForm() {
                 size="lg"
                 action="kova"
                 className="w-full"
-                onPress={handleSubmit(onSubmit)}
+                onPress={() => {
+                  // Get the form values
+                  const values = getValues();
+                  console.log("Post workout button clicked", JSON.stringify(values));
+                  
+                  // Close the modal
+                  setModal(false);
+                  
+                  // Submit the form data
+                  handleSubmit(onSubmit)();
+                }}
               >
                 <ButtonText>Post Workout</ButtonText>
                 {postPending ? (

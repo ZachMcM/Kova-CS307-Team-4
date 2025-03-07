@@ -10,10 +10,17 @@ import { Heading } from "@/components/ui/heading";
 import { useState, useEffect } from "react";
 import { supabase } from '@/lib/supabase';
 import ExerciseSearchView from '@/components/search-views/ExerciseSearchView';
+import { useToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/services/toastServices";
+import { useSession } from "@/components/SessionContext";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
+
+  const toast = useToast();
+
+  const { signOutUser, sessionLoading, setSessionLoading, session } = useSession();
 
   const settingsData = [
     {
@@ -36,24 +43,14 @@ export default function SettingsScreen() {
       content: "/app/(tabs)/profile"
     },
     {
-      attribute: "Social profile",
+      attribute: "Debug: Unit Testing",
       type: "banner"
     },
     {
-      attribute: "Display age",
-      type: "privacy-tri",
-      content: "false"
-    },
-    {
-      attribute: "Display weight",
-      type: "privacy-tri",
-      content: "false"
-    },
-    {
-      attribute: "Display bio",
-      type: "privacy-tri",
-      content: "false"
-    },
+      attribute: "Unit testing page",
+      type: "redirect",
+      content: "/app/unit-tests"
+    }
   ];
 
   useEffect(() => {
@@ -67,6 +64,20 @@ export default function SettingsScreen() {
       fetchUserId();
     }, []);
 
+  const handleLogout = () => {
+    setSessionLoading(true);
+    signOutUser()
+      .then(() => {
+        router.replace("/login");
+        setSessionLoading(false)
+      })
+      .catch((error) => {
+        console.log(error);
+        setSessionLoading(false)
+        showErrorToast(toast, error.message);
+      });
+  };
+
   return (
     <StaticContainer className = "flex px-6 py-16">
       <VStack>
@@ -75,22 +86,26 @@ export default function SettingsScreen() {
             variant = "outline"
             size = "lg"
             action = "primary"
-            onPress={() => router.replace({
-              pathname: "/(tabs)/profiles/[id]",
-              params: { id: userId! }
-            })}
+            onPress={() => router.replace(`/(tabs)/profiles/${userId}`)}
+            // onPress={() => router.replace({
+            //   pathname: "/(tabs)/profiles/[id]",
+            //   params: { id: userId! }
+            // })}
             className = "p-3"
           >
             <Icon as={ChevronLeftIcon} className = "m-0"></Icon>
           </Button>
           <Heading size = "2xl" className = "mt-1 ml-16 pl-2">Settings</Heading>
         </HStack>
-        <ScrollView>
+        <ScrollView className = "h-screen">
           <VStack>
             {settingsData.map((setting) => (
               <SettingsCard key={setting.attribute} setting={setting}></SettingsCard>
             ))}
           </VStack>
+          <Button onPress={handleLogout} className = "mt-6 bg-red-500">
+            <ButtonText className="text-white" size = "xl">Logout</ButtonText>
+          </Button>
         </ScrollView>
       </VStack>
     </StaticContainer>

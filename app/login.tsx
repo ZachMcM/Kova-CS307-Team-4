@@ -1,6 +1,10 @@
 import Container from "@/components/Container";
 import { useSession } from "@/components/SessionContext";
-import { Button, ButtonText } from "@/components/ui/button";
+import {
+  Button,
+  ButtonSpinner,
+  ButtonText
+} from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
@@ -8,9 +12,8 @@ import { Link, LinkText } from "@/components/ui/link";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { supabase } from "@/lib/supabase";
 import { showErrorToast } from "@/services/toastServices";
-import { Redirect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 
 export default function LoginScreen() {
@@ -19,7 +22,7 @@ export default function LoginScreen() {
 
   const toast = useToast();
   const router = useRouter();
-  const { signInUser } = useSession();
+  const { signInUser, sessionLoading, setSessionLoading } = useSession();
 
   return (
     <Container>
@@ -57,20 +60,26 @@ export default function LoginScreen() {
           <Button
             variant="solid"
             size="xl"
-            action="secondary"
-            className="mt-5 mb-5 bg-[#6FA8DC]"
+            action="kova"
+            className="mt-5 mb-5"
             onPress={() => {
-              signInUser(email, password). then(() => {
-                router.replace("/(tabs)")
-              }).catch(error => {
-                  console.log(error);
-                  showErrorToast(toast, error.message);
+              setSessionLoading(true);
+              signInUser(email, password)
+                .then(() => {
+                  router.replace("/(tabs)");
+                  setSessionLoading(false);
                 })
+                .catch((error) => {
+                  console.log(error);
+                  setSessionLoading(false)
+                  showErrorToast(toast, error.message);
+                });
             }}
           >
             <ButtonText className="text-white">Sign In</ButtonText>
+            {sessionLoading && <ButtonSpinner color="#FFF" />}
           </Button>
-          <Link onPress= {() => router.replace("/password-recovery")}>
+          <Link onPress={() => router.replace("/password-recovery")}>
             <LinkText>Forgot Password?</LinkText>
           </Link>
         </VStack>
@@ -79,7 +88,9 @@ export default function LoginScreen() {
         <Heading className="text-center">New To Kova?</Heading>
         <Button
           size="xl"
-          className="ml-[38px] mr-[38px] bg-[#6FA8DC]"
+          action="kova"
+          variant="solid"
+          className="ml-[38px] mr-[38px]"
           onPress={() => router.replace("./register")}
         >
           <ButtonText className="text-white">Register for Account</ButtonText>
