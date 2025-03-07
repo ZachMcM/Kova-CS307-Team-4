@@ -239,13 +239,15 @@ export function exercisesToSearch(exercises: ExtendedExercise[]) : TaggedSearchI
  * @param item -- the item to compare to.
  * @param counter -- the counter that helps to find the frequency.
  */
-function compareToQuery(query: string, 
+export function compareToQuery(query: string, 
         item: SearchItem, 
         counter: WordCounter): number {
+    query = query.toLowerCase();
     let score = 0;
     let terms = query.split(" ");
     terms.forEach( (term) => {
-        if (item.name.includes(term)) {
+        term = term.toLowerCase();
+        if (item.name.toLowerCase().includes(term)) {
             score += counter.getInverseFrequency(term) + term.length;
         }
     });
@@ -261,7 +263,7 @@ function compareToQuery(query: string,
  * @param selectedTags -- the selected tags to filter by. If blank, ignore.
  * @returns the score of the given item.
  */
-function compareToTaggedQuery(query: string,
+export function compareToTaggedQuery(query: string,
         item: TaggedSearchItem,
         wordCounter: WordCounter,
         tagCounter: TagCounter,
@@ -275,7 +277,7 @@ function compareToTaggedQuery(query: string,
     if (!containsATag && !item.isTag) {
         return -1;
     }
-
+    query = query.toLowerCase();
     let score = compareToQuery(query, item, wordCounter);
     if (item.isTag) {
         score *= 2;
@@ -283,8 +285,9 @@ function compareToTaggedQuery(query: string,
     else {
         let terms = query.split(" ");
         terms.forEach( (term) => {
+            term = term.toLowerCase();
             item.tags.forEach( (tag) => {
-                if (tag.name.includes(term)) {
+                if (tag.name.toLowerCase().includes(term)) {
                     score += 2 * (tagCounter.getInverseFrequency(tag.name) + term.length);
                 }
             });
