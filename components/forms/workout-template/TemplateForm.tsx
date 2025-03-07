@@ -96,7 +96,7 @@ export default function TemplateForm() {
   async function onSubmit(values: FieldValues) {
     saveTemplate(values as TemplateFormValues);
   }
-  
+
   let searchItems = undefined;
   let wordCounter = undefined;
   let tagCounter = undefined;
@@ -111,6 +111,7 @@ export default function TemplateForm() {
       searchIdToIndex.set(searchItems[i].id, i);
     }
   }
+  
   return !exercisesLoading ? (
     allExercises && (
       <VStack space="4xl">
@@ -154,28 +155,13 @@ export default function TemplateForm() {
 
           {exerciseQuery.length != 0 &&
             allExercises
-              // .filter(
-              //   (exercise) =>
-              //     (exercise
-              //       .name!.toLowerCase()
-              //       .includes(exerciseQuery.toLowerCase()) ||
-              //       exercise.tags.filter((tag) =>
-              //         tag
-              //           .name!.toLowerCase()
-              //           .includes(exerciseQuery.toLowerCase())
-              //       ).length != 0) &&
-              //     !isExerciseAdded(exercise.id)
-              // )
               .sort((a: ExtendedExercise, b: ExtendedExercise) => {
-                console.log(exerciseQuery);
                 let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
                 let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
                 let diff = compareToTaggedQuery(exerciseQuery, bSearch,
                   wordCounter!, tagCounter!, []) 
                     - compareToTaggedQuery(exerciseQuery, aSearch,
                       wordCounter!, tagCounter!, []);
-                console.log(bSearch.name + ", " + aSearch.name);
-                console.log(diff);
                 return diff;
               })
               .map((exercise) => (

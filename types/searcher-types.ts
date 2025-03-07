@@ -2,7 +2,7 @@
 
 import ExerciseDataForm from "@/components/forms/workout-template/ExerciseDataForm";
 import { Tables } from "./database.types";
-import { ExtendedExercise } from "./extended-types";
+import { ExtendedExercise, ExtendedTemplateWithCreator } from "./extended-types";
 import { PublicProfile } from "./profile-types";
 import { Workout } from "./workout-types";
 
@@ -162,32 +162,17 @@ export function createTagCounter(items: TaggedSearchItem[]): TagCounter {
 // ADVANCED CREATORS [For user stories]
 
 /**
- * Converts a list of followers to a list of search items.
+ * Converts a list of profiles to a list of search items.
  * 
- * @param followers -- the followers to create the list from.
- * 
- * @returns a list of SearchItems
- */
-export function followerToSearch(followers: PublicProfile[]) : SearchItem[] {
-    let sItems: SearchItem[] = [];
-    followers.forEach((follower) => {
-        sItems.push(createSearchItem(follower.username, follower.user_id));
-    });
-    return sItems;
-}
-
-/**
- * Converts a list of friends to a list of search items.
- * 
- * @param friends -- the friends to create the list from.
+ * @param profiles -- the profiles to create the list from.
  * 
  * @returns a list of SearchItems
  */
-export function friendsToSearch(friends: PublicProfile[]) : SearchItem[] {
+export function profilesToSearch(profiles: any[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
-    friends.forEach((friend) => {
-        sItems.push(createSearchItem(friend.username, friend.user_id));
-    });
+    for (const profile of profiles) {
+        sItems.push(createSearchItem(profile.name, profile.userId));
+    }
     return sItems;
 }
 
@@ -198,10 +183,10 @@ export function friendsToSearch(friends: PublicProfile[]) : SearchItem[] {
  * 
  * @returns a list of SearchItems
  */
-export function templatesToSearch(templates: Workout[]) : SearchItem[] {
+export function templatesToSearch(templates: ExtendedTemplateWithCreator[]) : SearchItem[] {
     let sItems: SearchItem[] = [];
     templates.forEach((template) => {
-        sItems.push(createSearchItem(template.templateName, template.templateId));
+        sItems.push(createSearchItem(template.name!, template.id));
     });
     return sItems;
 }

@@ -17,6 +17,7 @@ import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/to
 import { useToast } from "@/components/ui/toast";
 import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
 import { Input, InputField } from "@/components/ui/input";
+import { compareToQuery, createWordCounter, profilesToSearch } from "@/types/searcher-types";
 
 export default function RelationsView() {
   const { id, type } = useLocalSearchParams();
@@ -106,6 +107,21 @@ export default function RelationsView() {
   const followingIds = following?.map((following: any) => following.userId);
   const relations = selectedTab === "friends" ? friends : selectedTab === "followers" ? followers : following;
 
+  let searchItems = undefined;
+  let wordCounter = undefined;
+  let searchIdToIndex = undefined;
+
+  if ((selectedTab === "friends" && !isPending)
+        || (selectedTab == "followers" && !isFetching)
+        || (selectedTab == "following" && !isLoading)) {
+    searchItems = profilesToSearch(relations!);
+    wordCounter = createWordCounter(searchItems);
+    searchIdToIndex = new Map<string, number>();
+    for (let i = 0; i < searchItems.length; i++) {
+      searchIdToIndex.set(searchItems[i].id, i);
+    }
+  }
+
   return (
     <StaticContainer className = "flex px-6 py-16">
       <VStack>
@@ -133,7 +149,18 @@ export default function RelationsView() {
           <VStack>
             {isLoading ? (
               <Text>Loading...</Text>
-            ) : (relations?.filter((relation) => (relation.name.toLowerCase().includes(profileQuery?.toLowerCase()))).map((relation: any) => (
+            ) : (
+            relations?.filter((relation) => (relation.name.toLowerCase().includes(profileQuery?.toLowerCase())))
+            .sort((a, b) => {
+                let aSearch = searchItems![searchIdToIndex!.get(a.userId)!];
+                let bSearch = searchItems![searchIdToIndex!.get(b.userId)!];
+                let diff = compareToQuery(profileQuery, bSearch,
+                  wordCounter!) 
+                    - compareToQuery(profileQuery, aSearch,
+                      wordCounter!);
+                return diff;
+              })
+            .map((relation: any) => (
                 <Pressable key={relation.userId} onPress={() => router.replace(`/profiles/${relation.userId}`)}>
                   <HStack space="md" className="p-2 border-b border-gray-300 mb-0">
                     <Avatar className="bg-indigo-600" size="md">
