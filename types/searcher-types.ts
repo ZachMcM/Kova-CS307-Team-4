@@ -233,10 +233,12 @@ export function compareToQuery(query: string,
     const itemParts = item.name.toLowerCase().split(" ");
     terms.forEach( (term) => {
         term = term.toLowerCase();
-        for (let i = 0; i < itemParts.length; i++) {
-            let itemPart = itemParts[i];
-            if (itemPart.includes(term)) {
-                score += counter.getInverseFrequency(itemPart) + term.length;
+        if (term !== "") {
+            for (let i = 0; i < itemParts.length; i++) {
+                let itemPart = itemParts[i];
+                if (itemPart.includes(term)) {
+                    score += counter.getInverseFrequency(itemPart) + term.length;
+                }
             }
         }
     });
@@ -274,12 +276,14 @@ export function compareToTaggedQuery(query: string,
     else {
         let terms = query.split(" ");
         terms.forEach( (term) => {
-            term = term.toLowerCase();
-            item.tags.forEach( (tag) => {
-                if (tag.name.toLowerCase().includes(term)) {
-                    score += 2 * (tagCounter.getInverseFrequency(tag.name) + term.length);
-                }
-            });
+            if (term !== "") {
+                term = term.toLowerCase();
+                item.tags.forEach( (tag) => {
+                    if (tag.name.toLowerCase().includes(term)) {
+                        score += 2 * (tagCounter.getInverseFrequency(tag.name) + term.length);
+                    }
+                });
+            }
         });
     }
     return score;
