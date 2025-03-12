@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Contribution } from "@/types/competition-types";
+import { WorkoutContribution } from "@/types/competition-types";
 import { PostAsyncStorage, PostDatabase } from "@/types/post.types";
 import { Workout } from "@/types/workout-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -53,7 +53,7 @@ export async function setWorkoutEndTime(endTime: number) {
 
 // saves contribution data in async storage
 
-export async function saveContributions(contributions: Contribution[]) {
+export async function saveContributionsToStorage(contributions: WorkoutContribution[]) {
   try {
     const stringVal = JSON.stringify(contributions)
     await AsyncStorage.setItem("contributions", stringVal)
@@ -63,7 +63,7 @@ export async function saveContributions(contributions: Contribution[]) {
   }
 }
 
-export async function getContributionsFromStorage(): Promise<Contribution[] | null> {
+export async function getContributionsFromStorage(): Promise<WorkoutContribution[] | null> {
   try {
     const stringVal = await AsyncStorage.getItem("contributions")
     if (stringVal == null) {

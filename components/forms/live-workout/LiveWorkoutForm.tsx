@@ -35,10 +35,9 @@ import { calculateTime, formatCalculateTime } from "@/lib/calculateTime";
 import {
   clearWorkout,
   getContributionsFromStorage,
-  saveContributions,
+  saveContributionsToStorage,
   setWorkoutEndTime,
 } from "@/services/asyncStorageServices";
-import { getContributions } from "@/services/groupServices";
 import { showErrorToast } from "@/services/toastServices";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -46,6 +45,7 @@ import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
+import { addCompetitionWorkout, getWorkoutContributions } from "@/services/groupServices";
 
 export default function LiveWorkoutForm() {
   const { control, handleSubmit, watch, setValue, formState, getValues } =
@@ -107,11 +107,11 @@ export default function LiveWorkoutForm() {
       setIsStopped(true);
       const endTime = Date.now();
       setValue("endTime", endTime);
-      const contributions = await getContributions(
+      const contributions = await getWorkoutContributions(
         getValues("exercises"),
         session?.user.user_metadata.profileId
       );
-      saveContributions(contributions);
+      saveContributionsToStorage(contributions);
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
       await setWorkoutEndTime(endTime);
     },
@@ -132,6 +132,7 @@ export default function LiveWorkoutForm() {
       // TODO interact with post workout (need to omit done because it is not needed in final iteration)
       console.log("Successfully posted workout", JSON.stringify(values));
       await clearWorkout();
+      await addCompetitionWorkout(values, session?.user.user_metadata.profileId)
       return values;
     },
     onSuccess: (workoutData) => {

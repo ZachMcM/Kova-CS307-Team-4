@@ -63,6 +63,45 @@ export type Database = {
           },
         ]
       }
+      competitionWorkout: {
+        Row: {
+          competitionId: string
+          created_at: string
+          id: string
+          profileId: string
+          workoutData: Json | null
+        }
+        Insert: {
+          competitionId: string
+          created_at?: string
+          id?: string
+          profileId: string
+          workoutData?: Json | null
+        }
+        Update: {
+          competitionId?: string
+          created_at?: string
+          id?: string
+          profileId?: string
+          workoutData?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitionWorkout_competitionId_fkey"
+            columns: ["competitionId"]
+            isOneToOne: false
+            referencedRelation: "competition"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitionWorkout_profileId_fkey"
+            columns: ["profileId"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise: {
         Row: {
           created_at: string

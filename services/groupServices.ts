@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
-import { Contribution, ExercisePoints } from "@/types/competition-types";
+import { ExercisePoints, WorkoutContribution } from "@/types/competition-types";
 import { Tables } from "@/types/database.types";
-import { ExerciseData } from "@/types/workout-types";
+import { ExerciseData, Workout } from "@/types/workout-types";
 
 export const getUserCompetitions = async (profileId: string): Promise<Tables<'competition'>[]> => {
   const { data: groups, error: groupErr } = await supabase.from("groupRel").select(
@@ -28,6 +28,37 @@ export const getUserCompetitions = async (profileId: string): Promise<Tables<'co
   return allCompetitions
 }
 
+// function to add competitionWorkout to competition
+
+export const addCompetitionWorkout = async (workout: Workout, profileId: string) => {
+  const competitions = await getUserCompetitions(profileId)
+
+  for (const comp of competitions) {
+    const { error: insertErr } = await supabase.from("competitionWorkout").insert({
+      competitionId: comp.id,
+      workoutData: workout,
+      profileId
+    })
+
+    if (insertErr) {
+      console.log(insertErr)
+      throw new Error(insertErr.message)
+    }
+  }
+}
+
+// TODO add function that formats utilizes this function and getExercisePoints and formats data for competition page
+export const getCompetitionWorkouts = async (competitionId: string) => {
+  const { data, error } = await supabase.from("competitionWorkouts").select().eq("competitionId", competitionId)
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data
+}
+
+// function to get the total points for a given exercise
+
 export const getExercisePoints = (competition: Tables<'competition'>, exercise: ExerciseData) => {
   const exercisePoints = competition.exercise_points as ExercisePoints[] || []
   let totalPoints = 0
@@ -50,9 +81,11 @@ export const getExercisePoints = (competition: Tables<'competition'>, exercise: 
   return totalPoints
 }
 
-export const getContributions = async (exercises: ExerciseData[], profileId: string): Promise<Contribution[]> => {
+// function to get the list of competitions the workout contributed to
+
+export const getWorkoutContributions = async (exercises: ExerciseData[], profileId: string): Promise<WorkoutContribution[]> => {
   const competitions = await getUserCompetitions(profileId)
-  const contributions: Contribution[] = []
+  const contributions: WorkoutContribution[] = []
 
   for (const comp of competitions) {
     let points = 0

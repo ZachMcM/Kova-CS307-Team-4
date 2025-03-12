@@ -3,7 +3,7 @@ export type ExercisePoints = {
   points: number
 }
 
-export type Contribution = {
+export type WorkoutContribution = {
   competition: {
     title: string,
     id: string
