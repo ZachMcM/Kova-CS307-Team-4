@@ -1,44 +1,43 @@
+import CompetitionCard from "@/components/CompetitionCard";
 import Container from "@/components/Container";
-import GroupCard from "@/components/GroupCard";
 import { useSession } from "@/components/SessionContext";
 import { Heading } from "@/components/ui/heading";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { getUserGroups } from "@/services/groupServices";
+import { getUserCompetitions } from "@/services/competitionServices";
 import { useQuery } from "@tanstack/react-query";
 
-export default function ProfileScreen() {
+export default function Competitions() {
   const { session } = useSession();
 
-  const { data: groups, isPending } = useQuery({
-    queryKey: ["groups"],
+  const { data: competitions, isPending } = useQuery({
+    queryKey: ["competitions"],
     queryFn: async () => {
-      const groups = await getUserGroups(session?.user.user_metadata.profileId);
-      return groups;
+      const competitions = await getUserCompetitions(
+        session?.user.user_metadata.profileId
+      );
+      return competitions;
     },
   });
 
   return (
-    // TODO work on this UI
     <Container>
       <VStack space="2xl">
         <VStack space="sm">
           <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
-            Groups
+            Competitions
           </Heading>
-          <Text>View all of your groups</Text>
+          <Text>View all your competitions</Text>
         </VStack>
         {isPending ? (
           <Spinner />
         ) : (
-          <VStack space="md">
-            {groups?.map((group) => (
-              <GroupCard key={group.id} group={group} />
-            ))}
-          </VStack>
+          competitions?.map((competition) => (
+            <CompetitionCard key={competition.id} competition={competition} />
+          ))
         )}
       </VStack>
     </Container>
-  );
+  );  
 }

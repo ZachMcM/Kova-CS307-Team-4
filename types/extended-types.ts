@@ -24,3 +24,20 @@ export type LikeRelation = {
   name: string
 }
 
+export type ExtendedGroupWithCompetitions = Tables<'group'> & {
+  competitions: Tables<'competition'>[]
+}
+
+export type ExtendedCompetitionWithGroup = Tables<'competition'> & {
+  group: {
+    id: string,
+    title: string
+  }
+}
+
+export type CompetitionWithGroup = Tables<'competition'> & {
+  group: {
+    id: string,
+    title: string,
+  }
+}

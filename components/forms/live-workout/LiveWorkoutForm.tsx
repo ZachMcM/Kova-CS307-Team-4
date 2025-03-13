@@ -45,7 +45,7 @@ import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
-import { addCompetitionWorkout, getWorkoutContributions } from "@/services/groupServices";
+import { addCompetitionWorkout, getWorkoutContributions } from "@/services/competitionServices";
 
 export default function LiveWorkoutForm() {
   const { control, handleSubmit, watch, setValue, formState, getValues } =
