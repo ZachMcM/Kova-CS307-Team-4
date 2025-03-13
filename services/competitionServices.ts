@@ -1,9 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { ExercisePoints, WorkoutContribution } from "@/types/competition-types";
 import { Tables } from "@/types/database.types";
+import {
+  CompetitionWithGroup,
+  CompetitionWorkoutWithProfile,
+  ExtendedCompetitionWithGroup,
+} from "@/types/extended-types";
 import { ExerciseData, Workout } from "@/types/workout-types";
-import { getGroup, getUserGroups } from "./groupServices";
-import { CompetitionWithGroup, ExtendedCompetitionWithGroup } from "@/types/extended-types";
+import { getUserGroups } from "./groupServices";
 
 export const getCompetition = async (
   id: string
@@ -22,7 +26,7 @@ export const getCompetition = async (
     throw new Error(compErr.message);
   }
 
-  return competition
+  return competition;
 };
 
 export const getUserCompetitions = async (
@@ -36,9 +40,11 @@ export const getUserCompetitions = async (
   for (const group of groups) {
     const { data: competitions, error: competitionsErr } = await supabase
       .from("competition")
-      .select(`
+      .select(
+        `
         *,
-        group:groupId(title, id)`)
+        group:groupId(title, id)`
+      )
       .eq("groupId", group.id);
     if (competitionsErr) {
       throw new Error(competitionsErr.message);
@@ -75,16 +81,23 @@ export const addCompetitionWorkout = async (
 };
 
 // TODO add function that formats utilizes this function and getExercisePoints and formats data for competition page
-export const getCompetitionWorkouts = async (competitionId: string) => {
+export const getCompetitionWorkouts = async (
+  competitionId: string
+): Promise<CompetitionWorkoutWithProfile[]> => {
   const { data, error } = await supabase
-    .from("competitionWorkouts")
-    .select()
+    .from("competitionWorkout")
+    .select(
+      `
+      *,
+      profile:profileId(id, name, username, avatar)`
+    )
     .eq("competitionId", competitionId);
   if (error) {
+    console.log(error);
     throw new Error(error.message);
   }
 
-  return data;
+  return data as any;
 };
 
 // function to get the total points for a given exercise
@@ -103,26 +116,13 @@ export const getExercisePoints = (
     }
   }
 
-  console.log(exercise);
-
   for (const set of exercise.sets) {
-    console.log(
-      "reps",
-      set.reps,
-      "rep mult",
-      competition.rep_multiplier,
-      "weight",
-      set.weight,
-      "weight mult",
-      competition.weight_multiplier
-    );
     const setPoints =
       baseValue *
       set.reps! *
       competition.rep_multiplier! *
       set.weight! *
       competition.weight_multiplier!;
-    console.log(setPoints);
     totalPoints += setPoints;
   }
 
@@ -154,4 +154,19 @@ export const getWorkoutContributions = async (
   }
 
   return contributions;
+};
+
+export const getProfilePoints = (
+  competition: Tables<"competition">,
+  workouts: CompetitionWorkoutWithProfile[]
+) => {
+  let points = 0
+  console.log("Workouts", JSON.stringify(workouts))
+  for (const workout of workouts) {
+    for (const exercise of workout.workoutData.exercises) {
+      points += getExercisePoints(competition, exercise)
+    }
+  }
+
+  return points
 };

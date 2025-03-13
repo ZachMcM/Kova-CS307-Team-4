@@ -113,6 +113,10 @@ export default function LiveWorkoutForm() {
       );
       saveContributionsToStorage(contributions);
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
+      // invalidate all competition leaderboards
+      for (const contribution of contributions) {
+        queryClient.invalidateQueries({ queryKey: ["comp-leaderboard", { id: contribution.competition.id }]})
+      }
       await setWorkoutEndTime(endTime);
     },
     onSuccess: () => {

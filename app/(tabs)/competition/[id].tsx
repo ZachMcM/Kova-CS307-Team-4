@@ -1,3 +1,5 @@
+import ExercisePointsView from "@/components/competition/ExercisePointsView";
+import Leaderboard from "@/components/competition/Leaderboard";
 import Container from "@/components/Container";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -6,6 +8,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getCompetition } from "@/services/competitionServices";
 import { Feather } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 
@@ -27,9 +30,12 @@ export default function Competition() {
       ) : !competition ? (
         <Redirect href="/feed" />
       ) : (
-        <VStack space="md">
-          <Heading size="2xl">{competition.title}</Heading>
-          <VStack space="2xl">
+        <VStack space="4xl">
+          <VStack space="sm">
+            <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
+              {competition.title}
+            </Heading>
+            <Text>View the competition data</Text>
             <HStack space="md" className="items-center">
               <Feather name="users" size={24} />
               <Link
@@ -42,22 +48,42 @@ export default function Competition() {
                 {competition.group.title}
               </Link>
             </HStack>
-            <VStack space="sm">
-              <HStack space="md" className="items-center">
-                <Feather name="calendar" size={18} />
-                <Text size="md" className="text-typography-950">
+          </VStack>
+          <VStack space="md">
+            <HStack space="md" className="items-center">
+              <Ionicons name="calendar-number-outline" size={24} />
+              <VStack>
+                <Heading size="md">Duration</Heading>
+                <Text size="md">
                   {new Date(competition?.start_date!).toLocaleDateString()} -{" "}
                   {new Date(competition?.end_date!).toLocaleDateString()}
                 </Text>
-              </HStack>
-              <HStack space="md" className="items-center">
-                <Feather name="target" size={18} />
-                <Text size="md" className="text-typography-950">
-                  {competition?.goal} Points
-                </Text>
-              </HStack>
-            </VStack>
+              </VStack>
+            </HStack>
+            <HStack space="md" className="items-center">
+              <Feather name="target" size={24} />
+              <VStack>
+                <Heading size="md">Goal</Heading>
+                <Text size="md">{competition?.goal} Points</Text>
+              </VStack>
+            </HStack>
+            <HStack space="md" className="items-center">
+              <Ionicons name="barbell" size={24} />
+              <VStack>
+                <Heading size="md">Weight Multiplier</Heading>
+                <Text size="md">x{competition.weight_multiplier} Points</Text>
+              </VStack>
+            </HStack>
+            <HStack space="md" className="items-center">
+              <Ionicons name="arrow-up" size={24} />
+              <VStack>
+                <Heading size="md">Rep Multiplier</Heading>
+                <Text size="md">x{competition.rep_multiplier} Points</Text>
+              </VStack>
+            </HStack>
           </VStack>
+          <Leaderboard competition={competition} />
+          <ExercisePointsView competition={competition} />
         </VStack>
       )}
     </Container>

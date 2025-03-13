@@ -1,4 +1,5 @@
 import { CompetitionWithGroup } from "@/types/extended-types";
+import { Ionicons } from "@expo/vector-icons";
 import Feather from "@expo/vector-icons/Feather";
 import { Link, useRouter } from "expo-router";
 import { Button, ButtonIcon, ButtonText } from "./ui/button";
@@ -36,15 +37,15 @@ export default function CompetitionCard({
           </HStack>
           <VStack space="sm">
             <HStack space="md" className="items-center">
-              <Feather name="calendar" size={18} />
-              <Text size="md" className="text-typography-950">
+              <Ionicons name="calendar-number-outline" size={22} />
+              <Text size="md">
                 {new Date(competition?.start_date!).toLocaleDateString()} -{" "}
                 {new Date(competition?.end_date!).toLocaleDateString()}
               </Text>
             </HStack>
             <HStack space="md" className="items-center">
-              <Feather name="target" size={18} />
-              <Text size="md" className="text-typography-950">
+              <Feather name="target" size={22} />
+              <Text size="md">
                 {competition?.goal} Points
               </Text>
             </HStack>
