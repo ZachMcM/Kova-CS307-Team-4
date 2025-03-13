@@ -59,7 +59,7 @@ export default function Leaderboard({
         };
       });
 
-      leaderboard.sort((a, b) => a.totalPoints - b.totalPoints);
+      leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
 
       return leaderboard;
     },
