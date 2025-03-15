@@ -80,7 +80,24 @@ export const addCompetitionWorkout = async (
   }
 };
 
-// TODO add function that formats utilizes this function and getExercisePoints and formats data for competition page
+export const getProfileCompetitionWorkouts = async (
+  competitionId: string,
+  profileId: string
+): Promise<CompetitionWorkoutWithProfile[]> => {
+  const { data, error } = await supabase
+    .from("competitionWorkout")
+    .select()
+    .eq("competitionId", competitionId)
+    .eq("profileId", profileId);
+
+  if (error) {
+    console.log(error);
+    throw new Error(error.message);
+  }
+
+  return data as any;
+};
+
 export const getCompetitionWorkouts = async (
   competitionId: string
 ): Promise<CompetitionWorkoutWithProfile[]> => {
@@ -160,13 +177,13 @@ export const getProfilePoints = (
   competition: Tables<"competition">,
   workouts: CompetitionWorkoutWithProfile[]
 ) => {
-  let points = 0
-  console.log("Workouts", JSON.stringify(workouts))
+  let points = 0;
+  console.log("Workouts", JSON.stringify(workouts));
   for (const workout of workouts) {
     for (const exercise of workout.workoutData.exercises) {
-      points += getExercisePoints(competition, exercise)
+      points += getExercisePoints(competition, exercise);
     }
   }
 
-  return points
+  return points;
 };

@@ -1,6 +1,8 @@
 import ExercisePointsView from "@/components/competition/ExercisePointsView";
 import Leaderboard from "@/components/competition/Leaderboard";
+import YourWorkouts from "@/components/competition/YourWorkouts";
 import Container from "@/components/Container";
+import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Spinner } from "@/components/ui/spinner";
@@ -35,7 +37,6 @@ export default function Competition() {
             <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
               {competition.title}
             </Heading>
-            <Text>View the competition data</Text>
             <HStack space="md" className="items-center">
               <Feather name="users" size={24} />
               <Link
@@ -49,41 +50,52 @@ export default function Competition() {
               </Link>
             </HStack>
           </VStack>
-          <VStack space="md">
-            <HStack space="md" className="items-center">
-              <Ionicons name="calendar-number-outline" size={24} />
-              <VStack>
-                <Heading size="md">Duration</Heading>
-                <Text size="md">
-                  {new Date(competition?.start_date!).toLocaleDateString()} -{" "}
-                  {new Date(competition?.end_date!).toLocaleDateString()}
-                </Text>
+          <VStack space="lg">
+            <VStack>
+              <Heading size="xl">Details</Heading>
+              <Text>View competition details</Text>
+            </VStack>
+            <Card variant="outline">
+              <VStack space="md">
+                <HStack space="md" className="items-center">
+                  <Ionicons name="calendar-number-outline" size={24} />
+                  <VStack>
+                    <Heading size="md">Duration</Heading>
+                    <Text size="md">
+                      {new Date(competition?.start_date!).toLocaleDateString()}{" "}
+                      - {new Date(competition?.end_date!).toLocaleDateString()}
+                    </Text>
+                  </VStack>
+                </HStack>
+                <HStack space="md" className="items-center">
+                  <Feather name="target" size={24} />
+                  <VStack>
+                    <Heading size="md">Goal</Heading>
+                    <Text size="md">{competition?.goal} Points</Text>
+                  </VStack>
+                </HStack>
+                <HStack space="md" className="items-center">
+                  <Ionicons name="barbell" size={24} />
+                  <VStack>
+                    <Heading size="md">Weight Multiplier</Heading>
+                    <Text size="md">
+                      x{competition.weight_multiplier} Points
+                    </Text>
+                  </VStack>
+                </HStack>
+                <HStack space="md" className="items-center">
+                  <Ionicons name="arrow-up" size={24} />
+                  <VStack>
+                    <Heading size="md">Rep Multiplier</Heading>
+                    <Text size="md">x{competition.rep_multiplier} Points</Text>
+                  </VStack>
+                </HStack>
               </VStack>
-            </HStack>
-            <HStack space="md" className="items-center">
-              <Feather name="target" size={24} />
-              <VStack>
-                <Heading size="md">Goal</Heading>
-                <Text size="md">{competition?.goal} Points</Text>
-              </VStack>
-            </HStack>
-            <HStack space="md" className="items-center">
-              <Ionicons name="barbell" size={24} />
-              <VStack>
-                <Heading size="md">Weight Multiplier</Heading>
-                <Text size="md">x{competition.weight_multiplier} Points</Text>
-              </VStack>
-            </HStack>
-            <HStack space="md" className="items-center">
-              <Ionicons name="arrow-up" size={24} />
-              <VStack>
-                <Heading size="md">Rep Multiplier</Heading>
-                <Text size="md">x{competition.rep_multiplier} Points</Text>
-              </VStack>
-            </HStack>
+            </Card>
           </VStack>
           <Leaderboard competition={competition} />
           <ExercisePointsView competition={competition} />
+          <YourWorkouts competition={competition} />
         </VStack>
       )}
     </Container>

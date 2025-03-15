@@ -45,7 +45,10 @@ import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
-import { addCompetitionWorkout, getWorkoutContributions } from "@/services/competitionServices";
+import {
+  addCompetitionWorkout,
+  getWorkoutContributions,
+} from "@/services/competitionServices";
 
 export default function LiveWorkoutForm() {
   const { control, handleSubmit, watch, setValue, formState, getValues } =
@@ -113,9 +116,15 @@ export default function LiveWorkoutForm() {
       );
       saveContributionsToStorage(contributions);
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
+      // invalidate all competition workouts for curr profile
+      queryClient.invalidateQueries({
+        queryKey: ["my-competition-workouts"],
+      });
       // invalidate all competition leaderboards
       for (const contribution of contributions) {
-        queryClient.invalidateQueries({ queryKey: ["comp-leaderboard", { id: contribution.competition.id }]})
+        queryClient.invalidateQueries({
+          queryKey: ["comp-leaderboard", { id: contribution.competition.id }],
+        });
       }
       await setWorkoutEndTime(endTime);
     },
@@ -136,7 +145,10 @@ export default function LiveWorkoutForm() {
       // TODO interact with post workout (need to omit done because it is not needed in final iteration)
       console.log("Successfully posted workout", JSON.stringify(values));
       await clearWorkout();
-      await addCompetitionWorkout(values, session?.user.user_metadata.profileId)
+      await addCompetitionWorkout(
+        values,
+        session?.user.user_metadata.profileId
+      );
       return values;
     },
     onSuccess: (workoutData) => {
@@ -278,7 +290,10 @@ export default function LiveWorkoutForm() {
                   ) : (
                     contributions &&
                     contributions.map((contribution) => (
-                      <HStack key={contribution.points * Math.random()} className="justify-between items-center">
+                      <HStack
+                        key={contribution.points * Math.random()}
+                        className="justify-between items-center"
+                      >
                         <Heading size="md">
                           {contribution.competition.title}
                         </Heading>

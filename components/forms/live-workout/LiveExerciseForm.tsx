@@ -146,7 +146,7 @@ export default function LiveExerciseForm({
                         className={clsx(
                           "border-2 rounded-md fle w-6 h-6 justify-center items-center",
                           value
-                            ? "border-success-300 bg-success-300"
+                            ? "border-success-200 bg-success-200"
                             : "border-outline-500 "
                         )}
                       >

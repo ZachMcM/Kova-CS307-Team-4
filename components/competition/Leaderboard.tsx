@@ -18,6 +18,8 @@ import { Progress, ProgressFilledTrack } from "../ui/progress";
 import { Spinner } from "../ui/spinner";
 import { Text } from "../ui/text";
 import { VStack } from "../ui/vstack";
+import { useSession } from "../SessionContext";
+import clsx from "clsx";
 
 export default function Leaderboard({
   competition,
@@ -65,6 +67,8 @@ export default function Leaderboard({
     },
   });
 
+  const { session } = useSession();
+
   const router = useRouter();
 
   return (
@@ -79,7 +83,14 @@ export default function Leaderboard({
         leaderboard && (
           <VStack space="md">
             {leaderboard.map(({ totalPoints, profile }, i) => (
-              <Card key={profile.id} variant="outline">
+              <Card
+                key={profile.id}
+                variant="outline"
+                className={clsx(
+                  session?.user.user_metadata.profileId == profile.id &&
+                    "bg-secondary-100"
+                )}
+              >
                 <VStack space="md">
                   <HStack space="lg" className="items-center">
                     <Box className="rounded-full bg-secondary-200 flex justify-center items-center h-8 w-8">
@@ -111,13 +122,17 @@ export default function Leaderboard({
                       </HStack>
                     </Pressable>
                   </HStack>
-                  <VStack space="sm">
+                  <VStack space="md">
                     <HStack className="items-center justify-between">
                       <Text>Progress torwards goal</Text>
-                      <Text>{Math.round((totalPoints / competition.goal!) * 100)}%</Text>
+                      <Text>
+                        {Math.round((totalPoints / competition.goal!) * 100)}%
+                      </Text>
                     </HStack>
                     <Progress
-                      value={Math.round((totalPoints / competition.goal!) * 100)}
+                      value={Math.round(
+                        (totalPoints / competition.goal!) * 100
+                      )}
                       size="lg"
                       orientation="horizontal"
                     >
@@ -127,7 +142,17 @@ export default function Leaderboard({
                       <Text>
                         {totalPoints} / {competition.goal}
                       </Text>
-                      <Text>{competition.goal! - totalPoints < 0 ? 0 : competition.goal! - totalPoints} pts remaining</Text>
+                      {competition.goal! - totalPoints >= 0 ? (
+                        <Text>
+                          {competition.goal! - totalPoints} pts remaining
+                        </Text>
+                      ) : (
+                        <Box className="bg-success-50 border border-success-200 rounded-full py-0.5 px-2">
+                          <Heading size="xs" className="text-success-400">
+                            Goal Reached!
+                          </Heading>
+                        </Box>
+                      )}
                     </HStack>
                   </VStack>
                 </VStack>

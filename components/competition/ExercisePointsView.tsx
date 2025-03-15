@@ -64,7 +64,7 @@ export default function ExercisePointsView({
               <Card key={exerciseId} variant="outline">
                 <HStack className="items-center justify-between">
                   <Heading>{exerciseName}</Heading>
-                  <Box className="bg-secondary-300 rounded-full py-1 px-3">
+                  <Box className="bg-secondary-400 rounded-full py-1 px-3">
                     <Heading size="sm">{points} pts</Heading>
                   </Box>
                 </HStack>
