@@ -90,6 +90,9 @@ export default function RootLayout() {
             <Stack.Screen name="password-recovery" options={{headerShown: false}} />
             <Stack.Screen name="settings" options={{headerShown: false}} />
             <Stack.Screen name="unit-tests" options={{headerShown: false}} />
+            <Stack.Screen name="change-password" options={{headerShown: false}} />
+            <Stack.Screen name="change-email" options={{headerShown: false}} />
+            <Stack.Screen name="change-username" options={{headerShown: false}} />
           </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

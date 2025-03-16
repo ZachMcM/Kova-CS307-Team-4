@@ -87,6 +87,7 @@ export default function PasswordRecoveryScreen() {
           onPress={() => {
             // showSuccessToast(toast, "Password recovery not yet implemented, redirecting to login");
             sendPasswordReset(RecoveryEmail).then(() => {
+              showSuccessToast(toast, "8-digit one time password sent, login using that password to reset your account")
               router.replace("/login");
             }).catch((error) => {
               showErrorToast(toast, error.message)

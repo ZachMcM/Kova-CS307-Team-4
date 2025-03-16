@@ -25,6 +25,13 @@ type SessionContextValues = {
     userPassword: string
   ) => Promise<boolean>;
   signOutUser: () => Promise<void>;
+  updateEmail: (
+    updateValue: string
+  ) => Promise<boolean>;
+  updatePassword: (
+    updateValue: string,
+    verifyValue: string
+  ) => Promise<boolean>
 };
 
 const SessionContext = createContext<SessionContextValues | null>(null);
@@ -171,6 +178,38 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(error.message);
   };
 
+  const updateEmail = async (updateValue: string) => {
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
+    if (!emailRegex.test(updateValue)) {
+      throw new Error("Please enter a valid email address");
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      email: updateValue
+    })
+    
+    if (error) throw Error("Error updating email");
+    return true;
+  }
+
+  const updatePassword = async (updateValue: string, verifyValue: string) => {
+    if (updateValue != verifyValue) {
+      throw new Error("Password and confirmed password\nmust match");
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      password: updateValue
+    })
+
+    if (error) {
+      throw new Error(
+        "New Password must be at least 6 characters\n and include a letter and number"
+      );
+    }
+
+    return true;
+  }
+
   return (
     <SessionContext.Provider
       value={{
@@ -180,6 +219,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         createAccount,
         signInUser,
         signOutUser,
+        updateEmail,
+        updatePassword
       }}
     >
       {children}
