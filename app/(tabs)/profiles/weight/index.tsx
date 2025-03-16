@@ -6,29 +6,30 @@ import { Text } from "@/components/ui/text";
 import { VStack } from '@/components/ui/vstack';
 import { HStack } from "@/components/ui/hstack";
 import { Box } from "@/components/ui/box";
-import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input";
+import { Input, InputField } from "@/components/ui/input";
 import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
 import { Icon, TrashIcon, EditIcon, AddIcon, ChevronLeftIcon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/toast";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { Pressable } from "@/components/ui/pressable";
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio";
 import { FlatList } from "@/components/ui/flat-list";
 import { Spinner } from "@/components/ui/spinner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getWeightEntries, addWeightEntry, updateWeightEntry, deleteWeightEntry } from "@/services/weightServices";
-import { WeightEntry } from "@/types/weight-types";
 import DateTimePicker from '@react-native-community/datetimepicker';
+
+// Local type definition for weight entries
+type WeightEntry = {
+  id: string;
+  weight: number;
+  unit: 'kg' | 'lbs';
+  date: string; // ISO date string
+  created_at: string;
+};
 
 export default function WeightTrackingScreen() {
   const router = useRouter();
   const toast = useToast();
-  const queryClient = useQueryClient();
-  
-  // User state
-  const [userId, setUserId] = useState<string | null>(null);
   
   // Weight entry form state
   const [weight, setWeight] = useState('');
@@ -36,30 +37,12 @@ export default function WeightTrackingScreen() {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   
+  // Local state for weight entries
+  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
   // Edit state
   const [editingEntry, setEditingEntry] = useState<WeightEntry | null>(null);
-  
-  // Fetch user ID
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUserId(session.user.id);
-      }
-    };
-
-    fetchUserId();
-  }, []);
-  
-  // Fetch weight entries
-  const { data: weightEntries, isPending, refetch } = useQuery({
-    queryKey: ["weightEntries", userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      return await getWeightEntries(userId);
-    },
-    enabled: !!userId,
-  });
   
   // Handle date change
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -83,14 +66,15 @@ export default function WeightTrackingScreen() {
     setEditingEntry(null);
   };
   
+  // Generate a simple UUID for local entries
+  const generateId = () => {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15);
+  };
+  
   // Handle form submission
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     try {
-      if (!userId) {
-        showErrorToast(toast, "You must be logged in to track weight");
-        return;
-      }
-      
       if (!weight || isNaN(Number(weight)) || Number(weight) <= 0) {
         showErrorToast(toast, "Please enter a valid weight");
         return;
@@ -100,26 +84,35 @@ export default function WeightTrackingScreen() {
       
       if (editingEntry) {
         // Update existing entry
-        await updateWeightEntry(editingEntry.id, {
-          weight: weightValue,
-          unit,
-          date: date.toISOString(),
-        });
+        setWeightEntries(entries => 
+          entries.map(entry => 
+            entry.id === editingEntry.id 
+              ? {
+                  ...entry,
+                  weight: weightValue,
+                  unit,
+                  date: date.toISOString(),
+                }
+              : entry
+          )
+        );
         showSuccessToast(toast, "Weight entry updated");
       } else {
         // Add new entry
-        await addWeightEntry({
-          user_id: userId,
+        const newEntry: WeightEntry = {
+          id: generateId(),
           weight: weightValue,
           unit,
           date: date.toISOString(),
-        });
+          created_at: new Date().toISOString(),
+        };
+        
+        setWeightEntries(entries => [newEntry, ...entries]);
         showSuccessToast(toast, "Weight entry added");
       }
       
-      // Reset form and refetch data
+      // Reset form
       resetForm();
-      refetch();
     } catch (error) {
       console.error(error);
       showErrorToast(toast, "Failed to save weight entry");
@@ -130,16 +123,15 @@ export default function WeightTrackingScreen() {
   const handleEdit = (entry: WeightEntry) => {
     setEditingEntry(entry);
     setWeight(entry.weight.toString());
-    setUnit(entry.unit as 'kg' | 'lbs');
+    setUnit(entry.unit);
     setDate(new Date(entry.date));
   };
   
   // Handle delete
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     try {
-      await deleteWeightEntry(id);
+      setWeightEntries(entries => entries.filter(entry => entry.id !== id));
       showSuccessToast(toast, "Weight entry deleted");
-      refetch();
     } catch (error) {
       console.error(error);
       showErrorToast(toast, "Failed to delete weight entry");
@@ -266,9 +258,9 @@ export default function WeightTrackingScreen() {
         <Box className="mt-4">
           <Heading size="md" className="mb-2">Weight History</Heading>
           
-          {isPending ? (
+          {isLoading ? (
             <Spinner />
-          ) : weightEntries && weightEntries.length > 0 ? (
+          ) : weightEntries.length > 0 ? (
             <FlatList
               data={weightEntries}
               keyExtractor={(item) => item.id}
