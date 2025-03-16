@@ -208,7 +208,7 @@ export const WorkoutPost = ({
                 <Ionicons name="pencil" size={18} color="#007AFF" />
               </TouchableOpacity>
             )}
-            <TouchableOpacity onPress={toggleExpand} activeOpacity={0.9}>
+            <TouchableOpacity onPress={() => {router.replace(`/posts/${postId}`)}} activeOpacity={0.9}>
               <Ionicons
                 name={expanded ? "chevron-up" : "chevron-down"}
                 size={24}
