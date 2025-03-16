@@ -12,7 +12,7 @@ import { Link, LinkText } from "@/components/ui/link";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { showErrorToast } from "@/services/toastServices";
+import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { testCounters, testCreators, testScorers } from "@/services/unitTestServices";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -66,9 +66,16 @@ export default function LoginScreen() {
             onPress={() => {
               setSessionLoading(true);
               signInUser(email, password)
-                .then(() => {
-                  router.replace("/(tabs)");
-                  setSessionLoading(false);
+                .then((credentials: boolean) => {
+                  if (credentials) {
+                    showSuccessToast(toast, "Welcome Back to Kova")
+                    router.replace("/(tabs)");
+                    setSessionLoading(false);
+                  } else {
+                    showSuccessToast(toast, "OTP sign in success, redirecting to password reset");
+                    setSessionLoading(false);
+                    router.replace("/settings");
+                  }
                 })
                 .catch((error) => {
                   console.log(error);

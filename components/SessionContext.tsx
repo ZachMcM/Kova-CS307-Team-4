@@ -23,7 +23,7 @@ type SessionContextValues = {
   signInUser: (
     userEmail: string,
     userPassword: string
-  ) => Promise<AuthAccountResponse>;
+  ) => Promise<boolean>;
   signOutUser: () => Promise<void>;
 };
 
@@ -129,7 +129,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signInUser = async (
     userEmail: string,
     userPassword: string
-  ): Promise<AuthAccountResponse> => {
+  ): Promise<boolean> => {
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
     if (!emailRegex.test(userEmail)) {
       throw new Error("Please enter a valid email address");
@@ -137,6 +137,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (userPassword.length == 0) {
       throw new Error("Password field cannot be empty");
     }
+
+    //Checking for OTP signing in first
+      const { data: OTPData, error: OTPError} = await supabase.auth.verifyOtp({
+        email: userEmail,
+        token: userPassword,
+        type: "email"
+      })
+      if (OTPError) {
+      console.log("No OTP with these credentials");
+      } else {
+        return false;
+      }
+
     const { data: signInData, error: passwordError } =
       await supabase.auth.signInWithPassword({
         email: userEmail,
@@ -148,7 +161,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     console.log("signing in");
 
-    return signInData as AuthAccountResponse;
+    return true;
   };
 
   const signOutUser = async () => {
