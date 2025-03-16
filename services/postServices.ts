@@ -120,3 +120,17 @@ export const uploadPostImage = async (uri: string, fileType = 'image/jpeg') => {
     throw error;
   }
 }; 
+
+export const getPostDetailsById = async (postId: string) => {
+  const { data: post, error } = await supabase
+    .from("post")
+    .select(`
+      *,
+      profile:profileId(*)
+    `)
+    .eq("id", postId)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return post;
+}
