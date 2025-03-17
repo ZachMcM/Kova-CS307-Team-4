@@ -7,7 +7,10 @@ import { Button, ButtonText } from "@/components/ui/button";
 import { Pressable } from "react-native";
 import { ChevronLeftIcon, Icon } from "@/components/ui/icon";
 import { getPostDetailsById } from "@/services/postServices";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import PostCard from "@/components/PostCard";
+import { supabase } from "@/lib/supabase";
 
 export default function PostsView() {
     // Grab local params
@@ -15,11 +18,41 @@ export default function PostsView() {
 
     const router = useRouter();
 
-    useEffect(async () => {
-        if (!Array.isArray(postId)) {
-            return await getPostDetailsById(postId);
-        }
-    }, [postData]);
+    const [post, setPost] = useState(null);
+    const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchPostAndProfile = async () => {
+            try {
+                setLoading(true);
+
+                const { data: postData, error: postError } = await supabase.from("posts").select("*").eq("id", postId).single();
+                if (postError) throw postError;
+
+                setPost(postData);
+        
+                if (postData?.profileId) {
+                    const { data: profileData, error: profileError } = await supabase.from("profiles").select("*").eq("id", postData.profileId).single();
+                    if (profileError) throw profileError;
+
+                    setProfile(profileData);
+                }
+            } 
+            catch (err: typeof error) {
+                setError(err.message);
+            } 
+            finally {
+                setLoading(false);
+            }
+        };
+    
+        fetchPostAndProfile();
+        }, [postId]);
+        
+        return { post, profile, loading, error };
+    };
 
     return (
         <StaticContainer className = "flex px-6 py-16">
@@ -30,7 +63,7 @@ export default function PostsView() {
                         <Text size = "2xl" className = "font-bold">Feed</Text>
                     </HStack>
                 </Pressable>
-                <></>
+                <PostCard {postData, }></PostCard>
             </VStack>
         </StaticContainer>
     );
