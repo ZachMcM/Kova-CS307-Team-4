@@ -65,15 +65,15 @@ export default function LoginScreen() {
             onPress={() => {
               setSessionLoading(true);
               signInUser(email, password)
-                .then((credentials: boolean) => {
-                  if (credentials) {
+                .then((OTPSignIn: boolean) => {
+                  if (!OTPSignIn) {
                     showSuccessToast(toast, "Welcome Back to Kova")
                     router.replace("/(tabs)");
                     setSessionLoading(false);
                   } else {
                     showSuccessToast(toast, "OTP sign in success, redirecting to password reset");
                     setSessionLoading(false);
-                    router.replace("/settings");
+                    router.replace("/change-password");
                   }
                 })
                 .catch((error) => {

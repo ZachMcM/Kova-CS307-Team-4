@@ -24,9 +24,6 @@ const sendPasswordReset = async (email: string) => {
   if (!emailRegex.test(email)) {
     throw new Error("Please enter a valid email address");
   }
-  // const { error } = await supabase.auth.resetPasswordForEmail(email, {
-  //   redirectTo: 'myapp://password-recovery'
-  // });
 
   const { error } = await supabase.auth.signInWithOtp({
     email: email,
@@ -85,7 +82,6 @@ export default function PasswordRecoveryScreen() {
           action="kova"
           className="mt-5 mb-5"
           onPress={() => {
-            // showSuccessToast(toast, "Password recovery not yet implemented, redirecting to login");
             sendPasswordReset(RecoveryEmail).then(() => {
               showSuccessToast(toast, "8-digit one time password sent, login using that password to reset your account")
               router.replace("/login");
@@ -94,7 +90,7 @@ export default function PasswordRecoveryScreen() {
             })
           }}
         >
-          <ButtonText className="text-white">Send Password Recovery</ButtonText>
+          <ButtonText className="text-white">Send Password Recovery Code</ButtonText>
         </Button>
       </VStack>
     </Card>

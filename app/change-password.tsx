@@ -25,21 +25,24 @@ export default function changePasswordScreen() {
 
     const toast = useToast();
     const router = useRouter();
-    const { updateEmail, updatePassword } = useSession();
+    const { OTPSignIn, updateEmail, updatePassword } = useSession();
 
+    //!OTPSignIn removes the back button and Old Password text entry for OTP password reset logins
     return (
         <Container>
-            <Button
+            {!OTPSignIn && (<Button
                 variant = "outline"
                 size = "md"
                 action = "primary"
-                onPress={() => router.replace("/settings")}
+                onPress={() => {
+                    router.replace("/settings")
+                }}
                 className = "p-3">
                 <HStack>
                 <Icon as={ChevronLeftIcon} className="mt-0"></Icon>
                 <ButtonText>Cancel Password Change</ButtonText>
                 </HStack>
-            </Button>
+            </Button>)}
             <Card variant="ghost" className="p-10 mb-50">
                 <VStack space="sm" className="mb-50">
                     <Heading size="4xl">Change Password</Heading>
@@ -47,7 +50,7 @@ export default function changePasswordScreen() {
                 </VStack>
             </Card>
             <Card variant="outline" className="m-[25px]">
-                <VStack space="sm">
+                {!OTPSignIn && (<VStack space="sm">
                     <Text size="lg" className="ml-3 mt-5">
                         Old Password
                     </Text>
@@ -56,9 +59,10 @@ export default function changePasswordScreen() {
                             value={oldPassword.trim()}
                             onChangeText={setOldPassword}
                             placeholder="Enter Old Password"
+                            type="password"
                         />
                     </Input>
-                </VStack>
+                </VStack>)}
                 <VStack space="sm">
                     <Text size="lg" className="ml-3 mt-5">
                         New Password
@@ -68,6 +72,7 @@ export default function changePasswordScreen() {
                             value={newPassword.trim()}
                             onChangeText={setNewPassword}
                             placeholder="Enter New Password"
+                            type="password"
                         />
                     </Input>
                 </VStack>
@@ -89,22 +94,14 @@ export default function changePasswordScreen() {
                         action="kova"
                         className="mt-5 mb-5 bg-red-500"
                         onPress={() => {
-                            /*signInUser(email, password)
-                                .then((credentials: boolean) => {
-                                    if (credentials) {
-                                        showSuccessToast(toast, "Welcome Back to Kova")
-                                        router.replace("/(tabs)");
-                                        setSessionLoading(false);
-                                    } else {
-                                        showSuccessToast(toast, "OTP sign in success, redirecting to password reset");
-                                        setSessionLoading(false);
-                                        router.replace("/settings");
-                                    }
+                            updatePassword(oldPassword, newPassword, verifyNewPassword)
+                                .then(() => {
+                                    showSuccessToast(toast, "Successfully changed password")
+                                    router.replace("/settings")
+                                }).catch((error) => {
+                                    console.log(error)
+                                    showErrorToast(toast, error.message)
                                 })
-                                .catch((error) => {
-                                    console.log(error);
-                                    showErrorToast(toast, error.message);
-                                });*/
                         }}
                     >
                         <ButtonText className="text-white">Change Password</ButtonText>

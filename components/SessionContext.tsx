@@ -12,6 +12,7 @@ import {
 type SessionContextValues = {
   session: Session | null;
   sessionLoading: boolean;
+  OTPSignIn: boolean;
   setSessionLoading: React.Dispatch<React.SetStateAction<boolean>>;
   createAccount: (
     userEmail: string,
@@ -29,8 +30,9 @@ type SessionContextValues = {
     updateValue: string
   ) => Promise<boolean>;
   updatePassword: (
-    updateValue: string,
-    verifyValue: string
+    oldPassword: string,
+    updatePassword: string,
+    verifyPassword: string
   ) => Promise<boolean>
 };
 
@@ -39,6 +41,7 @@ const SessionContext = createContext<SessionContextValues | null>(null);
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(false);
+  const [OTPSignIn, setOTPSignIn] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -154,10 +157,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (OTPError) {
       console.log("No OTP with these credentials");
       } else {
-        return false;
+        setOTPSignIn(true)
+        return true;
       }
 
-    const { data: signInData, error: passwordError } =
+    const { error: passwordError } =
       await supabase.auth.signInWithPassword({
         email: userEmail,
         password: userPassword,
@@ -168,7 +172,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     console.log("signing in");
 
-    return true;
+    setOTPSignIn(false)
+    return false;
   };
 
   const signOutUser = async () => {
@@ -184,7 +189,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       throw new Error("Please enter a valid email address");
     }
 
-    const { data, error } = await supabase.auth.updateUser({
+    const { error } = await supabase.auth.updateUser({
       email: updateValue
     })
     
@@ -192,19 +197,36 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return true;
   }
 
-  const updatePassword = async (updateValue: string, verifyValue: string) => {
-    if (updateValue != verifyValue) {
+  const updatePassword = async (oldPassword: string, updatePassword: string, verifyPassword: string) => {
+  
+    //When not using OTP to reset a forgotten password, do not ask for the old password
+    if (!OTPSignIn) {
+      const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
+        password: oldPassword
+      });
+
+      console.log("verifyData: " + verifyData);
+
+      if (verifyError || !verifyData) {
+        console.log(verifyError)
+        throw new Error("Old Password is not correct")
+      }
+    }
+
+    if (updatePassword != verifyPassword) {
       throw new Error("Password and confirmed password\nmust match");
     }
 
-    const { data, error } = await supabase.auth.updateUser({
-      password: updateValue
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: updatePassword
     })
 
-    if (error) {
-      throw new Error(
-        "New Password must be at least 6 characters\n and include a letter and number"
-      );
+    if (updateError) {
+      console.log(updateError.message)
+      if (updateError.message == "New password should be different from the old password.") {
+        throw updateError;  
+      }
+      else throw new Error("New Password must be at least 6 characters\n and include a letter and number");
     }
 
     return true;
@@ -215,6 +237,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       value={{
         session,
         sessionLoading,
+        OTPSignIn,
         setSessionLoading,
         createAccount,
         signInUser,
