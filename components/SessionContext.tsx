@@ -26,14 +26,19 @@ type SessionContextValues = {
     userPassword: string
   ) => Promise<boolean>;
   signOutUser: () => Promise<void>;
-  updateEmail: (
-    updateValue: string
-  ) => Promise<boolean>;
   updatePassword: (
     oldPassword: string,
     updatePassword: string,
     verifyPassword: string
-  ) => Promise<boolean>
+  ) => Promise<boolean>;
+  updateEmail: (
+    password: string,
+    newEmail: string
+  ) => Promise<boolean>;
+  updateUsername: (
+    password: string,
+    newUsername: string
+  ) => Promise<boolean>;
 };
 
 const SessionContext = createContext<SessionContextValues | null>(null);
@@ -183,20 +188,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(error.message);
   };
 
-  const updateEmail = async (updateValue: string) => {
-    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
-    if (!emailRegex.test(updateValue)) {
-      throw new Error("Please enter a valid email address");
-    }
-
-    const { error } = await supabase.auth.updateUser({
-      email: updateValue
-    })
-    
-    if (error) throw Error("Error updating email");
-    return true;
-  }
-
   const updatePassword = async (oldPassword: string, updatePassword: string, verifyPassword: string) => {
   
     //When not using OTP to reset a forgotten password, do not ask for the old password
@@ -232,6 +223,82 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return true;
   }
 
+  const updateEmail = async (password: string, newEmail: string) => {
+  
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
+    if (!emailRegex.test(newEmail)) {
+      throw new Error("Please enter a valid email address");
+    }
+
+    const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
+      password: password
+    });
+
+    if (verifyError || !verifyData) {
+      console.log(verifyError)
+      throw new Error("Verification Password is not correct")
+    }
+
+    if (newEmail == session?.user.email) {
+      throw new Error("New email cannot be the same as old email")
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      email: newEmail
+    })
+
+    if (updateError) {
+      console.log(updateError.message)
+      throw updateError;
+    }
+
+    return true;
+  }
+
+  const updateUsername = async (password: string, newUsername: string) => {
+  
+    const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
+      password: password
+    });
+
+    if (verifyError || !verifyData) {
+      console.log(verifyError)
+      throw new Error("Verification Password is not correct")
+    }
+
+    if (newUsername == "") {
+      throw new Error("Username cannot be blank");
+    }
+
+    if (newUsername.includes(" ")) {
+      throw new Error("Username cannot include spaces");
+    }
+
+    const {data, error} = await supabase 
+      .from('profile')
+      .select("userId")
+      //.eq('userId', session?.user.id)
+      .eq('username', newUsername)
+
+    if (data && data.length != 0) {
+      console.log("data: " + data)
+      if (data[0].userId == session?.user.id) throw new Error("New username cannot be the same as old username");
+      else throw new Error("Username is already in use");
+    }
+    
+    const {error: fetchError} = await supabase
+      .from('profile')
+      .update({username: newUsername})
+      .eq('userId', session?.user.id);
+
+    if (fetchError) {
+      console.log(fetchError);
+      throw fetchError;
+    }
+
+    return true;
+  }
+
   return (
     <SessionContext.Provider
       value={{
@@ -242,8 +309,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         createAccount,
         signInUser,
         signOutUser,
+        updatePassword,
         updateEmail,
-        updatePassword
+        updateUsername
       }}
     >
       {children}

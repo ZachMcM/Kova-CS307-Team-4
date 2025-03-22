@@ -22,7 +22,7 @@ export default function changeUsernameScreen() {
 
     const toast = useToast();
     const router = useRouter();
-    const { updateEmail, updatePassword } = useSession();
+    const { updateUsername } = useSession();
 
     return (
         <Container>
@@ -74,22 +74,14 @@ export default function changeUsernameScreen() {
                         action="kova"
                         className="mt-5 mb-5 bg-red-500"
                         onPress={() => {
-                            /*signInUser(email, password)
-                                .then((credentials: boolean) => {
-                                    if (credentials) {
-                                        showSuccessToast(toast, "Welcome Back to Kova")
-                                        router.replace("/(tabs)");
-                                        setSessionLoading(false);
-                                    } else {
-                                        showSuccessToast(toast, "OTP sign in success, redirecting to password reset");
-                                        setSessionLoading(false);
-                                        router.replace("/settings");
-                                    }
+                            updateUsername(verifyPassword, newUsername)
+                                .then(() => {
+                                    showSuccessToast(toast, "Successfully changed username")
+                                    router.replace("/settings")
+                                }).catch((error) => {
+                                    console.log(error)
+                                    showErrorToast(toast, error.message)
                                 })
-                                .catch((error) => {
-                                    console.log(error);
-                                    showErrorToast(toast, error.message);
-                                });*/
                         }}
                     >
                         <ButtonText className="text-white">Change Username</ButtonText>

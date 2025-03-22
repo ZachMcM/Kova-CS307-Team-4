@@ -24,7 +24,7 @@ export default function changeEmailScreen() {
 
     const toast = useToast();
     const router = useRouter();
-    const { updateEmail, updatePassword } = useSession();
+    const { updateEmail } = useSession();
 
     return (
         <Container>
@@ -76,22 +76,14 @@ export default function changeEmailScreen() {
                         action="kova"
                         className="mt-5 mb-5 bg-red-500"
                         onPress={() => {
-                            /*signInUser(email, password)
-                                .then((credentials: boolean) => {
-                                    if (credentials) {
-                                        showSuccessToast(toast, "Welcome Back to Kova")
-                                        router.replace("/(tabs)");
-                                        setSessionLoading(false);
-                                    } else {
-                                        showSuccessToast(toast, "OTP sign in success, redirecting to password reset");
-                                        setSessionLoading(false);
-                                        router.replace("/settings");
-                                    }
+                            updateEmail(verifyPassword, newEmail)
+                                .then(() => {
+                                    showSuccessToast(toast, "Successfully changed email")
+                                    router.replace("/settings")
+                                }).catch((error) => {
+                                    console.log(error)
+                                    showErrorToast(toast, error.message)
                                 })
-                                .catch((error) => {
-                                    console.log(error);
-                                    showErrorToast(toast, error.message);
-                                });*/
                         }}
                     >
                         <ButtonText className="text-white">Change Email</ButtonText>
