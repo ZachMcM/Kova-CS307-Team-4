@@ -10,8 +10,8 @@ import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Icon, MenuIcon, TrashIcon, CheckCircleIcon, CircleIcon, AlertCircleIcon, EditIcon } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
-import { getProfile, updateProfile, isProfileFollowed, isProfileFollowing, followUser, unfollowUser, uploadProfilePicture } from "@/services/profileServices";
-import { useQuery } from "@tanstack/react-query";
+import { getProfile, updateProfile, isProfileFollowed, isProfileFollowing, followUser, unfollowUser, uploadProfilePicture, privacies } from "@/services/profileServices";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "@/components/ui/spinner";
 import { getProfileAccess } from "@/types/profile-types";
@@ -24,6 +24,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
 import { View } from "react-native";
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio"
+import { useSession } from "@/components/SessionContext";
+import { IconSymbol } from "@/components/ui/IconSymbol";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function ProfileScreen() {
 
@@ -31,7 +34,9 @@ export default function ProfileScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
+  const { session } = useSession()
 
   // Profile editing states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -58,6 +63,7 @@ export default function ProfileScreen() {
   const [bioDisabled, setBioDisabled] = useState(false);
   const [locationDisabled, setLocationDisabled] = useState(false);
   const [achievementDisabled, setAchievementDisabled] = useState(false);
+  const [ageDisabled, setAgeDisabled] = useState(false);
 
   // Follower functionality
   const [isFollowing, setIsFollowing] = useState(false);
@@ -67,6 +73,9 @@ export default function ProfileScreen() {
 
   const [privacyValues, setPrivacyValue] = useState("PRIVATE");
   const [storedPrivacyValue, setStoredPrivacyValues] = useState("");
+
+  const [storedAge, setStoredAge] = useState("")
+  const [age, setAge] = useState("")
 
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
@@ -124,6 +133,9 @@ export default function ProfileScreen() {
       setAvatar(profile.avatar || "");
       setLocation(profile.location || "");
       setAchievement(profile.achievement || "");
+      if (profile.age) {
+        setAge(profile.age.toString() || "");
+      }
     }
   }, [profile]);
 
@@ -139,6 +151,7 @@ export default function ProfileScreen() {
         if (goalDisabled) { setGoal(""); }
         if (bioDisabled) { setBio(""); }
         if (achievementDisabled) { setAchievement(""); }
+        if (ageDisabled) {setAge(""); }
 
         console.log(nameValue);
 
@@ -154,12 +167,16 @@ export default function ProfileScreen() {
         profile.achievement = achievement;
         profile.private = privacyValues;
         profile.name = nameValue;
+        if (age) {
+          profile.age = parseInt(age);
+        }
 
         // Re-enable the inputs
         setGoalDisabled(false);
         setBioDisabled(false);
         setLocationDisabled(false);
         setAchievementDisabled(false);
+        setAgeDisabled(false);
       }
     } catch (error) {
       console.error(error);
@@ -176,6 +193,9 @@ export default function ProfileScreen() {
       setStoredGoal(profile.goal);
       setStoredBio(profile.bio);
       setStoredAchievement(profile.achievement);
+      if (profile.age) {
+        setStoredAge(profile.age.toString())
+      }
     }
     setIsEditingProfile(true);
   }
@@ -191,6 +211,7 @@ export default function ProfileScreen() {
     setBioDisabled(false);
     setLocationDisabled(false);
     setAchievementDisabled(false);
+    setAgeDisabled(false);
     setAvatar(storedAvatar);
     setLocation(storedLocation);
     setGoal(storedGoal);
@@ -198,6 +219,7 @@ export default function ProfileScreen() {
     setAchievement(storedAchievement);
     setPrivacyValue(storedPrivacyValue);
     setNameValue(storedName);
+    setAge(storedAge);
     if (profile && getProfileAccess(profile, isFriend)) { 
       profile.avatar = storedAvatar;
       profile.location = storedLocation;
@@ -206,6 +228,9 @@ export default function ProfileScreen() {
       profile.achievement = storedAchievement;
       profile.private = storedPrivacyValue;
       profile.name = storedName;
+      if (storedAge) {
+        profile.age = parseInt(storedAge);
+      }
     }
   };
 
@@ -222,6 +247,11 @@ export default function ProfileScreen() {
   const disableAchievementInput = () => {
     setAchievementDisabled(true); 
     setAchievement("");
+  }
+
+  const disableAgeInput = () => {
+    setAgeDisabled(true);
+    setAge("");
   }
 
   const updateName = () => {
@@ -299,6 +329,37 @@ export default function ProfileScreen() {
     }
   };
 
+  const privacy_list = {
+    'friends_following': "PRIVATE",
+    'age': "PUBLIC",
+    'weight': "PUBLIC",
+    'location': "PRIVATE",
+    'goal': "PRIVATE",
+    'bio': "PRIVATE",
+    'achievement': "PRIVATE",
+    'gender': "PRIVATE",
+    'posts': "PRIVATE",
+  } as privacies //TODO change this to real data once implemented in the DB
+
+  const hasAccess = (parameter: string) => {
+    if (profile?.user_id == session?.user.id || privacy_list[parameter] === "PUBLIC" || (isFriend && privacy_list[parameter] == "FRIENDS")) {
+      console.log("true access for " + parameter)
+      return true
+    }
+    console.log("false access for " + parameter)
+    return false
+  }
+
+  const getPrivacyIcon = (parameter: string) => {
+    if (privacy_list[parameter] === "PUBLIC") {
+      return <MaterialIcons name="remove-red-eye" size={24} color="black" />
+    } else if (privacy_list[parameter] === "FRIENDS") {
+      return <MaterialIcons name="people" size={24} color="black" />;
+    } else {
+      return <MaterialIcons name="private-connectivity" size={24} color="black" />
+    }
+  }
+
   return (
    <StaticContainer className = "flex px-6 py-16">
       <VStack space = "md">
@@ -355,27 +416,28 @@ export default function ProfileScreen() {
                   <Text size="sm">@{profile.username}</Text>
                 </VStack>
                 <HStack space = "2xl">
-                  <Pressable onPress = {() => router.replace(`/relations/${id}?type=friends`)}>
+                  <Pressable onPress = {hasAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=friends`)) : (() => {})}>
                     <VStack>
                       <Heading size = "lg" className = "text-center">{profile.friends}</Heading>
                       <Text size = "sm" className = "text-center">friends</Text>
                     </VStack>
                   </Pressable>
-                  <Pressable onPress = {() => router.replace(`/relations/${id}?type=followers`)}>
+                  <Pressable onPress = {hasAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=followers`)) : (() => {})}>
                     <VStack>
                       <Heading size = "lg" className = "text-center">{profile.followers}</Heading>
                       <Text size = "sm" className = "text-center">followers</Text>
                     </VStack>
                   </Pressable>
-                  <Pressable onPress = {() => router.replace(`/relations/${id}?type=following`)}>
+                  <Pressable onPress = {hasAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=following`)) : (() => {})}>
                     <VStack>
                       <Heading size = "lg" className = "text-center">{profile.following}</Heading>
                       <Text size = "sm" className = "text-center">following</Text>
                     </VStack>
                   </Pressable>
+                  {isEditingProfile && getPrivacyIcon("friends_following")}
                 </HStack>
               </VStack>
-              { userId === id && (
+              { userId === id && !isEditingProfile && (
                 <Button onPress={() => router.replace("/settings")} className = "w-0 h-0">
                   <Icon as = {MenuIcon} size = "xl" className = "mt-8 ml-8 w-8 h-8"></Icon>
                 </Button>
@@ -384,6 +446,12 @@ export default function ProfileScreen() {
             <VStack>
               { isEditingProfile && (
                 <Box className = "p-2 border rounded border-gray-300">
+                  <Button variant="solid" size="xl" action="kova" className="mt-5 mb-5 ml-5 mr-5"
+                  onPress={() => {/**TODO this to a new page most likely */}}>
+                    <ButtonText>
+                      Edit Privacy Settings
+                    </ButtonText>
+                  </Button>
                   <HStack>
                     <Text size = "md" className = "mr-4">🔒 Privacy</Text>
                     <RadioGroup value = {privacyValues} onChange = {setPrivacyValue}>
@@ -411,8 +479,74 @@ export default function ProfileScreen() {
                   </HStack>
                 </Box>
               )}
-              { (getProfileAccess(profile, isFriend) || userId === id) && (isEditingProfile || (profile.location || profile.goal || profile.bio)) ? (
+              { (getProfileAccess(profile, isFriend) || userId === id) && (isEditingProfile || (profile.location || profile.goal || profile.bio || profile.age)) ? (
                 <Box className = "border border-gray-300 rounded p-2 mt-2">
+                  {/**TODO add age gender and weight hstack here */}
+                  {/*<HStack>*/}
+                    { isEditingProfile && !ageDisabled ? (
+                      <HStack>
+                        <Heading className = "mt-3">🕯️</Heading>
+                        <Input variant = "outline" className = "mt-2 w-2/5 ml-0.5">
+                          <InputField id = "AgeInput" value={age} onChangeText={(text: string) => {if (text != "" && /^[0-9]+$/.test(text)) {setAge(text)} else {setAge("")}}} maxLength = {3} placeholder = "Age"></InputField>
+                          <InputSlot>
+                            <Pressable onPress={disableAgeInput}>
+                              <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
+                            </Pressable>
+                          </InputSlot>
+                        </Input>
+                        {getPrivacyIcon("friends_following")}
+                      </HStack>
+                    ) : profile.location && hasAccess("age") && !ageDisabled && age != "" && (
+                      <HStack className = "text-wrap">
+                        <Heading className = "mr-1">🕯️</Heading>
+                        <View className = "w-2/5">
+                          <Heading>{profile.age}</Heading>
+                        </View>
+                      </HStack>
+                    )}
+                    { isEditingProfile && !ageDisabled ? (
+                      <HStack>
+                        <Heading className = "mr-1 mt-3">🕯️</Heading>
+                        <Input variant = "outline" className = "mt-2 w-2/5 ml-0.5">
+                          <InputField id = "AgeInput" value={age} onChangeText={(text: string) => {if (text != "" && /^[0-9]+$/.test(text)) {setAge(text)} else {setAge("")}}} maxLength = {3} placeholder = "Gender"></InputField>
+                          <InputSlot>
+                            <Pressable onPress={disableAgeInput}>
+                              <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
+                            </Pressable>
+                          </InputSlot>
+                        </Input>
+                        {getPrivacyIcon("friends_following")}
+                      </HStack>
+                    ) : profile.location && hasAccess("age") && !ageDisabled && age != "" && (
+                      <HStack className = "text-wrap">
+                        <Heading size = "md" className = "mr-1">🕯️</Heading>
+                        <View className = "w-2/5">
+                          <Heading size = "md">{profile.age}</Heading>
+                        </View>
+                      </HStack>
+                    )}
+                    { isEditingProfile && !ageDisabled ? (
+                      <HStack>
+                        <Heading size = "md" className = "mr-1 mt-3">🕯️</Heading>
+                        <Input size = "md" variant = "outline" className = "mt-2 w-2/5 ml-0.5">
+                          <InputField id = "AgeInput" value={age} onChangeText={(text: string) => {if (text != "" && /^[0-9]+$/.test(text)) {setAge(text)} else {setAge("")}}} maxLength = {3} placeholder = "Weight"></InputField>
+                          <InputSlot>
+                            <Pressable onPress={disableAgeInput}>
+                              <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
+                            </Pressable>
+                          </InputSlot>
+                        </Input>
+                        {getPrivacyIcon("friends_following")}
+                      </HStack>
+                    ) : profile.location && hasAccess("age") && !ageDisabled && age != "" && (
+                      <HStack className = "text-wrap">
+                        <Heading size = "md" className = "mr-1">🕯️</Heading>
+                        <View className = "w-2/5">
+                          <Heading size = "md">{profile.age}</Heading>
+                        </View>
+                      </HStack>
+                    )}                    
+                  {/* </HStack> */}
                   { isEditingProfile && !locationDisabled ? (
                     <HStack>
                       <Heading size = "md" className = "mr-1 mt-3">📍</Heading>
@@ -425,7 +559,7 @@ export default function ProfileScreen() {
                         </InputSlot>
                       </Input>
                     </HStack>
-                  ) : profile.location && !locationDisabled && (
+                  ) : profile.location && !locationDisabled && hasAccess("location") && (
                     <HStack className = "text-wrap">
                       <Heading size = "md" className = "mr-1">📍</Heading>
                       <View className = "w-11/12">
@@ -445,7 +579,7 @@ export default function ProfileScreen() {
                         </InputSlot>
                       </Input>
                     </HStack>
-                  ) : profile.achievement && !achievementDisabled && (
+                  ) : profile.achievement && !achievementDisabled && hasAccess("achievement") && (
                     <HStack className = "text-wrap">
                       <Heading size = "md" className = "mr-1">🏆</Heading>
                       <View className = "w-11/12">
@@ -465,7 +599,7 @@ export default function ProfileScreen() {
                         </InputSlot>
                       </Input>
                     </HStack>
-                  ) : profile.goal && !goalDisabled && (
+                  ) : profile.goal && !goalDisabled && hasAccess("goal") && (
                     <HStack className = "text-wrap">
                       <Heading size = "md" className = "mr-1">🎯</Heading>
                       <View className = "w-11/12">
@@ -477,7 +611,7 @@ export default function ProfileScreen() {
                     <Textarea className = "text-wrap mt-2">
                       <TextareaInput id = "bioInput" value={bio} onChangeText={setBio} maxLength={300} placeholder = "Write some information about yourself..."></TextareaInput>
                     </Textarea>
-                  ) : profile.bio && (
+                  ) : profile.bio && hasAccess("bio") && (
                     <Text className = "mt-2">{profile.bio}</Text>
                   )}
                 </Box>

@@ -16,6 +16,10 @@ const MAPPING = {
   'flame.fill': 'dumbbell',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'person-off': 'person-off',
+  'private-connectivity': 'private-connectivity',
+  'people': 'people',
+  'remove-red-eye': 'remove-red-eye',
 } as Partial<
   Record<
     import('expo-symbols').SymbolViewProps['name'],

@@ -2,6 +2,20 @@ import { supabase } from "@/lib/supabase";
 import { Profile, PrivateProfile, PublicProfile } from "@/types/profile-types";
 import { useState } from "react";
 
+export interface privacies {
+  // friends_following: string,
+  // age: string,
+  // weight: string,
+  // location: string,
+  // goal: string,
+  // bio: string,
+  // achievement: string,
+  // gender: string,
+  // posts: string,
+  [key: string]: any
+  //TODO later potentially add a 'statistics' privacy too
+}
+
 // Get profile based on provided user_id
 export const getProfile = async (id: string): Promise<Profile> => {
   const { data: profile, error } = await supabase
@@ -27,7 +41,7 @@ export const getProfile = async (id: string): Promise<Profile> => {
   //}
   return {
     id: profile.id,
-    user_id: profile.user_id,
+    user_id: id,     //profile.user_id is bugged and returns undefined in this case, using this as a fix
     name: profile.name,
     username: profile.username,
     avatar: profile.avatar,
