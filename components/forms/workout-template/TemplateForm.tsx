@@ -205,7 +205,7 @@ export default function TemplateForm() {
         </VStack>
         <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
           <ButtonText>Save Template</ButtonText>
-          {isPending && <ButtonSpinner color={"FFF"} />}
+          {isPending && <ButtonSpinner color="#FFF" />}
         </Button>
         <Controller
           control={control}
