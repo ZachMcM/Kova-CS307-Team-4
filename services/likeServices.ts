@@ -15,7 +15,7 @@ export async function getLikes(postId: string): Promise<LikeRelation[]> {
 
     const names: string[] = []
     for (const like of data) {
-        const { data: profile, error: profileErr } = await supabase.from("profile").select('name').eq("userId", like.user_id).single()
+        const { data: profile, error: profileErr } = await supabase.from("profile").select('name, avatars').eq("userId", like.user_id).single()
         if (profileErr) throw new Error(profileErr.message)
         names.push(profile.name)
     }

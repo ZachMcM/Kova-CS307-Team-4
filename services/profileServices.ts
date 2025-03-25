@@ -3,6 +3,15 @@ import { Profile, PrivateProfile, PublicProfile } from "@/types/profile-types";
 import { useState } from "react";
 
 // Get profile based on provided user_id
+export const getProfiles = async (ids: string[]): Promise<Map<string, Profile>> => {
+  const profiles = new Map<string, Profile>();
+  for (const id of ids) {
+    const profile = await getProfile(id);
+    profiles.set(profile.user_id, profile);
+  }
+  return profiles;
+}
+
 export const getProfile = async (id: string): Promise<Profile> => {
   const { data: profile, error } = await supabase
     .from("profile")
