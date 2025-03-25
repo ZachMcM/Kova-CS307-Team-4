@@ -1,29 +1,60 @@
 import { supabase } from "@/lib/supabase";
-import { GroupOverview, MemberRelationship } from "@/types/extended-types";
+import { GroupOverview, GroupPage, MemberRelationship } from "@/types/extended-types";
 import { getProfile, getProfiles } from "./profileServices";
 
-export async function getAllGroups() {
+export async function getAllGroups() : Promise<GroupOverview[]> {
     const {data, error} = await supabase
         .from("group")
         .select("id,title,icon,description");
-    const groupOverviews = data?.map
-
+    if (error) {
+        throw new Error(error.message);
+    }
+    const groupOverviews = data.map((row, i) => {
+        return {groupId: row.id, 
+            icon: row.icon, 
+            description: row.description,
+            title: row.title};
+    });
+    return groupOverviews as GroupOverview[]
 }
 
-export async function getGroupsOfUser(userId: string) {
+export async function getGroupsOfUser(userId: string) : Promise<number[]> {
     const {data, error} = await supabase
-        .from("group")
-        .select("id,title,icon,description")
+        .from("groupRel")
+        .select("groupId")
         .eq("profileId", userId);
-
+    if (error) {
+        throw new Error(error.message);
+    }
+    const items = data.map((row, i) => {
+        return row.groupId;
+    })
+    return items as number[];
 }
 
 export async function leaveGroup(groupId: string, userId: string) {
-
+    await supabase
+        .from("groupRel")
+        .delete()
+        .eq("groupId", groupId)
+        .eq("profileId", userId);
 }
 
 export async function joinGroup(groupId: string, userId: string) {
+    await supabase
+        .from("groupRel")
+        .insert({groupId: groupId, userId: userId});
+}
 
+export async function getNumOfMembers(groupId: string): Promise<number> {
+    const {data, error} = await supabase
+        .from("groupRel")
+        .select("profileId")
+        .eq("groupId", groupId);
+    if (error) {
+        throw new Error(error.message);
+    }
+    return data.length;
 }
 
 export async function getMembers(groupId: string): Promise<MemberRelationship[]> {
@@ -35,7 +66,7 @@ export async function getMembers(groupId: string): Promise<MemberRelationship[]>
         throw new Error(error.message);
     }
     const profiles = await getProfiles(data.map((row, i) => row.profileId));
-    const memberInfo = data!.map((row, i) => {
+    const memberInfo = data.map((row, i) => {
         const profile = profiles.get(row.profileId)!;
         return {
             role: row.role,
@@ -57,6 +88,21 @@ export async function getMembers(groupId: string): Promise<MemberRelationship[]>
     return memberInfo as MemberRelationship[];
 }
 
-export async function getGroup(groupId: string) {
-
+export async function getGroup(groupId: string) : Promise<GroupPage> {
+    const {data, error} = await supabase
+        .from("group")
+        .select("id,created_at,title,icon,description,banner,goal");
+    if (error) {
+        throw new Error(error.message);
+    }
+    const row = data[0];
+    return {
+        groupId: row.id,
+        created_at: row.created_at,
+        title: row.title,
+        icon: row.icon,
+        description: row.description,
+        banner: row.banner,
+        goal: row.goal
+    };
 }
