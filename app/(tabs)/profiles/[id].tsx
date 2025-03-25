@@ -27,6 +27,7 @@ import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/comp
 import { useSession } from "@/components/SessionContext";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Container from "@/components/Container";
 
 export default function ProfileScreen() {
 
@@ -64,6 +65,8 @@ export default function ProfileScreen() {
   const [locationDisabled, setLocationDisabled] = useState(false);
   const [achievementDisabled, setAchievementDisabled] = useState(false);
   const [ageDisabled, setAgeDisabled] = useState(false);
+  const [genderDisabled, setGenderDisabled] = useState(false);
+  const [weightDisabled, setWeightDisabled] = useState(false);
 
   // Follower functionality
   const [isFollowing, setIsFollowing] = useState(false);
@@ -76,6 +79,10 @@ export default function ProfileScreen() {
 
   const [storedAge, setStoredAge] = useState("")
   const [age, setAge] = useState("")
+  const [storedGender, setStoredGender] = useState("")
+  const [gender, setGender] = useState("")
+  const [storedWeight, setStoredWeight] = useState("")
+  const [weight, setWeight] = useState("")
 
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
@@ -133,9 +140,9 @@ export default function ProfileScreen() {
       setAvatar(profile.avatar || "");
       setLocation(profile.location || "");
       setAchievement(profile.achievement || "");
-      if (profile.age) {
-        setAge(profile.age.toString() || "");
-      }
+      if (profile.age) { setAge(profile.age.toString() || ""); }
+      if (profile.gender) { setGender(profile.gender || ""); }
+      if (profile.weight) { setWeight(profile.weight.toString() || ""); }
     }
   }, [profile]);
 
@@ -152,10 +159,12 @@ export default function ProfileScreen() {
         if (bioDisabled) { setBio(""); }
         if (achievementDisabled) { setAchievement(""); }
         if (ageDisabled) {setAge(""); }
+        if (genderDisabled) {setGender(""); }
+        if (weightDisabled) {setWeight(""); }
 
         console.log(nameValue);
 
-        await updateProfile(profile.id, goal, bio, location, achievement, privacyValues, nameValue);
+        await updateProfile(profile.id, goal, bio, location, achievement, privacyValues, nameValue, profile.age, gender, profile.weight);
         setIsEditingProfile(false);
         showSuccessToast(toast, "Profile updated successfully");
 
@@ -167,9 +176,9 @@ export default function ProfileScreen() {
         profile.achievement = achievement;
         profile.private = privacyValues;
         profile.name = nameValue;
-        if (age) {
-          profile.age = parseInt(age);
-        }
+        if (age) { profile.age = parseInt(age); }
+        if (gender) { profile.gender = gender; }
+        if (weight) { profile.weight = parseInt(weight); }
 
         // Re-enable the inputs
         setGoalDisabled(false);
@@ -177,6 +186,8 @@ export default function ProfileScreen() {
         setLocationDisabled(false);
         setAchievementDisabled(false);
         setAgeDisabled(false);
+        setGenderDisabled(false);
+        setWeightDisabled(false);
       }
     } catch (error) {
       console.error(error);
@@ -193,9 +204,9 @@ export default function ProfileScreen() {
       setStoredGoal(profile.goal);
       setStoredBio(profile.bio);
       setStoredAchievement(profile.achievement);
-      if (profile.age) {
-        setStoredAge(profile.age.toString())
-      }
+      if (profile.age) { setStoredAge(profile.age.toString()) }
+      if (profile.gender) { setStoredGender(profile.gender) }
+      if (profile.weight) { setStoredWeight(profile.weight.toString()) }
     }
     setIsEditingProfile(true);
   }
@@ -228,9 +239,9 @@ export default function ProfileScreen() {
       profile.achievement = storedAchievement;
       profile.private = storedPrivacyValue;
       profile.name = storedName;
-      if (storedAge) {
-        profile.age = parseInt(storedAge);
-      }
+      if (storedAge) { profile.age = parseInt(storedAge); }
+      if (storedGender) { profile.gender = storedGender; }
+      if (storedWeight) { profile.weight = parseInt(storedWeight); }
     }
   };
 
@@ -254,6 +265,15 @@ export default function ProfileScreen() {
     setAge("");
   }
 
+  const disableGenderInput = () => {
+    setGenderDisabled(true);
+    setAge("");
+  }
+
+  const disableWeightInput = () => {
+    setWeightDisabled(true);
+    setAge("");
+  }
   const updateName = () => {
 
   }
@@ -356,7 +376,7 @@ export default function ProfileScreen() {
     } else if (privacy_list[parameter] === "FRIENDS") {
       return <MaterialIcons name="people" size={24} color="black" />;
     } else {
-      return <MaterialIcons name="private-connectivity" size={24} color="black" />
+      return <MaterialIcons name="private-connectivity" size={24} className="m-0" color="black" />
     }
   }
 
@@ -494,9 +514,9 @@ export default function ProfileScreen() {
                             </Pressable>
                           </InputSlot>
                         </Input>
-                        {getPrivacyIcon("friends_following")}
+                        {getPrivacyIcon("age")}
                       </HStack>
-                    ) : profile.location && hasAccess("age") && !ageDisabled && age != "" && (
+                    ) : profile.age && hasAccess("age") && !ageDisabled && age != "" && (
                       <HStack className = "text-wrap">
                         <Heading className = "mr-1">🕯️</Heading>
                         <View className = "w-2/5">
@@ -504,45 +524,45 @@ export default function ProfileScreen() {
                         </View>
                       </HStack>
                     )}
-                    { isEditingProfile && !ageDisabled ? (
+                    { isEditingProfile && !genderDisabled ? (
                       <HStack>
-                        <Heading className = "mr-1 mt-3">🕯️</Heading>
+                        <Heading className = "mr-1 mt-3">Gender:</Heading>
                         <Input variant = "outline" className = "mt-2 w-2/5 ml-0.5">
-                          <InputField id = "AgeInput" value={age} onChangeText={(text: string) => {if (text != "" && /^[0-9]+$/.test(text)) {setAge(text)} else {setAge("")}}} maxLength = {3} placeholder = "Gender"></InputField>
+                          <InputField id = "GenderInput" value={gender} onChangeText={(text: string) => {setGender(text)}} maxLength = {15} placeholder = "Gender"></InputField>
                           <InputSlot>
-                            <Pressable onPress={disableAgeInput}>
+                            <Pressable onPress={disableGenderInput}>
                               <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
                             </Pressable>
                           </InputSlot>
                         </Input>
-                        {getPrivacyIcon("friends_following")}
+                        {getPrivacyIcon("gender")}
                       </HStack>
-                    ) : profile.location && hasAccess("age") && !ageDisabled && age != "" && (
+                    ) : profile.gender && hasAccess("gender") && !genderDisabled && gender != "" && (
                       <HStack className = "text-wrap">
-                        <Heading size = "md" className = "mr-1">🕯️</Heading>
+                        <Heading size = "md" className = "mr-1">Gender:</Heading>
                         <View className = "w-2/5">
-                          <Heading size = "md">{profile.age}</Heading>
+                          <Heading size = "md">{profile.gender}</Heading>
                         </View>
                       </HStack>
                     )}
-                    { isEditingProfile && !ageDisabled ? (
+                    { isEditingProfile && !weightDisabled ? (
                       <HStack>
-                        <Heading size = "md" className = "mr-1 mt-3">🕯️</Heading>
+                        <Heading size = "md" className = "mr-1 mt-3">Weight:</Heading>
                         <Input size = "md" variant = "outline" className = "mt-2 w-2/5 ml-0.5">
-                          <InputField id = "AgeInput" value={age} onChangeText={(text: string) => {if (text != "" && /^[0-9]+$/.test(text)) {setAge(text)} else {setAge("")}}} maxLength = {3} placeholder = "Weight"></InputField>
+                          <InputField id = "WeightInput" value={weight} onChangeText={(text: string) => {if (text != "" && /^[0-9]+$/.test(text)) {setWeight(text)} else {setWeight("")}}} maxLength = {4} placeholder = "Weight"></InputField>
                           <InputSlot>
-                            <Pressable onPress={disableAgeInput}>
+                            <Pressable onPress={disableWeightInput}>
                               <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
                             </Pressable>
                           </InputSlot>
                         </Input>
-                        {getPrivacyIcon("friends_following")}
+                        {getPrivacyIcon("weight")}
                       </HStack>
-                    ) : profile.location && hasAccess("age") && !ageDisabled && age != "" && (
+                    ) : profile.weight && hasAccess("weight") && !weightDisabled && weight != "" && (
                       <HStack className = "text-wrap">
-                        <Heading size = "md" className = "mr-1">🕯️</Heading>
+                        <Heading size = "md" className = "mr-1">Weight:</Heading>
                         <View className = "w-2/5">
-                          <Heading size = "md">{profile.age}</Heading>
+                          <Heading size = "md">{profile.weight}</Heading>
                         </View>
                       </HStack>
                     )}                    
@@ -558,6 +578,7 @@ export default function ProfileScreen() {
                           </Pressable>
                         </InputSlot>
                       </Input>
+                      {getPrivacyIcon("location")}
                     </HStack>
                   ) : profile.location && !locationDisabled && hasAccess("location") && (
                     <HStack className = "text-wrap">
@@ -578,6 +599,7 @@ export default function ProfileScreen() {
                           </Pressable>
                         </InputSlot>
                       </Input>
+                      {getPrivacyIcon("achievement")}
                     </HStack>
                   ) : profile.achievement && !achievementDisabled && hasAccess("achievement") && (
                     <HStack className = "text-wrap">
@@ -598,6 +620,7 @@ export default function ProfileScreen() {
                           </Pressable>
                         </InputSlot>
                       </Input>
+                      {getPrivacyIcon("goal")}
                     </HStack>
                   ) : profile.goal && !goalDisabled && hasAccess("goal") && (
                     <HStack className = "text-wrap">
@@ -610,6 +633,7 @@ export default function ProfileScreen() {
                   { isEditingProfile ? (
                     <Textarea className = "text-wrap mt-2">
                       <TextareaInput id = "bioInput" value={bio} onChangeText={setBio} maxLength={300} placeholder = "Write some information about yourself..."></TextareaInput>
+                      {getPrivacyIcon("bio")}
                     </Textarea>
                   ) : profile.bio && hasAccess("bio") && (
                     <Text className = "mt-2">{profile.bio}</Text>

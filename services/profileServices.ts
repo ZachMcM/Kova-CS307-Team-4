@@ -50,6 +50,8 @@ export const getProfile = async (id: string): Promise<Profile> => {
     following: profile.following,
     followers: profile.followers,
     age: profile.age,
+    gender: profile.gender,
+    weight: profile.weight,
     location: profile.location,
     goal: profile.goal,
     bio: profile.bio,
@@ -57,7 +59,8 @@ export const getProfile = async (id: string): Promise<Profile> => {
   } as PublicProfile;
 }
 
-export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, privacy: string, name: string) => {
+export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, 
+                                    privacy: string, name: string, age: number, gender: string, weight: number) => {
   const { error } = await supabase
     .from("profile")
     .update({
@@ -66,7 +69,10 @@ export const updateProfile = async (id:string, goal: string, bio: string, locati
       location: location,
       achievement: achievement,
       private: privacy,
-      name: name
+      name: name,
+      age: age,
+      gender: gender,
+      weight: weight
     })
     .eq("id", id);
 
