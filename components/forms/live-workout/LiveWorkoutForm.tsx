@@ -46,9 +46,9 @@ import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
 import {
-  addCompetitionWorkout,
+  addEventWorkout,
   getWorkoutContributions,
-} from "@/services/competitionServices";
+} from "@/services/groupEventServices";
 
 export default function LiveWorkoutForm() {
   const { control, handleSubmit, watch, setValue, formState, getValues } =
@@ -118,12 +118,12 @@ export default function LiveWorkoutForm() {
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
       // invalidate all competition workouts for curr profile
       queryClient.invalidateQueries({
-        queryKey: ["my-competition-workouts"],
+        queryKey: ["my-event-workouts"],
       });
       // invalidate all competition leaderboards
       for (const contribution of contributions) {
         queryClient.invalidateQueries({
-          queryKey: ["comp-leaderboard", { id: contribution.competition.id }],
+          queryKey: ["event-leaderboard", { id: contribution.competition.id }],
         });
       }
       await setWorkoutEndTime(endTime);
@@ -145,7 +145,7 @@ export default function LiveWorkoutForm() {
       // TODO interact with post workout (need to omit done because it is not needed in final iteration)
       console.log("Successfully posted workout", JSON.stringify(values));
       await clearWorkout();
-      await addCompetitionWorkout(
+      await addEventWorkout(
         values,
         session?.user.user_metadata.profileId
       );
@@ -291,7 +291,7 @@ export default function LiveWorkoutForm() {
                     contributions &&
                     contributions.map((contribution) => (
                       <HStack
-                        key={contribution.points * Math.random()}
+                        key={contribution.competition.id}
                         className="justify-between items-center"
                       >
                         <Heading size="md">

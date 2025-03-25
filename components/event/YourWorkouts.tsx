@@ -1,9 +1,8 @@
 import { calculateTime, formatCalculateTime } from "@/lib/calculateTime";
 import {
   getExercisePoints,
-  getProfileCompetitionWorkouts,
-} from "@/services/competitionServices";
-import { CompetitionWithGroup } from "@/types/extended-types";
+  getProfileEventWorkouts,
+} from "@/services/groupEventServices";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSession } from "../SessionContext";
@@ -15,19 +14,20 @@ import { HStack } from "../ui/hstack";
 import { Spinner } from "../ui/spinner";
 import { Text } from "../ui/text";
 import { VStack } from "../ui/vstack";
+import { EventWithGroup } from "@/types/extended-types";
 
 export default function YourWorkouts({
-  competition,
+  event,
 }: {
-  competition: CompetitionWithGroup;
+  event: EventWithGroup;
 }) {
   const { session } = useSession();
 
   const { data: workouts, isPending } = useQuery({
-    queryKey: ["my-competition-workouts"],
+    queryKey: ["my-event-workouts"],
     queryFn: async () => {
-      const workouts = await getProfileCompetitionWorkouts(
-        competition.id,
+      const workouts = await getProfileEventWorkouts(
+        event.id,
         session?.user.user_metadata.profileId
       );
       return workouts;
@@ -40,7 +40,7 @@ export default function YourWorkouts({
     <VStack space="lg">
       <VStack>
         <Heading size="xl">Your Workouts</Heading>
-        <Text>See your workouts that contributed to the competition</Text>
+        <Text>See your workouts that contributed to the {event.type}</Text>
       </VStack>
       {isPending ? (
         <Spinner />
@@ -80,7 +80,7 @@ export default function YourWorkouts({
                       <Heading size="sm">
                         {workout.workoutData.exercises.reduce(
                           (accum, curr) =>
-                            accum + getExercisePoints(competition, curr),
+                            accum + getExercisePoints(event, curr),
                           0
                         )}{" "}
                         pts

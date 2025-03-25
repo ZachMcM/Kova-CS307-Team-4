@@ -1,19 +1,15 @@
 import { supabase } from "@/lib/supabase";
-import { ExercisePoints, WorkoutContribution } from "@/types/competition-types";
+import { ExercisePoints, WorkoutContribution } from "@/types/event-types";
 import { Tables } from "@/types/database.types";
-import {
-  CompetitionWithGroup,
-  CompetitionWorkoutWithProfile,
-  ExtendedCompetitionWithGroup,
-} from "@/types/extended-types";
 import { ExerciseData, Workout } from "@/types/workout-types";
 import { getUserGroups } from "./groupServices";
+import { EventWithGroup, EventWorkoutWithProfile, ExtendedEventWithGroup } from "@/types/extended-types";
 
-export const getCompetition = async (
+export const getEvent = async (
   id: string
-): Promise<ExtendedCompetitionWithGroup> => {
-  const { data: competition, error: compErr } = await supabase
-    .from("competition")
+): Promise<ExtendedEventWithGroup> => {
+  const { data: event, error } = await supabase
+    .from("groupEvent")
     .select(
       `*,
     group:groupId(title, id)`
@@ -21,54 +17,56 @@ export const getCompetition = async (
     .eq("id", id)
     .single();
 
-  if (compErr) {
-    console.log("Competition Error", compErr);
-    throw new Error(compErr.message);
+  if (error) {
+    console.log("Event Error", error);
+    throw new Error(error.message);
   }
 
-  return competition;
+  return event;
 };
 
-export const getUserCompetitions = async (
+export const getUserEvents = async (
   profileId: string
-): Promise<CompetitionWithGroup[]> => {
+): Promise<EventWithGroup[]> => {
   const groups = await getUserGroups(profileId);
 
-  const allCompetitions: CompetitionWithGroup[] = [];
+  const allEvents: EventWithGroup[] = [];
 
   // add each competition associated with the group into the array
   for (const group of groups) {
-    const { data: competitions, error: competitionsErr } = await supabase
-      .from("competition")
+    const { data: events, error } = await supabase
+      .from("groupEvent")
       .select(
         `
         *,
         group:groupId(title, id)`
       )
       .eq("groupId", group.id);
-    if (competitionsErr) {
-      throw new Error(competitionsErr.message);
+    if (error) {
+      throw new Error(error.message);
     }
 
-    competitions.forEach((comp) => allCompetitions.push(comp));
+    events.forEach((event) => allEvents.push(event));
   }
 
-  return allCompetitions;
+  console.log("Events", allEvents)
+
+  return allEvents;
 };
 
 // function to add competitionWorkout to competition
 
-export const addCompetitionWorkout = async (
+export const addEventWorkout = async (
   workout: Workout,
   profileId: string
 ) => {
-  const competitions = await getUserCompetitions(profileId);
+  const events = await getUserEvents(profileId);
 
-  for (const comp of competitions) {
+  for (const event of events) {
     const { error: insertErr } = await supabase
-      .from("competitionWorkout")
+      .from("eventWorkout")
       .insert({
-        competitionId: comp.id,
+        groupEventId: event.id,
         workoutData: workout,
         profileId,
       });
@@ -80,14 +78,14 @@ export const addCompetitionWorkout = async (
   }
 };
 
-export const getProfileCompetitionWorkouts = async (
-  competitionId: string,
+export const getProfileEventWorkouts = async (
+  eventId: string,
   profileId: string
-): Promise<CompetitionWorkoutWithProfile[]> => {
+): Promise<EventWorkoutWithProfile[]> => {
   const { data, error } = await supabase
-    .from("competitionWorkout")
+    .from("eventWorkout")
     .select()
-    .eq("competitionId", competitionId)
+    .eq("groupEventId", eventId)
     .eq("profileId", profileId);
 
   if (error) {
@@ -98,17 +96,17 @@ export const getProfileCompetitionWorkouts = async (
   return data as any;
 };
 
-export const getCompetitionWorkouts = async (
-  competitionId: string
-): Promise<CompetitionWorkoutWithProfile[]> => {
+export const getEventWorkouts = async (
+  eventId: string
+): Promise<EventWorkoutWithProfile[]> => {
   const { data, error } = await supabase
-    .from("competitionWorkout")
+    .from("eventWorkout")
     .select(
       `
       *,
       profile:profileId(id, name, username, avatar)`
     )
-    .eq("competitionId", competitionId);
+    .eq("groupEventId", eventId);
   if (error) {
     console.log(error);
     throw new Error(error.message);
@@ -120,11 +118,11 @@ export const getCompetitionWorkouts = async (
 // function to get the total points for a given exercise
 
 export const getExercisePoints = (
-  competition: Tables<"competition">,
+  event: Tables<"groupEvent">,
   exercise: ExerciseData
 ) => {
   const exercisePoints =
-    (competition.exercise_points as ExercisePoints[]) || [];
+    (event.exercise_points as ExercisePoints[]) || [];
   let totalPoints = 0;
   let baseValue = 1;
   for (const compExercise of exercisePoints) {
@@ -137,9 +135,9 @@ export const getExercisePoints = (
     const setPoints =
       baseValue *
       set.reps! *
-      competition.rep_multiplier! *
+      event.rep_multiplier! *
       set.weight! *
-      competition.weight_multiplier!;
+      event.weight_multiplier!;
     totalPoints += setPoints;
   }
 
@@ -152,19 +150,19 @@ export const getWorkoutContributions = async (
   exercises: ExerciseData[],
   profileId: string
 ): Promise<WorkoutContribution[]> => {
-  const competitions = await getUserCompetitions(profileId);
+  const events = await getUserEvents(profileId);
   const contributions: WorkoutContribution[] = [];
 
-  for (const comp of competitions) {
+  for (const event of events) {
     let points = 0;
     for (const exercise of exercises) {
       console.log(exercise);
-      points += getExercisePoints(comp, exercise);
+      points += getExercisePoints(event, exercise);
     }
     contributions.push({
       competition: {
-        id: comp.id,
-        title: comp.title!,
+        id: event.id,
+        title: event.title!,
       },
       points,
     });
@@ -174,14 +172,14 @@ export const getWorkoutContributions = async (
 };
 
 export const getProfilePoints = (
-  competition: Tables<"competition">,
-  workouts: CompetitionWorkoutWithProfile[]
+  event: Tables<"groupEvent">,
+  workouts: EventWorkoutWithProfile[]
 ) => {
   let points = 0;
   console.log("Workouts", JSON.stringify(workouts));
   for (const workout of workouts) {
     for (const exercise of workout.workoutData.exercises) {
-      points += getExercisePoints(competition, exercise);
+      points += getExercisePoints(event, exercise);
     }
   }
 

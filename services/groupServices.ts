@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/types/database.types";
-import { ExtendedGroupWithCompetitions } from "@/types/extended-types";
+import { ExtendedGroupWithEvents } from "@/types/extended-types";
 
 export const getUserGroups = async (
   profileId: string
@@ -21,13 +21,13 @@ export const getUserGroups = async (
 
 export const getGroup = async (
   id: string
-): Promise<ExtendedGroupWithCompetitions> => {
+): Promise<ExtendedGroupWithEvents> => {
   const { data: group, error } = await supabase
     .from("group")
     .select(
       `
       *,
-      competitions:competition(*)
+      events:groupEvent(*)
       `
     )
     .eq("id", id)

@@ -1,22 +1,23 @@
-import { ExercisePoints } from "@/types/competition-types";
-import { CompetitionWithGroup } from "@/types/extended-types";
+import { ExercisePoints } from "@/types/event-types";
+import { EventWithGroup } from "@/types/extended-types";
 import { useState } from "react";
+import { Alert, AlertIcon, AlertText } from "../ui/alert";
 import { Box } from "../ui/box";
 import { Card } from "../ui/card";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
-import { AlertCircleIcon, ArrowDownIcon, ArrowUpIcon, Icon } from "../ui/icon";
+import { ArrowDownIcon, ArrowUpIcon, Icon, InfoIcon } from "../ui/icon";
 import { Input, InputField } from "../ui/input";
 import { Pressable } from "../ui/pressable";
 import { Text } from "../ui/text";
 import { VStack } from "../ui/vstack";
 
 export default function ExercisePointsView({
-  competition,
+  event,
 }: {
-  competition: CompetitionWithGroup;
+  event: EventWithGroup;
 }) {
-  const exercisePoints: ExercisePoints[] = competition.exercise_points as any;
+  const exercisePoints: ExercisePoints[] = event.exercise_points as any;
 
   const [exerciseQuery, setExerciseQuery] = useState("");
   const [sort, setSort] = useState<"ascending" | "descending">("descending");
@@ -28,12 +29,10 @@ export default function ExercisePointsView({
         <Text>See the point values for different exercises</Text>
       </VStack>
       {!exercisePoints || exercisePoints.length <= 0 ? (
-        <VStack space="sm" className="flex items-center justify-center">
-          <Icon as={AlertCircleIcon} size="xl" />
-          <Text className="text-typography-950">
-            All exercises have default values (worth 1 pt)
-          </Text>
-        </VStack>
+        <Alert action="muted" variant="solid">
+          <AlertIcon as={InfoIcon} />
+          <AlertText>All exercises have default values (worth 1 pt)</AlertText>
+        </Alert>
       ) : (
         <VStack space="md">
           <HStack className="items-center" space="lg">

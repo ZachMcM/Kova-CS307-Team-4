@@ -24,25 +24,25 @@ export type LikeRelation = {
   name: string
 }
 
-export type ExtendedGroupWithCompetitions = Tables<'group'> & {
-  competitions: Tables<'competition'>[]
+export type ExtendedGroupWithEvents = Tables<'group'> & {
+  events: Tables<'groupEvent'>[]
 }
 
-export type ExtendedCompetitionWithGroup = Tables<'competition'> & {
+export type ExtendedEventWithGroup = Tables<'groupEvent'> & {
   group: {
     id: string,
     title: string
   }
 }
 
-export type CompetitionWithGroup = Tables<'competition'> & {
+export type EventWithGroup = Tables<'groupEvent'> & {
   group: {
     id: string,
     title: string,
   }
 }
 
-export type CompetitionWorkoutWithProfile = Omit<Tables<'competitionWorkout'>, 'workoutData'> & {
+export type EventWorkoutWithProfile = Omit<Tables<'eventWorkout'>, 'workoutData'> & {
   workoutData: Workout,
   profile: {
     name: string,

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { WorkoutContribution } from "@/types/competition-types";
+import { WorkoutContribution } from "@/types/event-types";
 import { PostAsyncStorage, PostDatabase } from "@/types/post.types";
 import { Workout } from "@/types/workout-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";

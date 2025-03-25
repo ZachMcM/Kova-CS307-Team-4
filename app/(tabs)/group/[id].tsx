@@ -1,12 +1,14 @@
 import Container from "@/components/Container";
+import EventCard from "@/components/EventCard";
+import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Heading } from "@/components/ui/heading";
+import { InfoIcon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getGroup } from "@/services/groupServices";
-import { ExtendedGroupWithCompetitions } from "@/types/extended-types";
+import { Tables } from "@/types/database.types";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
 import { useLocalSearchParams } from "expo-router/build/hooks";
 
 export default function Group() {
@@ -21,25 +23,54 @@ export default function Group() {
   });
 
   return (
-    // TODO work on this UI
     <Container>
-      {
-        isPending ? <Spinner/> : 
-        <VStack space="md">
-          <VStack>
-            <Heading className="text-4xl lg:text-5xl xl:text-[56px]">{group?.title}</Heading>
+      {isPending ? (
+        <Spinner />
+      ) : (
+        <VStack space="xl">
+          <VStack space="sm">
+            <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
+              {group?.title}
+            </Heading>
             <Text>{group?.description}</Text>
           </VStack>
-          {
-            group?.competitions.map(comp => (
-              <Link key={comp.id} href={{
-                pathname: "/competition/[id]",
-                params: { id: comp.id }
-              }}>{comp.title}</Link>
-            ))
-          }
+          <VStack space="md">
+            <Heading size="lg">Competitions</Heading>
+            <GroupEvents
+              events={
+                group?.events.filter((event) => event.type == "competition")!
+              }
+              type="competitions"
+            />
+          </VStack>
+          <VStack space="md">
+            <Heading size="lg">Collaborations</Heading>
+            <GroupEvents
+              events={
+                group?.events.filter((event) => event.type == "collaboration")!
+              }
+              type="collaborations"
+            />
+          </VStack>
         </VStack>
-      }
+      )}
     </Container>
+  );
+}
+
+export function GroupEvents({
+  events,
+  type,
+}: {
+  events: Tables<"groupEvent">[];
+  type: string;
+}) {
+  return events.length > 0 ? (
+    events.map((event) => <EventCard event={event} key={event.id} />)
+  ) : (
+    <Alert action="muted" variant="solid">
+      <AlertIcon as={InfoIcon} />
+      <AlertText>No {type} found!</AlertText>
+    </Alert>
   );
 }

@@ -9,92 +9,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      competition: {
+      eventWorkout: {
         Row: {
-          end_date: string | null
-          exercise_points: Json | null
-          goal: number | null
-          groupId: string
-          id: string
-          rep_multiplier: number | null
-          start_date: string
-          title: string | null
-          weight_multiplier: number | null
-          winnerId: string | null
-        }
-        Insert: {
-          end_date?: string | null
-          exercise_points?: Json | null
-          goal?: number | null
-          groupId?: string
-          id?: string
-          rep_multiplier?: number | null
-          start_date?: string
-          title?: string | null
-          weight_multiplier?: number | null
-          winnerId?: string | null
-        }
-        Update: {
-          end_date?: string | null
-          exercise_points?: Json | null
-          goal?: number | null
-          groupId?: string
-          id?: string
-          rep_multiplier?: number | null
-          start_date?: string
-          title?: string | null
-          weight_multiplier?: number | null
-          winnerId?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "competition_groupId_fkey"
-            columns: ["groupId"]
-            isOneToOne: false
-            referencedRelation: "group"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "competition_winnerId_fkey"
-            columns: ["winnerId"]
-            isOneToOne: true
-            referencedRelation: "profile"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      competitionWorkout: {
-        Row: {
-          competitionId: string
           created_at: string
+          groupEventId: string
           id: string
           profileId: string
           workoutData: Json | null
         }
         Insert: {
-          competitionId: string
           created_at?: string
+          groupEventId?: string
           id?: string
           profileId: string
           workoutData?: Json | null
         }
         Update: {
-          competitionId?: string
           created_at?: string
+          groupEventId?: string
           id?: string
           profileId?: string
           workoutData?: Json | null
         }
         Relationships: [
           {
-            foreignKeyName: "competitionWorkout_competitionId_fkey"
-            columns: ["competitionId"]
+            foreignKeyName: "eventWorkout_groupEventId_fkey"
+            columns: ["groupEventId"]
             isOneToOne: false
-            referencedRelation: "competition"
+            referencedRelation: "groupEvent"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "competitionWorkout_profileId_fkey"
+            foreignKeyName: "eventWorkout_profileId_fkey"
             columns: ["profileId"]
             isOneToOne: false
             referencedRelation: "profile"
@@ -183,24 +129,74 @@ export type Database = {
         }
         Relationships: []
       }
+      groupEvent: {
+        Row: {
+          end_date: string | null
+          exercise_points: Json | null
+          goal: number | null
+          groupId: string
+          id: string
+          rep_multiplier: number | null
+          start_date: string
+          title: string | null
+          type: string | null
+          weight_multiplier: number | null
+        }
+        Insert: {
+          end_date?: string | null
+          exercise_points?: Json | null
+          goal?: number | null
+          groupId: string
+          id?: string
+          rep_multiplier?: number | null
+          start_date?: string
+          title?: string | null
+          type?: string | null
+          weight_multiplier?: number | null
+        }
+        Update: {
+          end_date?: string | null
+          exercise_points?: Json | null
+          goal?: number | null
+          groupId?: string
+          id?: string
+          rep_multiplier?: number | null
+          start_date?: string
+          title?: string | null
+          type?: string | null
+          weight_multiplier?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groupEvent_groupId_fkey"
+            columns: ["groupId"]
+            isOneToOne: false
+            referencedRelation: "group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groupRel: {
         Row: {
           created_at: string
           groupId: string
           id: string
           profileId: string
+          role: string | null
         }
         Insert: {
           created_at?: string
           groupId: string
           id?: string
           profileId: string
+          role?: string | null
         }
         Update: {
           created_at?: string
           groupId?: string
           id?: string
           profileId?: string
+          role?: string | null
         }
         Relationships: [
           {
@@ -458,6 +454,21 @@ export type Database = {
           },
         ]
       }
+      weightEntries: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -498,6 +509,12 @@ export type Database = {
           user_id: string
         }
         Returns: undefined
+      }
+      verify_user_password: {
+        Args: {
+          password: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

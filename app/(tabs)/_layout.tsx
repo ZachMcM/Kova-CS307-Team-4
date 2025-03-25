@@ -62,15 +62,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="competitions"
-        options={{
-          title: "Competitions",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="target" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="group/[id]"
         options={{
           title: "Group",
@@ -78,9 +69,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="competition/[id]"
+        name="event/[id]"
         options={{
-          title: "Competition",
+          title: "Event",
           href: null,
         }}
       />
