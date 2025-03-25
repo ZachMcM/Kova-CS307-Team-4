@@ -4,6 +4,7 @@ import { Tables } from "@/types/database.types";
 import { ExerciseData, Workout } from "@/types/workout-types";
 import { getUserGroups } from "./groupServices";
 import { EventWithGroup, EventWorkoutWithProfile, ExtendedEventWithGroup } from "@/types/extended-types";
+import EditEventDetails, { EditEventDetailsValues } from "@/components/event/EditEventDetails";
 
 export const getEvent = async (
   id: string
@@ -185,3 +186,30 @@ export const getProfilePoints = (
 
   return points;
 };
+
+export const editEventDetails = async ({ endDate, goal, weightMultiplier, repMultiplier }: EditEventDetailsValues, eventId: string) => {
+  const { data, error } = await supabase.from("groupEvent").update({
+    end_date: endDate,
+    goal,
+    rep_multiplier: repMultiplier,
+    weight_multiplier: weightMultiplier
+  }).eq("id", eventId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data
+}
+
+export const editExercisePointValues = async (pointValues: ExercisePoints[], eventId: string) => {
+  const { data, error } = await supabase.from("groupEvent").update({
+    exercise_points: pointValues
+  }).eq("id", eventId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data
+}

@@ -1,16 +1,27 @@
+import { getProfileGroupRel } from "@/services/groupServices";
 import { ExercisePoints } from "@/types/event-types";
 import { EventWithGroup } from "@/types/extended-types";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useSession } from "../SessionContext";
 import { Alert, AlertIcon, AlertText } from "../ui/alert";
 import { Box } from "../ui/box";
 import { Card } from "../ui/card";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
-import { ArrowDownIcon, ArrowUpIcon, Icon, InfoIcon } from "../ui/icon";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  EditIcon,
+  Icon,
+  InfoIcon,
+} from "../ui/icon";
 import { Input, InputField } from "../ui/input";
 import { Pressable } from "../ui/pressable";
 import { Text } from "../ui/text";
 import { VStack } from "../ui/vstack";
+import { getExercises } from "@/services/exerciseServices";
+import EditExercisePoints from "./EditExercisePoints";
 
 export default function ExercisePointsView({
   event,
@@ -22,13 +33,56 @@ export default function ExercisePointsView({
   const [exerciseQuery, setExerciseQuery] = useState("");
   const [sort, setSort] = useState<"ascending" | "descending">("descending");
 
+  const { session } = useSession();
+
+  const { data: groupRel } = useQuery({
+    queryKey: ["group", { id: event.id }],
+    queryFn: async () => {
+      const groupRel = await getProfileGroupRel(
+        session?.user.user_metadata.profileId,
+        event?.groupId!
+      );
+      return groupRel;
+    },
+  });
+
+  const { data: allExercises } = useQuery({
+    queryKey: ["exercises"],
+    queryFn: async () => {
+      const exercises = await getExercises();
+      return exercises;
+    },
+  });
+
+  const [editPointValues, setEditPointValues] = useState(false);
+
   return (
     <VStack space="lg">
-      <VStack>
-        <Heading size="xl">Exercise Point Values</Heading>
-        <Text>See the point values for different exercises</Text>
-      </VStack>
-      {!exercisePoints || exercisePoints.length <= 0 ? (
+      <HStack className="items-center justify-between">
+        <VStack>
+          <Heading size="xl">Exercise Point Values</Heading>
+          <Text>
+            {editPointValues ? "Edit" : "View"} the point values for different
+            exercises
+          </Text>
+        </VStack>
+        {allExercises != undefined && !editPointValues && groupRel?.role == "owner" && (
+          <Pressable
+            onPress={() => {
+              setEditPointValues(true);
+            }}
+          >
+            <Icon size="xl" as={EditIcon} />
+          </Pressable>
+        )}
+      </HStack>
+      {editPointValues ? (
+        <EditExercisePoints
+          event={event}
+          setEditPointValues={setEditPointValues}
+          allExercises={allExercises!}
+        />
+      ) : !exercisePoints || exercisePoints.length <= 0 ? (
         <Alert action="muted" variant="solid">
           <AlertIcon as={InfoIcon} />
           <AlertText>All exercises have default values (worth 1 pt)</AlertText>

@@ -7,6 +7,13 @@ import { useToast } from "@/components/ui/toast";
 import { getExercises } from "@/services/exerciseServices";
 import { newTemplate, updateTemplate } from "@/services/templateServices";
 import { showErrorToast } from "@/services/toastServices";
+import { ExtendedExercise } from "@/types/extended-types";
+import {
+  compareToTaggedQuery,
+  createTagCounter,
+  createWordCounter,
+  exercisesToSearch,
+} from "@/types/searcher-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -25,15 +32,12 @@ import { VStack } from "../../ui/vstack";
 import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
-import ExerciseSearchView from "@/components/search-views/ExerciseSearchView";
-import { ExtendedExercise } from "@/types/extended-types";
-import { compareToTaggedQuery, createTagCounter, createWordCounter, exercisesToSearch } from "@/types/searcher-types";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
-  const { control, handleSubmit, watch, formState, reset } = useTemplateForm();
+  const { control, handleSubmit, watch, formState } = useTemplateForm();
 
   const templateId = watch("id");
 
@@ -84,15 +88,6 @@ export default function TemplateForm() {
     name: "data",
   });
 
-  function isExerciseAdded(id: string) {
-    for (const exercise of exercises) {
-      if (exercise.info.id == id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   async function onSubmit(values: FieldValues) {
     saveTemplate(values as TemplateFormValues);
   }
@@ -111,7 +106,7 @@ export default function TemplateForm() {
       searchIdToIndex.set(searchItems[i].id, i);
     }
   }
-  
+
   return !exercisesLoading ? (
     allExercises && (
       <VStack space="4xl">
@@ -141,7 +136,6 @@ export default function TemplateForm() {
               </FormControl>
             )}
           />
-          {/* TODO replace with actual search bar @AreebE */}
           <Input size="md">
             <InputField
               placeholder="Search exercises"
@@ -155,15 +149,33 @@ export default function TemplateForm() {
 
           {exerciseQuery.length != 0 &&
             allExercises
-              .sort((a: ExtendedExercise, b: ExtendedExercise) => {
-                let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
-                let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
-                let diff = compareToTaggedQuery(exerciseQuery, bSearch,
-                  wordCounter!, tagCounter!, []) 
-                    - compareToTaggedQuery(exerciseQuery, aSearch,
-                      wordCounter!, tagCounter!, []);
-                return diff;
-              })
+              // .sort((a: ExtendedExercise, b: ExtendedExercise) => {
+              //   let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
+              //   let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
+              //   let diff =
+              //     compareToTaggedQuery(
+              //       exerciseQuery,
+              //       bSearch,
+              //       wordCounter!,
+              //       tagCounter!,
+              //       []
+              //     ) -
+              //     compareToTaggedQuery(
+              //       exerciseQuery,
+              //       aSearch,
+              //       wordCounter!,
+              //       tagCounter!,
+              //       []
+              //     );
+              //   return diff;
+              // })
+              .filter(
+                (exercise) =>
+                  exercise.name?.toLowerCase().includes(exerciseQuery.toLowerCase()) ||
+                  exercise.tags.filter((tag) =>
+                    tag.name?.toLowerCase().includes(exerciseQuery.toLowerCase())
+                  ).length > 0
+              )
               .map((exercise) => (
                 <Pressable
                   key={exercise.id}

@@ -51,3 +51,10 @@ export type EventWorkoutWithProfile = Omit<Tables<'eventWorkout'>, 'workoutData'
     avatar?: string
   }
 }
+
+export type ExtendedGroupRel = Tables<'groupRel'> & {
+  group: {
+    id: string,
+    title: string | null
+  }
+}
