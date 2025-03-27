@@ -29,12 +29,12 @@ const schema = z.object({
     .transform((x) => (x === null || x === undefined ? undefined : x)),
   weightMultiplier: z
     .number({ required_error: "Must be a valid number" })
-    .nonnegative()
+    .min(1, { message: "Multiplier cannot be less than 1" })
     .nullish()
     .transform((x) => (x === null || x === undefined ? undefined : x)),
   repMultiplier: z
     .number({ required_error: "Must be a valid number" })
-    .nonnegative()
+    .min(1, { message: "Multiplier cannot be less than 1" })
     .nullish()
     .transform((x) => (x === null || x === undefined ? undefined : x)),
 });

@@ -10,12 +10,13 @@ import ExerciseCard from "../forms/workout-template/ExerciseCard";
 import { Card } from "../ui/card";
 import { HStack } from "../ui/hstack";
 import { Heading } from "../ui/heading";
+import { NewEventPointsValues } from "./EventForm";
 
-export default function EditExercisePointsForm({
+export default function ExercisePointsForm({
   form,
   allExercises,
 }: {
-  form: UseFormReturn<ExercisePointsFormValues>;
+  form: UseFormReturn<any>;
   allExercises: ExtendedExercise[];
 }) {
   const {
@@ -70,10 +71,14 @@ export default function EditExercisePointsForm({
             </Pressable>
           ))}
       {exercises.map((exercise, index) => (
+        // @ts-expect-error
         <Card variant="outline" key={exercise.exerciseId}>
           <VStack space="xl">
             <HStack className="items-center justify-between">
-              <Heading size="md">{exercise.exerciseName}</Heading>
+              <Heading 
+                // @ts-expect-error
+                size="md">{exercise.exerciseName
+              }</Heading>
               <Pressable onPress={() => remove(index)}>
                 <Icon as={TrashIcon} size="xl" color="red" />
               </Pressable>

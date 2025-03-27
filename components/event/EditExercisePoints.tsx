@@ -13,8 +13,9 @@ import { HStack } from "../ui/hstack";
 import { CheckIcon, CloseIcon } from "../ui/icon";
 import { useToast } from "../ui/toast";
 import { VStack } from "../ui/vstack";
-import EditExercisePointsForm from "./EditExercisePointsForm";
+import ExercisePointsForm from "./ExercisePointsForm";
 import { editExercisePointValues } from "@/services/groupEventServices";
+import { ExercisePoints } from "@/types/event-types";
 
 export default function EditExercisePoints({
   event,
@@ -28,7 +29,7 @@ export default function EditExercisePoints({
   const form = useForm<ExercisePointsFormValues>({
     resolver: zodResolver(pointValuesSchema),
     defaultValues: {
-      exercises: event.exercise_points as any,
+      exercises: (event.exercise_points as ExercisePoints[]) || [],
     },
   });
 
@@ -46,7 +47,7 @@ export default function EditExercisePoints({
         event.id
       );
 
-      return data
+      return data;
     },
     onSuccess: (data) => {
       console.log(data);
@@ -69,7 +70,7 @@ export default function EditExercisePoints({
 
   return (
     <VStack space="2xl">
-      <EditExercisePointsForm allExercises={allExercises} form={form} />
+      <ExercisePointsForm allExercises={allExercises} form={form} />
       <HStack space="sm">
         {setEditPointValues && (
           <Button action="secondary" onPress={() => setEditPointValues(false)}>

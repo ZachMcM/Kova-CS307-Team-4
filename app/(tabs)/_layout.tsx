@@ -136,6 +136,12 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="new-event/[id]"
+        options={{
+          href: null
+        }}
+      />
     </Tabs>
   ) : (
     <Redirect href="/live-workout" />

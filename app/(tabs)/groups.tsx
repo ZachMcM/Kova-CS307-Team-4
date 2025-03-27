@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getUserGroups } from "@/services/groupServices";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 
 export default function ProfileScreen() {
   const { session } = useSession();
@@ -18,6 +19,8 @@ export default function ProfileScreen() {
       return groups;
     },
   });
+
+  const router = useRouter();
 
   return (
     // TODO work on this UI

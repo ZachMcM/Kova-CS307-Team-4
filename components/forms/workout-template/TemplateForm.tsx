@@ -109,97 +109,76 @@ export default function TemplateForm() {
 
   return !exercisesLoading ? (
     allExercises && (
-      <VStack space="4xl">
-        <VStack space="xl">
-          <Controller
-            control={control}
-            name="name"
-            rules={{ required: true }}
-            render={({ field, fieldState }) => (
-              <FormControl isInvalid={fieldState.invalid} size="md">
-                <FormControlLabel>
-                  <FormControlLabelText>Name</FormControlLabelText>
-                </FormControlLabel>
-                <Input>
-                  <InputField
-                    placeholder="Enter a template name"
-                    value={field.value}
-                    onChangeText={field.onChange}
-                    onBlur={field.onBlur}
-                  />
-                </Input>
-                <FormControlError>
-                  <FormControlErrorText>
-                    {fieldState.error?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
-            )}
+      <VStack space="2xl">
+        <Controller
+          control={control}
+          name="name"
+          rules={{ required: true }}
+          render={({ field, fieldState }) => (
+            <FormControl isInvalid={fieldState.invalid} size="md">
+              <FormControlLabel>
+                <FormControlLabelText>Name</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  placeholder="Enter a template name"
+                  value={field.value}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              </Input>
+              <FormControlError>
+                <FormControlErrorText>
+                  {fieldState.error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
+        <Input size="md">
+          <InputField
+            placeholder="Search exercises"
+            onChangeText={setExerciseQuery}
+            value={exerciseQuery}
           />
-          <Input size="md">
-            <InputField
-              placeholder="Search exercises"
-              onChangeText={setExerciseQuery}
-              value={exerciseQuery}
-            />
-            <InputSlot className="p-3">
-              <InputIcon as={SearchIcon} />
-            </InputSlot>
-          </Input>
-
-          {exerciseQuery.length != 0 &&
-            allExercises
-              // .sort((a: ExtendedExercise, b: ExtendedExercise) => {
-              //   let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
-              //   let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
-              //   let diff =
-              //     compareToTaggedQuery(
-              //       exerciseQuery,
-              //       bSearch,
-              //       wordCounter!,
-              //       tagCounter!,
-              //       []
-              //     ) -
-              //     compareToTaggedQuery(
-              //       exerciseQuery,
-              //       aSearch,
-              //       wordCounter!,
-              //       tagCounter!,
-              //       []
-              //     );
-              //   return diff;
-              // })
-              .filter(
-                (exercise) =>
-                  exercise.name?.toLowerCase().includes(exerciseQuery.toLowerCase()) ||
-                  exercise.tags.filter((tag) =>
-                    tag.name?.toLowerCase().includes(exerciseQuery.toLowerCase())
-                  ).length > 0
-              )
-              .map((exercise) => (
-                <Pressable
-                  key={exercise.id}
-                  onPress={() => {
-                    setExerciseQuery("");
-                    addExercise({
-                      info: {
-                        name: exercise.name!,
-                        id: exercise.id,
+          <InputSlot className="p-3">
+            <InputIcon as={SearchIcon} />
+          </InputSlot>
+        </Input>
+        {exerciseQuery.length != 0 &&
+          allExercises
+            .filter(
+              (exercise) =>
+                exercise.name
+                  ?.toLowerCase()
+                  .includes(exerciseQuery.toLowerCase()) ||
+                exercise.tags.filter((tag) =>
+                  tag.name?.toLowerCase().includes(exerciseQuery.toLowerCase())
+                ).length > 0
+            )
+            .map((exercise) => (
+              <Pressable
+                key={exercise.id}
+                onPress={() => {
+                  setExerciseQuery("");
+                  addExercise({
+                    info: {
+                      name: exercise.name!,
+                      id: exercise.id,
+                    },
+                    sets: [
+                      {
+                        reps: 0,
+                        weight: 0,
                       },
-                      sets: [
-                        {
-                          reps: 0,
-                          weight: 0,
-                        },
-                      ],
-                    });
-                  }}
-                  className="flex flex-1"
-                >
-                  <ExerciseCard exercise={exercise} />
-                </Pressable>
-              ))}
-        </VStack>
+                    ],
+                  });
+                }}
+                className="flex flex-1"
+              >
+                <ExerciseCard exercise={exercise} />
+              </Pressable>
+            ))}
         <VStack space="4xl">
           {exercises.map((exercise, i) => (
             <VStack space="md" key={exercise.info.id}>
