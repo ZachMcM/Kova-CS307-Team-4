@@ -268,7 +268,7 @@ export default function ProfileScreen() {
 
   // Navigate to weight tracking page
   const navigateToWeightTracking = () => {
-    router.push('/profiles/weight');
+    router.push('/weight_tracking');
   };
 
   // Image upload functionality
