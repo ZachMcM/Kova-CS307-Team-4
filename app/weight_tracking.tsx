@@ -465,11 +465,9 @@ export default function WeightTrackingScreen() {
             {isPending ? (
               <Spinner />
             ) : weightEntries && weightEntries.length > 0 ? (
-              <FlatList
-                data={weightEntries}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <Box className="border border-gray-300 rounded-md p-3 mb-2">
+              <VStack space="sm">
+                {weightEntries.map(item => (
+                  <Box key={item.id} className="border border-gray-300 rounded-md p-3 mb-2">
                     <HStack className="justify-between items-center">
                       <VStack>
                         <HStack space="sm">
@@ -489,8 +487,8 @@ export default function WeightTrackingScreen() {
                       </HStack>
                     </HStack>
                   </Box>
-                )}
-              />
+                ))}
+              </VStack>
             ) : (
               <Text className="text-center py-4">No weight entries yet</Text>
             )}
