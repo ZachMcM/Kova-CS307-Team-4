@@ -296,17 +296,17 @@ export default function WeightTrackingScreen() {
                 <Text size="md" className="w-20">Unit:</Text>
                 <RadioGroup value={unit} onChange={setUnit as (value: string) => void}>
                   <HStack space="xl">
-                    <Radio value="kg" isInvalid={false} isDisabled={false}>
-                      <RadioIndicator>
-                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                      </RadioIndicator>
-                      <RadioLabel>kg</RadioLabel>
-                    </Radio>
                     <Radio value="lbs" isInvalid={false} isDisabled={false}>
                       <RadioIndicator>
                         <RadioIcon as={ChevronLeftIcon}></RadioIcon>
                       </RadioIndicator>
                       <RadioLabel>lbs</RadioLabel>
+                    </Radio>
+                    <Radio value="kg" isInvalid={false} isDisabled={false}>
+                      <RadioIndicator>
+                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                      </RadioIndicator>
+                      <RadioLabel>kg</RadioLabel>
                     </Radio>
                   </HStack>
                 </RadioGroup>
@@ -413,7 +413,7 @@ export default function WeightTrackingScreen() {
 
                 <LineChart
                   data={prepareChartData(weightEntries)}
-                  width={Dimensions.get('window').width - 48}
+                  width={Dimensions.get('window').width - 65}
                   height={220}
                   chartConfig={{
                     backgroundColor: '#ffffff',
