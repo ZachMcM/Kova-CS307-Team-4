@@ -55,12 +55,13 @@ export const getProfile = async (id: string): Promise<Profile> => {
     location: profile.location,
     goal: profile.goal,
     bio: profile.bio,
-    achievement: profile.achievement
+    achievement: profile.achievement,
+    privacy_settings: profile.privacy_settings
   } as PublicProfile;
 }
 
 export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, 
-                                    privacy: string, name: string, age: number, gender: string, weight: number) => {
+                                    privacy: string, name: string, age: number, gender: string, weight: number, privacy_settings?: privacies) => {
   const { error } = await supabase
     .from("profile")
     .update({
@@ -72,14 +73,53 @@ export const updateProfile = async (id:string, goal: string, bio: string, locati
       name: name,
       age: age,
       gender: gender,
-      weight: weight
+      weight: weight,
     })
     .eq("id", id);
 
   if (error) {
     throw new Error(error.message);
   }
+
+  if (privacy_settings) {
+    const { error: privacy_error } = await supabase
+    .from("profile")
+    .update({
+      privacy_settings: privacy_settings
+    })
+    .eq("id", id);
+
+  if (privacy_error) {
+    throw new Error(privacy_error.message);
+  }
+  }
 };
+
+export const updateProfilePrivacies = async (userId:string, privacy_settings: privacies) => {
+  const { error: privacy_error } = await supabase
+    .from("profile")
+    .update({
+      privacy_settings: privacy_settings
+    })
+    .eq("userId", userId);
+
+  if (privacy_error) {
+    throw new Error(privacy_error.message);
+  }
+}
+
+export const getProfilePrivacies = async (userId: string) => {
+  const { data: privacy_settings, error } = await supabase
+  .from("profile")
+  .select("privacy_settings")
+  .eq("userId", userId)
+  .limit(1).single();
+
+   if (error) throw new Error(error.message);
+
+   console.log("returning " + privacy_settings.privacy_settings["age"]);
+   return privacy_settings.privacy_settings as privacies;
+}
 
 export const isProfileFollowed = async (sourceId: string, targetId: string): Promise<boolean> => {
   const { data: follows, error } = await supabase
