@@ -33,6 +33,7 @@ export default function PostScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
+  const [weighIn, setWeighIn] = useState(Number);
   const [isPublic, setIsPublic] = useState(true);
   const [includeWorkoutData, setIncludeWorkoutData] = useState(true);
   const [workoutData, setWorkoutData] = useState<any>(defaultWorkoutData);
@@ -254,7 +255,8 @@ export default function PostScreen() {
         taggedFriends: taggedFriends.length > 0 ? taggedFriends : null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        images: imageURLs
+        images: imageURLs,
+        weighIn: weighIn
       };
 
       const { data, error } = await supabase
@@ -528,6 +530,21 @@ export default function PostScreen() {
                 onChangeText={setLocation}
               />
             </Input>
+          </VStack>
+          <VStack space="xs">
+            <HStack space = "sm">
+              <Text size="sm" className = "mt-2 mr-28" bold>Weigh-in (optional)</Text>
+              <Input variant="outline" className = "w-20">
+                <InputField
+                  placeholder=""
+                  value={weighIn > 0 ? weighIn.toString() : ""}
+                  onChangeText={(text) => setWeighIn(Number(text) || -1)}
+                  keyboardType="numeric"
+                  className = "text-center"
+                />
+              </Input>
+              <Text className = "mt-2">lbs</Text>
+            </HStack>
           </VStack>
           <VStack space="xs">
             <HStack style={styles.toggleContainer} space="md">
