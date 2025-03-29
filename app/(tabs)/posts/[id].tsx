@@ -40,7 +40,7 @@ export default function PostsView() {
                     setProfile(profileData);
                 }
             } 
-            catch (err: typeof error) {
+            catch (err: any) {
                 setError(err.message);
             } 
             finally {
@@ -49,11 +49,7 @@ export default function PostsView() {
         };
     
         fetchPostAndProfile();
-        }, [postId]);
-        
-        return { post, profile, loading, error };
-    };
-
+    }, [postId]);
     return (
         <StaticContainer className = "flex px-6 py-16">
             <VStack>
@@ -63,7 +59,6 @@ export default function PostsView() {
                         <Text size = "2xl" className = "font-bold">Feed</Text>
                     </HStack>
                 </Pressable>
-                <PostCard {postData, }></PostCard>
             </VStack>
         </StaticContainer>
     );

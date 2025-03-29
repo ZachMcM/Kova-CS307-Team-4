@@ -19,7 +19,7 @@ type Post = {
   description: string;
   location: string | null;
   isPublic: boolean;
-  imageUrl: string | null;
+  images: string[] | null;
   workoutData: {
     calories?: string;
     duration?: string;
@@ -311,7 +311,7 @@ export default function FeedScreen() {
             workoutCalories={post.workoutData?.calories || undefined}
             userId={userId!}
             comments={5}
-            imageUrl={post.imageUrl || undefined}
+            imageUrls={post.images || undefined}
             isOwnPost={isOwnPost(post)}
             onUpdatePost={updatePost}
             taggedFriends={post.taggedFriendsData}

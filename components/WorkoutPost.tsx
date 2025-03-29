@@ -11,10 +11,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Animated,
-  Image,
   Modal,
   StyleSheet,
   Text,
@@ -25,6 +24,9 @@ import {
 import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { HStack } from "./ui/hstack";
 import { Spinner } from "./ui/spinner";
+import { Image } from "./ui/image";
+import { ScrollView } from "./ui/scroll-view";
+import { supabase } from "@/lib/supabase";
 
 export type Exercise = {
   name: string;
@@ -50,7 +52,7 @@ type WorkoutPostProps = {
   exercises: Exercise[];
   userId: string;
   comments: number;
-  imageUrl?: string;
+  imageUrls?: string[];
   workoutDuration?: string;
   workoutCalories?: string;
   isOwnPost?: boolean;
@@ -73,7 +75,7 @@ export const WorkoutPost = ({
   description,
   exercises,
   comments,
-  imageUrl,
+  imageUrls,
   workoutDuration,
   workoutCalories,
   isOwnPost = false,
@@ -163,6 +165,8 @@ export const WorkoutPost = ({
     }
   };
 
+  console.log(imageUrls);
+
   return (
     <>
       <View style={styles.container}>
@@ -221,17 +225,19 @@ export const WorkoutPost = ({
         {/* Content */}
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
-          <Text
-            style={[
-              styles.description,
-              expanded
-                ? styles.expandedDescription
-                : styles.collapsedDescription,
-            ]}
-            numberOfLines={expanded ? undefined : 2}
-          >
-            {description}
-          </Text>
+          {description.length > 0 ? (
+            <Text
+              style={[
+                styles.description,
+                expanded
+                  ? styles.expandedDescription
+                  : styles.collapsedDescription,
+              ]}
+              numberOfLines={expanded ? undefined : 2}
+            >
+              {description}
+            </Text>
+          ) : (<></>)}
 
           {/* Tagged Friends */}
           {taggedFriends.length > 0 && (
@@ -265,12 +271,21 @@ export const WorkoutPost = ({
           </View>
 
           {/* Workout Image */}
-          {imageUrl && (
-            <Image
-              source={{ uri: imageUrl }}
-              style={[styles.image, expanded && styles.expandedImage]}
-              resizeMode="cover"
-            />
+          {imageUrls && imageUrls.length > 0 ? (
+            <ScrollView horizontal style={{ marginBottom: 12 }}>
+              <HStack space = "md">
+                {imageUrls.map((url, index) => (
+                  <Image
+                    key={index}
+                    size = "2xl"
+                    source={{ uri: url }}
+                    className = "rounded-2xl"
+                  />
+                ))}
+              </HStack>
+            </ScrollView>
+          ) : (
+            <></>
           )}
 
           {/* Expanded Details */}
