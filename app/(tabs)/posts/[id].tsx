@@ -42,7 +42,7 @@ export default function PostDetails() {
         title: data.title,
         description: data.description,
         location: data.location,
-        isPublic: data.isPublic,
+        privacy: data.privacy,
         images: data.images || [],
         weighIn: data.weighIn,
         workoutData: data.workoutData

@@ -15,13 +15,14 @@ import { useSession } from '@/components/SessionContext';
 import { getFriends } from '@/services/profileServices';
 import { useQuery } from '@tanstack/react-query';
 import { Checkbox, CheckboxIndicator, CheckboxLabel, CheckboxIcon } from '@/components/ui/checkbox';
-import { AddIcon, CheckIcon, CloseIcon, Icon, RemoveIcon, TrashIcon } from '@/components/ui/icon';
+import { AddIcon, CheckIcon, CircleIcon, CloseIcon, Icon, RemoveIcon, TrashIcon } from '@/components/ui/icon';
 import { Avatar, AvatarImage, AvatarFallbackText } from '@/components/ui/avatar';
 import * as ImagePicker from 'expo-image-picker';
 import { useToast } from "@/components/ui/toast";
 import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
 import { uploadPostImages } from '@/services/postServices';
 import { Image } from '@/components/ui/image';
+import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/components/ui/radio';
 
 const defaultWorkoutData = {
   duration: '0 minutes',
@@ -34,7 +35,6 @@ export default function PostScreen() {
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [weighIn, setWeighIn] = useState(Number);
-  const [isPublic, setIsPublic] = useState(true);
   const [includeWorkoutData, setIncludeWorkoutData] = useState(true);
   const [workoutData, setWorkoutData] = useState<any>(defaultWorkoutData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +43,7 @@ export default function PostScreen() {
   const [friendSearch, setFriendSearch] = useState('');
   const [titleError, setTitleError] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
+  const [postPrivacy, setPostPrivacy] = useState("PUBLIC");
   
   const { session } = useSession();
   const userId = session?.user?.id || null;
@@ -249,7 +250,7 @@ export default function PostScreen() {
         title,
         description,
         location: location || null,
-        isPublic: isPublic,
+        privacy: postPrivacy,
         imageUrl: null,
         workoutData: includeWorkoutData ? workoutData : null,
         taggedFriends: taggedFriends.length > 0 ? taggedFriends : null,
@@ -287,7 +288,9 @@ export default function PostScreen() {
       setTitle('');
       setDescription('');
       setLocation('');
-      setIsPublic(true);
+      setImages([]);
+      setWeighIn(-1);
+      setPostPrivacy("PUBLIC");
       setIncludeWorkoutData(true);
       setWorkoutData(defaultWorkoutData);
       setTaggedFriends([]);
@@ -547,19 +550,44 @@ export default function PostScreen() {
             </HStack>
           </VStack>
           <VStack space="xs">
-            <HStack style={styles.toggleContainer} space="md">
-              <Text size="sm" bold>Make Post Public</Text>
-              <Switch
-                value={isPublic}
-                onValueChange={setIsPublic}
-                size="md"
-              />
-            </HStack>
-            <Text size="xs" style={styles.privacyHint}>
-              {isPublic 
-                ? "Public posts can be seen by everyone" 
-                : "Private posts are only visible to you"}
-            </Text>
+            <Text size="sm" className = "mb-1" bold>Post Privacy</Text>
+            <RadioGroup value = {postPrivacy} onChange = {setPostPrivacy}>
+              <HStack space = "md">
+                <Radio value = "PRIVATE" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Private</RadioLabel>
+                </Radio>
+                <Radio value = "FOLLOWERS" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Followers</RadioLabel>
+                </Radio>
+                <Radio value = "FRIENDS" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Friends</RadioLabel>
+                </Radio>
+                <Radio value = "PUBLIC" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Public</RadioLabel>
+                </Radio>
+              </HStack>
+            </RadioGroup>
+            {postPrivacy === "PUBLIC" ? (
+              <Text size="xs" style={styles.privacyHint}>Public posts can be seen by everyone</Text>
+            ) : postPrivacy === "FRIENDS" ? (
+              <Text size="xs" style={styles.privacyHint}>Friends posts can only be seen by your friends</Text>
+            ) : postPrivacy === "FOLLOWERS" ? (
+              <Text size="xs" style={styles.privacyHint}>Followers posts can only be seen by your followers</Text>
+            ) : postPrivacy === "PRIVATE" && (
+              <Text size="xs" style={styles.privacyHint}>Private posts are only visible to you</Text>
+            )}
           </VStack>
 
           <Button

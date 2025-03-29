@@ -18,7 +18,7 @@ export type Post = {
   title: string;
   description: string;
   location: string | null;
-  isPublic: boolean;
+  privacy: string;
   images: string[] | null;
   weighIn: number;
   workoutData: {
@@ -131,7 +131,7 @@ export default function FeedScreen() {
           )
         `)
         .in("profileId", followingProfileIds)
-        .eq("isPublic", true)
+        .eq("privacy", "PUBLIC")
         .order("createdAt", { ascending: false })
         .range(from, to);
 
