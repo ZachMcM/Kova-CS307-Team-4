@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Alert, Dimensions } from 'react-native';
+import { View, Alert, Dimensions, ScrollView } from 'react-native';
 import StaticContainer from "@/components/StaticContainer";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
@@ -264,84 +264,96 @@ export default function WeightTrackingScreen() {
   }, [weightEntries]);
   
   return (
-    <StaticContainer className="flex px-6 py-16">
-      <VStack space="md">
-        <HStack space="md" className="items-center">
-          <Pressable onPress={() => router.back()}>
-            <Icon as={ChevronLeftIcon} size="xl" />
-          </Pressable>
-          <Heading size="xl">Weight Tracking</Heading>
-        </HStack>
-        
-        <Box className="border border-gray-300 rounded-lg p-4 mt-2">
-          <VStack space="md">
-            <Heading size="md">
-              {editingEntry ? "Edit Weight Entry" : "Add Weight Entry"}
-            </Heading>
-            
-            <HStack space="md" className="items-center">
-              <Text size="md" className="w-20">Weight:</Text>
-              <Input className="flex-1">
-                <InputField
-                  value={weight}
-                  onChangeText={setWeight}
-                  keyboardType="numeric"
-                  placeholder="Enter weight"
-                />
-              </Input>
-            </HStack>
-            
-            <HStack space="md" className="items-center">
-              <Text size="md" className="w-20">Unit:</Text>
-              <RadioGroup value={unit} onChange={setUnit as (value: string) => void}>
-                <HStack space="xl">
-                  <Radio value="kg" isInvalid={false} isDisabled={false}>
-                    <RadioIndicator>
-                      <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                    </RadioIndicator>
-                    <RadioLabel>kg</RadioLabel>
-                  </Radio>
-                  <Radio value="lbs" isInvalid={false} isDisabled={false}>
-                    <RadioIndicator>
-                      <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                    </RadioIndicator>
-                    <RadioLabel>lbs</RadioLabel>
-                  </Radio>
-                </HStack>
-              </RadioGroup>
-            </HStack>
-            
-            <HStack space="md" className="items-center">
-              <Text size="md" className="w-20">Date:</Text>
-              <Pressable 
-                onPress={() => setShowDatePicker(true)}
-                className="flex-1 h-10 border border-gray-300 rounded-md px-3 justify-center"
-              >
-                <Text>{date.toLocaleDateString()}</Text>
-              </Pressable>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display="default"
-                  onChange={onDateChange}
-                  maximumDate={new Date()}
-                />
-              )}
-            </HStack>
-            
-            <HStack space="md">
-              {editingEntry ? (
-                <>
-                  <Button 
-                    size="md" 
-                    variant="outline" 
-                    action="secondary" 
-                    className="flex-1"
-                    onPress={resetForm}
-                  >
-                    <ButtonText>Cancel</ButtonText>
-                  </Button>
+    <StaticContainer className="flex">
+      <ScrollView className="flex px-6 py-16">
+        <VStack space="md">
+          <HStack space="md" className="items-center">
+            <Pressable onPress={() => router.back()}>
+              <Icon as={ChevronLeftIcon} size="xl" />
+            </Pressable>
+            <Heading size="xl">Weight Tracking</Heading>
+          </HStack>
+          
+          <Box className="border border-gray-300 rounded-lg p-4 mt-2">
+            <VStack space="md">
+              <Heading size="md">
+                {editingEntry ? "Edit Weight Entry" : "Add Weight Entry"}
+              </Heading>
+              
+              <HStack space="md" className="items-center">
+                <Text size="md" className="w-20">Weight:</Text>
+                <Input className="flex-1">
+                  <InputField
+                    value={weight}
+                    onChangeText={setWeight}
+                    keyboardType="numeric"
+                    placeholder="Enter weight"
+                  />
+                </Input>
+              </HStack>
+              
+              <HStack space="md" className="items-center">
+                <Text size="md" className="w-20">Unit:</Text>
+                <RadioGroup value={unit} onChange={setUnit as (value: string) => void}>
+                  <HStack space="xl">
+                    <Radio value="kg" isInvalid={false} isDisabled={false}>
+                      <RadioIndicator>
+                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                      </RadioIndicator>
+                      <RadioLabel>kg</RadioLabel>
+                    </Radio>
+                    <Radio value="lbs" isInvalid={false} isDisabled={false}>
+                      <RadioIndicator>
+                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                      </RadioIndicator>
+                      <RadioLabel>lbs</RadioLabel>
+                    </Radio>
+                  </HStack>
+                </RadioGroup>
+              </HStack>
+              
+              <HStack space="md" className="items-center">
+                <Text size="md" className="w-20">Date:</Text>
+                <Pressable 
+                  onPress={() => setShowDatePicker(true)}
+                  className="flex-1 h-10 border border-gray-300 rounded-md px-3 justify-center"
+                >
+                  <Text>{date.toLocaleDateString()}</Text>
+                </Pressable>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="default"
+                    onChange={onDateChange}
+                    maximumDate={new Date()}
+                  />
+                )}
+              </HStack>
+              
+              <HStack space="md">
+                {editingEntry ? (
+                  <>
+                    <Button 
+                      size="md" 
+                      variant="outline" 
+                      action="secondary" 
+                      className="flex-1"
+                      onPress={resetForm}
+                    >
+                      <ButtonText>Cancel</ButtonText>
+                    </Button>
+                    <Button 
+                      size="md" 
+                      variant="solid" 
+                      action="primary" 
+                      className="flex-1 bg-[#6FA8DC]"
+                      onPress={handleSubmit}
+                    >
+                      <ButtonText className="text-white">Update</ButtonText>
+                    </Button>
+                  </>
+                ) : (
                   <Button 
                     size="md" 
                     variant="solid" 
@@ -349,152 +361,142 @@ export default function WeightTrackingScreen() {
                     className="flex-1 bg-[#6FA8DC]"
                     onPress={handleSubmit}
                   >
-                    <ButtonText className="text-white">Update</ButtonText>
+                    <ButtonText className="text-white">Add Entry</ButtonText>
+                    <ButtonIcon as={AddIcon} className="text-white" />
                   </Button>
-                </>
-              ) : (
-                <Button 
-                  size="md" 
-                  variant="solid" 
-                  action="primary" 
-                  className="flex-1 bg-[#6FA8DC]"
-                  onPress={handleSubmit}
+                )}
+              </HStack>
+            </VStack>
+          </Box>
+
+          {weightEntries && weightEntries.length > 0 && (
+            <Box className="mt-4">
+              <HStack className="justify-between items-center mb-4">
+                <Heading size="md">Weight Progress</Heading>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  action="secondary"
+                  className="border-[#6FA8DC]"
+                  onPress={exportToCSV}
                 >
-                  <ButtonText className="text-white">Add Entry</ButtonText>
-                  <ButtonIcon as={AddIcon} className="text-white" />
+                  <ButtonText className="text-[#6FA8DC]">Export</ButtonText>
+                  <ButtonIcon as={DownloadIcon} className="text-[#6FA8DC]" />
                 </Button>
-              )}
-            </HStack>
-          </VStack>
-        </Box>
-
-        {weightEntries && weightEntries.length > 0 && (
-          <Box className="mt-4">
-            <HStack className="justify-between items-center mb-4">
-              <Heading size="md">Weight Progress</Heading>
-              <Button
-                size="sm"
-                variant="outline"
-                action="secondary"
-                className="border-[#6FA8DC]"
-                onPress={exportToCSV}
-              >
-                <ButtonText className="text-[#6FA8DC]">Export</ButtonText>
-                <ButtonIcon as={DownloadIcon} className="text-[#6FA8DC]" />
-              </Button>
-            </HStack>
-
-            <Box className="bg-white p-4 rounded-lg border border-gray-300">
-              <HStack className="justify-between mb-4">
-                <RadioGroup value={timePeriod} onChange={setTimePeriod as (value: string) => void}>
-                  <HStack space="xl">
-                    <Radio value="week" isInvalid={false} isDisabled={false}>
-                      <RadioIndicator>
-                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                      </RadioIndicator>
-                      <RadioLabel>Week</RadioLabel>
-                    </Radio>
-                    <Radio value="month" isInvalid={false} isDisabled={false}>
-                      <RadioIndicator>
-                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                      </RadioIndicator>
-                      <RadioLabel>Month</RadioLabel>
-                    </Radio>
-                    <Radio value="year" isInvalid={false} isDisabled={false}>
-                      <RadioIndicator>
-                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                      </RadioIndicator>
-                      <RadioLabel>Year</RadioLabel>
-                    </Radio>
-                  </HStack>
-                </RadioGroup>
               </HStack>
 
-              <LineChart
-                data={prepareChartData(weightEntries)}
-                width={Dimensions.get('window').width - 48}
-                height={220}
-                chartConfig={{
-                  backgroundColor: '#ffffff',
-                  backgroundGradientFrom: '#ffffff',
-                  backgroundGradientTo: '#ffffff',
-                  decimalPlaces: 1,
-                  color: (opacity = 1) => `rgba(111, 168, 220, ${opacity})`,
-                  style: {
-                    borderRadius: 16,
-                  },
-                }}
-                bezier
-                style={{
-                  marginVertical: 8,
-                  borderRadius: 16,
-                }}
-              />
-
-              <VStack space="md" className="mt-4">
-                <Heading size="sm">Statistics</Heading>
-                <HStack className="flex-wrap justify-between">
-                  <Box className="w-[48%] bg-gray-100 p-3 rounded-lg">
-                    <Text size="sm" className="text-gray-600">Total Change</Text>
-                    <Heading size="md" className={stats.totalChange >= 0 ? "text-red-500" : "text-green-500"}>
-                      {stats.totalChange >= 0 ? '+' : ''}{stats.totalChange.toFixed(1)} {unit}
-                    </Heading>
-                  </Box>
-                  <Box className="w-[48%] bg-gray-100 p-3 rounded-lg">
-                    <Text size="sm" className="text-gray-600">Average Weight</Text>
-                    <Heading size="md">{stats.averageWeight.toFixed(1)} {unit}</Heading>
-                  </Box>
-                  <Box className="w-[48%] bg-gray-100 p-3 rounded-lg mt-2">
-                    <Text size="sm" className="text-gray-600">Highest Weight</Text>
-                    <Heading size="md">{stats.highestWeight.toFixed(1)} {unit}</Heading>
-                  </Box>
-                  <Box className="w-[48%] bg-gray-100 p-3 rounded-lg mt-2">
-                    <Text size="sm" className="text-gray-600">Lowest Weight</Text>
-                    <Heading size="md">{stats.lowestWeight.toFixed(1)} {unit}</Heading>
-                  </Box>
-                </HStack>
-              </VStack>
-            </Box>
-          </Box>
-        )}
-        
-        <Box className="mt-4">
-          <Heading size="md" className="mb-2">Weight History</Heading>
-          
-          {isPending ? (
-            <Spinner />
-          ) : weightEntries && weightEntries.length > 0 ? (
-            <FlatList
-              data={weightEntries}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <Box className="border border-gray-300 rounded-md p-3 mb-2">
-                  <HStack className="justify-between items-center">
-                    <VStack>
-                      <HStack space="sm">
-                        <Heading size="sm">{item.weight} {item.unit}</Heading>
-                        <Text size="sm" className="text-gray-500">
-                          {formatDate(item.date)}
-                        </Text>
-                      </HStack>
-                    </VStack>
-                    <HStack space="sm">
-                      <Pressable onPress={() => handleEdit(item)}>
-                        <Icon as={EditIcon} size="md" />
-                      </Pressable>
-                      <Pressable onPress={() => confirmDelete(item.id)}>
-                        <Icon as={TrashIcon} size="md" className="text-red-500" />
-                      </Pressable>
+              <Box className="bg-white p-4 rounded-lg border border-gray-300">
+                <HStack className="justify-between mb-4">
+                  <RadioGroup value={timePeriod} onChange={setTimePeriod as (value: string) => void}>
+                    <HStack space="xl">
+                      <Radio value="week" isInvalid={false} isDisabled={false}>
+                        <RadioIndicator>
+                          <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                        </RadioIndicator>
+                        <RadioLabel>Week</RadioLabel>
+                      </Radio>
+                      <Radio value="month" isInvalid={false} isDisabled={false}>
+                        <RadioIndicator>
+                          <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                        </RadioIndicator>
+                        <RadioLabel>Month</RadioLabel>
+                      </Radio>
+                      <Radio value="year" isInvalid={false} isDisabled={false}>
+                        <RadioIndicator>
+                          <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                        </RadioIndicator>
+                        <RadioLabel>Year</RadioLabel>
+                      </Radio>
                     </HStack>
+                  </RadioGroup>
+                </HStack>
+
+                <LineChart
+                  data={prepareChartData(weightEntries)}
+                  width={Dimensions.get('window').width - 48}
+                  height={220}
+                  chartConfig={{
+                    backgroundColor: '#ffffff',
+                    backgroundGradientFrom: '#ffffff',
+                    backgroundGradientTo: '#ffffff',
+                    decimalPlaces: 1,
+                    color: (opacity = 1) => `rgba(111, 168, 220, ${opacity})`,
+                    style: {
+                      borderRadius: 16,
+                    },
+                  }}
+                  bezier
+                  style={{
+                    marginVertical: 8,
+                    borderRadius: 16,
+                  }}
+                />
+
+                <VStack space="md" className="mt-4">
+                  <Heading size="sm">Statistics</Heading>
+                  <HStack className="flex-wrap justify-between">
+                    <Box className="w-[48%] bg-gray-100 p-3 rounded-lg">
+                      <Text size="sm" className="text-gray-600">Total Change</Text>
+                      <Heading size="md" className={stats.totalChange >= 0 ? "text-red-500" : "text-green-500"}>
+                        {stats.totalChange >= 0 ? '+' : ''}{stats.totalChange.toFixed(1)} {unit}
+                      </Heading>
+                    </Box>
+                    <Box className="w-[48%] bg-gray-100 p-3 rounded-lg">
+                      <Text size="sm" className="text-gray-600">Average Weight</Text>
+                      <Heading size="md">{stats.averageWeight.toFixed(1)} {unit}</Heading>
+                    </Box>
+                    <Box className="w-[48%] bg-gray-100 p-3 rounded-lg mt-2">
+                      <Text size="sm" className="text-gray-600">Highest Weight</Text>
+                      <Heading size="md">{stats.highestWeight.toFixed(1)} {unit}</Heading>
+                    </Box>
+                    <Box className="w-[48%] bg-gray-100 p-3 rounded-lg mt-2">
+                      <Text size="sm" className="text-gray-600">Lowest Weight</Text>
+                      <Heading size="md">{stats.lowestWeight.toFixed(1)} {unit}</Heading>
+                    </Box>
                   </HStack>
-                </Box>
-              )}
-            />
-          ) : (
-            <Text className="text-center py-4">No weight entries yet</Text>
+                </VStack>
+              </Box>
+            </Box>
           )}
-        </Box>
-      </VStack>
+          
+          <Box className="mt-4">
+            <Heading size="md" className="mb-2">Weight History</Heading>
+            
+            {isPending ? (
+              <Spinner />
+            ) : weightEntries && weightEntries.length > 0 ? (
+              <FlatList
+                data={weightEntries}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <Box className="border border-gray-300 rounded-md p-3 mb-2">
+                    <HStack className="justify-between items-center">
+                      <VStack>
+                        <HStack space="sm">
+                          <Heading size="sm">{item.weight} {item.unit}</Heading>
+                          <Text size="sm" className="text-gray-500">
+                            {formatDate(item.date)}
+                          </Text>
+                        </HStack>
+                      </VStack>
+                      <HStack space="sm">
+                        <Pressable onPress={() => handleEdit(item)}>
+                          <Icon as={EditIcon} size="md" />
+                        </Pressable>
+                        <Pressable onPress={() => confirmDelete(item.id)}>
+                          <Icon as={TrashIcon} size="md" className="text-red-500" />
+                        </Pressable>
+                      </HStack>
+                    </HStack>
+                  </Box>
+                )}
+              />
+            ) : (
+              <Text className="text-center py-4">No weight entries yet</Text>
+            )}
+          </Box>
+        </VStack>
+      </ScrollView>
     </StaticContainer>
   );
 } 
