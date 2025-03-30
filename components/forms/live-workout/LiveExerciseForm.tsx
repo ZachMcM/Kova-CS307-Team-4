@@ -34,11 +34,6 @@ export default function LiveExerciseForm({
 
   const toast = useToast();
 
-  const {} = useWatch({
-    control,
-    name: `exercises.${index}.sets`,
-  });
-
   return (
     <VStack space="xs">
       <Heading className="text-kova-500">{exercise.info.name}</Heading>

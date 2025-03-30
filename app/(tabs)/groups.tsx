@@ -8,6 +8,7 @@ import { VStack } from "@/components/ui/vstack";
 import { getAllGroups, getGroupsOfUser } from "@/services/groupServices";
 import { GroupOverview } from "@/types/extended-types";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 
 export default function ProfileScreen() {
   const { session } = useSession();
@@ -19,6 +20,8 @@ export default function ProfileScreen() {
       return groups;
     },
   });
+
+  const router = useRouter();
 
   const { data: userGroupIds, isPending: isUserPending } = useQuery({
     queryKey: ["groupRel"],

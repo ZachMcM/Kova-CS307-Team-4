@@ -87,14 +87,3 @@ export default function Workout() {
     </Container>
   );
 }
-
-/* Areeb unfortunately this code is not working
-.sort((a: ExtendedTemplateWithCreator, b: ExtendedTemplateWithCreator) => {
-  let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
-  let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
-  let diff = compareToQuery(templateQuery, bSearch,
-    wordCounter!) 
-      - compareToQuery(templateQuery, aSearch,
-        wordCounter!);
-  return diff;
-}) */

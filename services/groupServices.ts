@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
-import { GroupOverview, GroupPage, MemberRelationship } from "@/types/extended-types";
+import { Tables } from "@/types/database.types";
+import { ExtendedGroupRel, ExtendedGroupWithEvents, GroupOverview, GroupPage, MemberRelationship } from "@/types/extended-types";
 import { getProfile, getProfiles } from "./profileServices";
 import { ExtendedGroupWithEvents } from "@/types/extended-types";
 
@@ -25,6 +26,28 @@ export const getUserGroups = async (
   return groups as any;
 };
 */
+
+export const getProfileGroupRel = async (
+  profileId: string,
+  groupId: string
+): Promise<ExtendedGroupRel> => {
+  const { data, error } = await supabase
+    .from("groupRel")
+    .select(
+      `*,
+      group:groupId(id, title)`
+    )
+    .eq("profileId", profileId)
+    .eq("groupId", groupId)
+    .single();
+
+  if (error) {
+    console.log(error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
 
 export const getGroup = async (
   id: string
@@ -67,7 +90,9 @@ export const getGroupProfiles = async (
     throw new Error(profileErr.message);
   }
 
-  const profiles = profileData.map((item) => item.profile as any as Tables<'profile'>);
+  const profiles = profileData.map(
+    (item) => item.profile as any as Tables<"profile">
+  );
 
   return profiles;
 };

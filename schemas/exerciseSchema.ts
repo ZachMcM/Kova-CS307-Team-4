@@ -11,7 +11,7 @@ export const exerciseSchema = z
     sets: z
       .object({
         reps: z
-          .number({ required_error: "Must be a valid number" })
+          .number({ required_error: "Must be a valid whole number" })
           .int()
           .nonnegative()
           .nullish()
