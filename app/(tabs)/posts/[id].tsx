@@ -424,7 +424,7 @@ export default function PostDetails() {
           {comments && comments.map((comment: Comment) => (
             <CommentCard key = {comment.created_at} comment = {comment}></CommentCard>
           ))}
-          {!allCommentsFetched && (
+          {!allCommentsFetched && post && post.comments > PAGE_SIZE && (
             <Button onPress = {fetchMoreComments}>
               <ButtonText>Load more</ButtonText>
             </Button>
