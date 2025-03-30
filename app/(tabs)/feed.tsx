@@ -12,14 +12,15 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 
-type Post = {
+export type Post = {
   id: string;
   profileId: string;
   title: string;
   description: string;
   location: string | null;
-  isPublic: boolean;
-  imageUrl: string | null;
+  privacy: string;
+  images: string[] | null;
+  weighIn: number;
   workoutData: {
     calories?: string;
     duration?: string;
@@ -55,7 +56,7 @@ type Post = {
   };
 };
 
-const formatDate = (dateString: string): string => {
+export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { 
     year: 'numeric', 
@@ -130,7 +131,7 @@ export default function FeedScreen() {
           )
         `)
         .in("profileId", followingProfileIds)
-        .eq("isPublic", true)
+        .eq("privacy", "PUBLIC")
         .order("createdAt", { ascending: false })
         .range(from, to);
 
@@ -311,7 +312,8 @@ export default function FeedScreen() {
             workoutCalories={post.workoutData?.calories || undefined}
             userId={userId!}
             comments={5}
-            imageUrl={post.imageUrl || undefined}
+            imageUrls={post.images || undefined}
+            weighIn={post.weighIn}
             isOwnPost={isOwnPost(post)}
             onUpdatePost={updatePost}
             taggedFriends={post.taggedFriendsData}

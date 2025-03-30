@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View, TouchableOpacity, Alert } from 'react-nat
 import { Text } from '@/components/ui/text';
 import { Input, InputField } from '@/components/ui/input';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
@@ -15,8 +15,14 @@ import { useSession } from '@/components/SessionContext';
 import { getFriends } from '@/services/profileServices';
 import { useQuery } from '@tanstack/react-query';
 import { Checkbox, CheckboxIndicator, CheckboxLabel, CheckboxIcon } from '@/components/ui/checkbox';
-import { CheckIcon } from '@/components/ui/icon';
+import { AddIcon, CheckIcon, CircleIcon, CloseIcon, Icon, RemoveIcon, TrashIcon } from '@/components/ui/icon';
 import { Avatar, AvatarImage, AvatarFallbackText } from '@/components/ui/avatar';
+import * as ImagePicker from 'expo-image-picker';
+import { useToast } from "@/components/ui/toast";
+import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
+import { uploadPostImages } from '@/services/postServices';
+import { Image } from '@/components/ui/image';
+import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/components/ui/radio';
 
 const defaultWorkoutData = {
   duration: '0 minutes',
@@ -28,7 +34,7 @@ export default function PostScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
+  const [weighIn, setWeighIn] = useState(Number);
   const [includeWorkoutData, setIncludeWorkoutData] = useState(true);
   const [workoutData, setWorkoutData] = useState<any>(defaultWorkoutData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,11 +43,16 @@ export default function PostScreen() {
   const [friendSearch, setFriendSearch] = useState('');
   const [titleError, setTitleError] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
+  const [postPrivacy, setPostPrivacy] = useState("PUBLIC");
   
   const { session } = useSession();
   const userId = session?.user?.id || null;
+
+  const toast = useToast();
   
   const params = useLocalSearchParams();
+
+  const [images, setImages] = useState<String[]>([]);
   
   const { data: friends, isLoading: isLoadingFriends } = useQuery({
     queryKey: ["friends", userId],
@@ -221,18 +232,32 @@ export default function PostScreen() {
       }
       
       const profileId = profileData.id;
+
+      const files = images.map((uri, index) => {
+        const fileName = uri.split('/').pop() || `image_${index}`;
+        const fileType = uri.split('.').pop() || 'jpeg';
+        return {
+          uri: uri.toString(),
+          name: fileName,
+          type: `image/${fileType}`,
+        } as unknown as File;
+      });
+
+      const imageURLs = await uploadPostImages(userId, files);
       
       const postData = {
         profileId: profileId,
         title,
         description,
         location: location || null,
-        isPublic: isPublic,
+        privacy: postPrivacy,
         imageUrl: null,
         workoutData: includeWorkoutData ? workoutData : null,
         taggedFriends: taggedFriends.length > 0 ? taggedFriends : null,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        images: imageURLs,
+        weighIn: weighIn
       };
 
       const { data, error } = await supabase
@@ -263,7 +288,9 @@ export default function PostScreen() {
       setTitle('');
       setDescription('');
       setLocation('');
-      setIsPublic(true);
+      setImages([]);
+      setWeighIn(-1);
+      setPostPrivacy("PUBLIC");
       setIncludeWorkoutData(true);
       setWorkoutData(defaultWorkoutData);
       setTaggedFriends([]);
@@ -282,6 +309,42 @@ export default function PostScreen() {
   const filteredFriends = friends?.filter(friend => 
     friend.name.toLowerCase().includes(friendSearch.toLowerCase())
   ) || [];
+
+
+  // Image upload functionality
+  const showImageSelector = async () => {
+    const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (result.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled) {
+      const files: String[] = pickerResult.assets.map((asset) => {
+        return asset.uri;
+      });
+
+      console.log(images);
+      console.log(files);
+
+      const unionFiles = Array.from(new Set([...images, ...files]));
+
+      console.log(unionFiles)
+
+      setImages(unionFiles);
+    }
+  };
+
+  const handleRemoveImage = (uri: string) => {
+    setImages((prevImages) => prevImages.filter((image) => image !== uri));
+  };
 
   return (
     <ScrollView style={styles.scrollView}>
@@ -428,7 +491,39 @@ export default function PostScreen() {
               </VStack>
             )}
           </VStack>
-
+          <VStack space="xs">
+            <Text size="sm" bold>Pictures</Text>
+              <ScrollView horizontal>
+                <HStack space = "md">
+                  {images.map((file, index) => (
+                    <View key={index} style={{ position: 'relative' }}>
+                      {/* Image */}
+                      <Image
+                        source={{ uri: file.toString() }}
+                        style={{ width: 100, height: 100, borderRadius: 8 }}
+                      />
+                      {/* 'X' Icon */}
+                      <TouchableOpacity
+                        style={{
+                          position: 'absolute',
+                          top: 2,
+                          right: 2,
+                          borderRadius: 12,
+                          padding: 0,
+                          opacity: 0.6
+                        }}
+                        onPress={() => handleRemoveImage(file.toString())}
+                      >
+                        <Icon as = {CloseIcon}></Icon>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <Button variant = "outline" size="sm" style = {{width: 70, height: 70, borderRadius: 8}} onPress={() => showImageSelector()}>
+                    <ButtonIcon as = {AddIcon}></ButtonIcon>
+                  </Button>
+                </HStack>
+              </ScrollView>
+          </VStack>
           <VStack space="xs">
             <Text size="sm" bold>Location</Text>
             <Input variant="outline">
@@ -440,19 +535,59 @@ export default function PostScreen() {
             </Input>
           </VStack>
           <VStack space="xs">
-            <HStack style={styles.toggleContainer} space="md">
-              <Text size="sm" bold>Make Post Public</Text>
-              <Switch
-                value={isPublic}
-                onValueChange={setIsPublic}
-                size="md"
-              />
+            <HStack space = "sm">
+              <Text size="sm" className = "mt-2 mr-28" bold>Weigh-in (optional)</Text>
+              <Input variant="outline" className = "w-20">
+                <InputField
+                  placeholder=""
+                  value={weighIn > 0 ? weighIn.toString() : ""}
+                  onChangeText={(text) => setWeighIn(Number(text) || -1)}
+                  keyboardType="numeric"
+                  className = "text-center"
+                />
+              </Input>
+              <Text className = "mt-2">lbs</Text>
             </HStack>
-            <Text size="xs" style={styles.privacyHint}>
-              {isPublic 
-                ? "Public posts can be seen by everyone" 
-                : "Private posts are only visible to you"}
-            </Text>
+          </VStack>
+          <VStack space="xs">
+            <Text size="sm" className = "mb-1" bold>Post Privacy</Text>
+            <RadioGroup value = {postPrivacy} onChange = {setPostPrivacy}>
+              <HStack space = "md">
+                <Radio value = "PRIVATE" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Private</RadioLabel>
+                </Radio>
+                <Radio value = "FOLLOWERS" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Followers</RadioLabel>
+                </Radio>
+                <Radio value = "FRIENDS" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Friends</RadioLabel>
+                </Radio>
+                <Radio value = "PUBLIC" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Public</RadioLabel>
+                </Radio>
+              </HStack>
+            </RadioGroup>
+            {postPrivacy === "PUBLIC" ? (
+              <Text size="xs" style={styles.privacyHint}>Public posts can be seen by everyone</Text>
+            ) : postPrivacy === "FRIENDS" ? (
+              <Text size="xs" style={styles.privacyHint}>Friends posts can only be seen by your friends</Text>
+            ) : postPrivacy === "FOLLOWERS" ? (
+              <Text size="xs" style={styles.privacyHint}>Followers posts can only be seen by your followers</Text>
+            ) : postPrivacy === "PRIVATE" && (
+              <Text size="xs" style={styles.privacyHint}>Private posts are only visible to you</Text>
+            )}
           </VStack>
 
           <Button

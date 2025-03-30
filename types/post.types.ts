@@ -6,7 +6,7 @@ export type PostDatabase = {
     title: string;
     description: string;
     location: string;
-    isPublic: boolean;
+    privacy: string;
     imageUrl: string;
     workoutData: Workout;
     profileId: string;

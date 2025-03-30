@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { sampleProfileId } from "@/sample-data/sampleProfile";
+//import { sampleProfileId } from "@/sample-data/sampleProfile";
 
 export interface PostData {
   title: string;
@@ -9,7 +9,7 @@ export interface PostData {
   imageUrl?: string;
   workoutData?: any; // Replace with proper workout data type when available
 }
-
+/*
 // Function to create a new post
 export const createPost = async (postData: PostData) => {
   // TODO: Replace with actual session.user.profile.id
@@ -88,12 +88,12 @@ export const deletePost = async (postId: string) => {
   if (error) throw new Error(error.message);
   return true;
 };
-
+*/
 // Function to upload an image for a post
-export const uploadPostImage = async (uri: string, fileType = 'image/jpeg') => {
+export const uploadPostImage = async (uri: string, profileId: string, fileType = 'image/jpeg') => {
   try {
     const fileName = `post_${Date.now()}.jpg`;
-    const filePath = `posts/${sampleProfileId}/${fileName}`;
+    const filePath = `posts/${profileId}/${fileName}`;
     
     // Convert URI to Blob
     const response = await fetch(uri);
@@ -120,3 +120,73 @@ export const uploadPostImage = async (uri: string, fileType = 'image/jpeg') => {
     throw error;
   }
 }; 
+
+const convertBlobToFile = (blob: Blob, fileName: string): File => {
+  return new File([blob], fileName, { type: blob.type, lastModified: Date.now() });
+};
+
+export const uploadPostImages = async (userId: string, files: File[]) => {
+  console.log("UPLOADING IMAGES");
+  console.log("userId: " + userId);
+
+  if (files.length === 0) {
+    return null;
+  }
+
+  try {
+    const publicURLs: string[] = [];
+
+    for (const file of files) {
+      const fileName = file.name || `image_${Date.now()}`; // Use the file's name or a fallback
+      const filePath = `${userId}/${fileName}`;
+
+      console.log("Uploading:", fileName);
+
+      // Upload the file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('post-images')
+        .upload(filePath, file, {
+          contentType: file.type, // Use the file's MIME type
+          upsert: true, // Overwrite if the file already exists
+        });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError.message);
+        throw new Error(`Failed to upload file: ${fileName}`);
+      }
+
+      console.log("Uploaded:", fileName);
+
+      // Get the public URL for the uploaded file
+      const { data: publicURLData} = supabase.storage
+        .from('post-images')
+        .getPublicUrl(filePath);
+
+      if (!publicURLData || !publicURLData.publicUrl) {
+        throw new Error(`Public URL is undefined for file: ${fileName}`);
+      }
+
+      publicURLs.push(publicURLData.publicUrl);
+    }
+
+    return publicURLs;
+  } catch (error) {
+    console.error("Error uploading images:", error);
+    throw error;
+  }
+};
+/*
+export const getPostDetailsById = async (postId: string) => {
+  const { data: post, error } = await supabase
+    .from("post")
+    .select(`
+      *,
+      profile:profileId(*)
+    `)
+    .eq("id", postId)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return post;
+}
+  */
