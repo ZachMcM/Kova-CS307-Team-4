@@ -264,7 +264,7 @@ export const WorkoutPost = ({
           {/* Tagged Friends */}
           {taggedFriends.length > 0 && (
             <View style={styles.taggedFriendsContainer}>
-              <HStack>
+              <HStack className = "flex-wrap">
                 <GText>With </GText>
                 {taggedFriends.map((friend, index) => (
                   <Pressable
