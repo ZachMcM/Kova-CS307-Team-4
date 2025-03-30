@@ -64,7 +64,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="group/[id]"
         options={{
-          title: "Group",
+          href: null,
+        }}/>
+      <Tabs.Screen
+        name="groups/[id]"
+        options={{
           href: null,
         }}
       />
@@ -122,6 +126,12 @@ export default function TabLayout() {
         name="new-template"
         options={{
           href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="create-group"
+        options={{
+          href: null
         }}
       />
       <Tabs.Screen

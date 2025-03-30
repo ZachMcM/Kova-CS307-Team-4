@@ -1,6 +1,7 @@
 import { Session, User, WeakPassword } from "@supabase/auth-js";
 import { Tables } from "./database.types";
 import { ExerciseData, Workout } from "./workout-types";
+import { PublicProfile } from "./profile-types";
 
 // Extended template type that includes creator's profile
 export type ExtendedTemplateWithCreator = Omit<Tables<'template'>, 'data'> & {
@@ -21,7 +22,7 @@ export type AuthAccountResponse = {
 export type LikeRelation = {
   postId: string;
   userId: string;
-  name: string
+  name: string;
 }
 
 export type ExtendedGroupWithEvents = Tables<'group'> & {
@@ -57,4 +58,25 @@ export type ExtendedGroupRel = Tables<'groupRel'> & {
     id: string,
     title: string | null
   }
+}
+
+export type GroupPage = {
+  groupId: string;
+  banner: string;
+  icon: string;
+  description: string;
+  created_at: string;
+  title: string;
+  goal: string;
+}
+
+export type GroupOverview = {
+  groupId: string;
+  icon: string;
+  description: string;
+  title: string;
+}
+
+export type MemberRelationship = PublicProfile & {
+  role: string;
 }
