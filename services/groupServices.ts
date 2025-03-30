@@ -1,11 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { GroupOverview, GroupPage, MemberRelationship } from "@/types/extended-types";
 import { getProfile, getProfiles } from "./profileServices";
+import { ExtendedGroupWithEvents } from "@/types/extended-types";
 
 /*
 import { Tables } from "@/types/database.types";
-import { ExtendedGroupWithEvents } from "@/types/extended-types";
+*/
 
+/*
 export const getUserGroups = async (
   profileId: string
 ): Promise<Tables<"group">[]> => {
@@ -22,6 +24,7 @@ export const getUserGroups = async (
 
   return groups as any;
 };
+*/
 
 export const getGroup = async (
   id: string
@@ -47,6 +50,7 @@ export const getGroup = async (
   return group;
 };
 
+/*
 export const getGroupProfiles = async (
   id: string
 ): Promise<Tables<"profile">[]> => {
@@ -85,7 +89,7 @@ export async function getAllGroups() : Promise<GroupOverview[]> {
     return groupOverviews as GroupOverview[]
 }
 
-export async function getGroupsOfUser(userId: string) : Promise<number[]> {
+export async function getGroupsOfUser(userId: string) : Promise<string[]> {
     const {data, error} = await supabase
         .from("groupRel")
         .select("groupId")
@@ -96,7 +100,7 @@ export async function getGroupsOfUser(userId: string) : Promise<number[]> {
     const items = data.map((row, i) => {
         return row.groupId;
     })
-    return items as number[];
+    return items as string[];
 }
 
 export async function leaveGroup(groupId: string, userId: string) {
@@ -153,23 +157,4 @@ export async function getMembers(groupId: string): Promise<MemberRelationship[]>
             achievement: profile.achievement
         }});
     return memberInfo as MemberRelationship[];
-}
-
-export async function getGroup(groupId: string) : Promise<GroupPage> {
-    const {data, error} = await supabase
-        .from("group")
-        .select("id,created_at,title,icon,description,banner,goal");
-    if (error) {
-        throw new Error(error.message);
-    }
-    const row = data[0];
-    return {
-        groupId: row.id,
-        created_at: row.created_at,
-        title: row.title,
-        icon: row.icon,
-        description: row.description,
-        banner: row.banner,
-        goal: row.goal
-    };
 }

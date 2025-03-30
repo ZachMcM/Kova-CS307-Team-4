@@ -64,7 +64,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="group/[id]"
         options={{
-          title: "Group",
+          href: null,
+        }}/>
+      <Tabs.Screen
+        name="groups/[id]"
+        options={{
           href: null,
         }}
       />

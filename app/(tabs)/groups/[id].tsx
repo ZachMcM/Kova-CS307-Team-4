@@ -1,62 +1,76 @@
-import { getGroups } from "@/services/groupServices";
+import Container from "@/components/Container";
+import EventCard from "@/components/EventCard";
+import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
+import { Heading } from "@/components/ui/heading";
+import { InfoIcon } from "@/components/ui/icon";
+import { Spinner } from "@/components/ui/spinner";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
+import { getGroup } from "@/services/groupServices";
+import { Tables } from "@/types/database.types";
 import { useQuery } from "@tanstack/react-query";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router/build/hooks";
 
-export default function GroupView () {
-    const { userId } = useLocalSearchParams();
+export default function Group() {
+  const { id } = useLocalSearchParams();
 
-    const { data: groups, isPending } = useQuery({
-      queryKey: ["users", userId],
-      queryFn: async () => {
-        // TODO implement db call
-        const groups = (await getGroups(id as string)) || null;
-        return groups;
-      },
-    });
+  const { data: group, isPending } = useQuery({
+    queryKey: ["group", { id }],
+    queryFn: async () => {
+      const group = await getGroup(id as string);
+      return group;
+    },
+  });
 
-    return {<Input size="md">
-            <InputField
-              placeholder="Search exercises"
-              onChangeText={setExerciseQuery}
-              value={exerciseQuery}
+  return (
+    <Container>
+      {isPending ? (
+        <Spinner />
+      ) : (
+        <VStack space="xl">
+          <VStack space="sm">
+            <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
+              {group?.title}
+            </Heading>
+            <Text>{group?.description}</Text>
+          </VStack>
+          <VStack space="md">
+            <Heading size="lg">Competitions</Heading>
+            <GroupEvents
+              events={
+                group?.events.filter((event) => event.type == "competition")!
+              }
+              type="competitions"
             />
-            <InputSlot className="p-3">
-              <InputIcon as={SearchIcon} />
-            </InputSlot>
-          </Input>
+          </VStack>
+          <VStack space="md">
+            <Heading size="lg">Collaborations</Heading>
+            <GroupEvents
+              events={
+                group?.events.filter((event) => event.type == "collaboration")!
+              }
+              type="collaborations"
+            />
+          </VStack>
+        </VStack>
+      )}
+    </Container>
+  );
+}
 
-          {exerciseQuery.length != 0 &&
-            allExercises
-              .sort((a: ExtendedExercise, b: ExtendedExercise) => {
-                let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
-                let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
-                let diff = compareToTaggedQuery(exerciseQuery, bSearch,
-                  wordCounter!, tagCounter!, []) 
-                    - compareToTaggedQuery(exerciseQuery, aSearch,
-                      wordCounter!, tagCounter!, []);
-                return diff;
-              })
-              .map((exercise) => (
-                <Pressable
-                  key={exercise.id}
-                  onPress={() => {
-                    setExerciseQuery("");
-                    addExercise({
-                      info: {
-                        name: exercise.name!,
-                        id: exercise.id,
-                      },
-                      sets: [
-                        {
-                          reps: 0,
-                          weight: 0,
-                        },
-                      ],
-                    });
-                  }}
-                  className="flex flex-1"
-                >
-                  <ExerciseCard exercise={exercise} />
-                </Pressable>
-              ))}};
+export function GroupEvents({
+  events,
+  type,
+}: {
+  events: Tables<"groupEvent">[];
+  type: string;
+}) {
+  return events.length > 0 ? (
+    events.map((event) => <EventCard event={event} key={event.id} />)
+  ) : (
+    <Alert action="muted" variant="solid">
+      <AlertIcon as={InfoIcon} />
+      <AlertText>No {type} found!</AlertText>
+    </Alert>
+  );
 }
