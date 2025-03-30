@@ -22,7 +22,7 @@ export default function GroupCard({ group }: { group: GroupOverview }) {
       }
     >
       <Card variant="outline">
-        <HStack>
+        <HStack space="2xl">
           <Avatar className="bg-indigo-600" size="md">
             {group.icon ? (
               <AvatarImage source={{ uri: group.icon }} />

@@ -129,6 +129,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="create-group"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
         name="templates/[id]"
         options={{
           href: null,

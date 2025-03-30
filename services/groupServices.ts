@@ -73,6 +73,31 @@ export const getGroupProfiles = async (
 };
 */
 
+export async function createGroup(userId: string, 
+    title: string,
+    description: string,
+    goal: string) : Promise<string> {
+    const {data, error} = await supabase
+        .from("group")
+        .insert({
+            title:title,
+            description:description,
+            goal:goal
+        })
+        .select()
+    if (error) {
+        throw Error(error.message)
+    }
+    const groupId = data[0].id
+    const {data: relData, error: relError} = await supabase
+        .from("groupRel")
+        .insert({groupId: groupId, userId: userId, role:"groupId"});
+    if (relError) {
+        throw Error(relError.message)
+    }
+    return groupId
+}
+
 export async function getAllGroups() : Promise<GroupOverview[]> {
     const {data, error} = await supabase
         .from("group")
@@ -97,9 +122,9 @@ export async function getGroupsOfUser(userId: string) : Promise<string[]> {
     if (error) {
         throw new Error(error.message);
     }
-    const items = data.map((row, i) => {
+    const items = (data) ? data.map((row, i) => {
         return row.groupId;
-    })
+    }) : []
     return items as string[];
 }
 
@@ -114,7 +139,30 @@ export async function leaveGroup(groupId: string, userId: string) {
 export async function joinGroup(groupId: string, userId: string) {
     await supabase
         .from("groupRel")
-        .insert({groupId: groupId, userId: userId});
+        .insert({groupId: groupId, userId: userId, role:"member"});
+}
+
+export async function getRole(groupId: string, userId: string) : Promise<string>{
+    const {data, error} = await supabase
+        .from("groupRel")
+        .select("role")
+        .eq("groupId", groupId)
+        .eq("userId", userId)
+    if (error) {
+        throw new Error(error.message)
+    }
+    return data[0].role
+}
+
+export async function setRole(groupId: string, userId: string, role: string) {
+    const {data, error} = await supabase
+        .from("groupRel")
+        .update({role: role})
+        .eq("groupId", groupId)
+        .eq("userId", userId)
+    if (error) {
+        throw new Error(error.message)
+    }
 }
 
 export async function getNumOfMembers(groupId: string): Promise<number> {

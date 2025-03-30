@@ -31,7 +31,7 @@ export default function ProfileScreen() {
   const userGroups = [] as GroupOverview[]
 
   if (!isPending && !isUserPending && groups && userGroupIds) {
-    for (let i = groups.length; i >= 0; i--) {
+    for (let i = groups.length - 1; i >= 0; i--) {
       if (userGroupIds.includes(groups[i].groupId)) {
         const group = groups.splice(i, 1)[0]
         userGroups.push(group)
@@ -43,7 +43,7 @@ export default function ProfileScreen() {
     // TODO work on this UI
     <Container>
       <VStack space="2xl">
-        <VStack space="sm">
+        <VStack>
           <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
             Groups
           </Heading>
@@ -52,20 +52,16 @@ export default function ProfileScreen() {
         {isPending && isUserPending ? (
           <Spinner />
         ) : (
-          <Container>
-            <Heading>Your Groups</Heading>
-            <VStack space="md">
-              {groups?.map((group) => (
-                <GroupCard key={group.groupId} group={group} />
-              ))}
-            </VStack>
-            <Heading>All Groups</Heading>
-            <VStack space="md">
-              {groups?.map((group) => (
-                <GroupCard key={group.groupId} group={group} />
-              ))}
-            </VStack>
-          </Container>
+          <><Heading>Your Groups</Heading><VStack space="md">
+              {(userGroups.length >= 1) ? (
+                userGroups?.map((group) => (
+                  <GroupCard key={group.groupId} group={group} />
+                ))) : <Text>You haven't joined a group yet. Join one!</Text>}
+            </VStack><Heading>All Groups</Heading><VStack space="md">
+                {groups?.map((group) => (
+                  <GroupCard key={group.groupId} group={group} />
+                ))}
+            </VStack></> 
         )}
       </VStack>
     </Container>

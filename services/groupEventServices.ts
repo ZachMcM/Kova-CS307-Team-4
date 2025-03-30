@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { ExercisePoints, WorkoutContribution } from "@/types/event-types";
 import { Tables } from "@/types/database.types";
 import { ExerciseData, Workout } from "@/types/workout-types";
-import { getUserGroups } from "./groupServices";
+import { getGroupsOfUser } from "./groupServices";
 import { EventWithGroup, EventWorkoutWithProfile, ExtendedEventWithGroup } from "@/types/extended-types";
 
 export const getEvent = async (
@@ -28,12 +28,12 @@ export const getEvent = async (
 export const getUserEvents = async (
   profileId: string
 ): Promise<EventWithGroup[]> => {
-  const groups = await getUserGroups(profileId);
+  const groups = await getGroupsOfUser(profileId);
 
   const allEvents: EventWithGroup[] = [];
 
   // add each competition associated with the group into the array
-  for (const group of groups) {
+  for (const groupId of groups) {
     const { data: events, error } = await supabase
       .from("groupEvent")
       .select(
@@ -41,7 +41,7 @@ export const getUserEvents = async (
         *,
         group:groupId(title, id)`
       )
-      .eq("groupId", group.id);
+      .eq("groupId", groupId);
     if (error) {
       throw new Error(error.message);
     }
