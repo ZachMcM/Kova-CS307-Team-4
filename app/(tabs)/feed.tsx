@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { getFollowing, getFriends } from "@/services/profileServices";
 
 export type Post = {
   id: string;
@@ -54,6 +55,7 @@ export type Post = {
     name: string;
     avatar?: string;
   };
+  comments: number;
 };
 
 export const formatDate = (dateString: string): string => {
@@ -105,35 +107,43 @@ export default function FeedScreen() {
         .select("targetId")
         .eq("sourceId", userId);
 
-      const followingUserIds = followingData?.map(item => item.targetId) || [];
+      const followingUserIds = (await getFollowing(userId)).map(follower => follower.userId);
+      const friendUserIds = (await getFriends(userId)).map(friend => friend.userId);
       
-      followingUserIds.push(userId);
+      //followingUserIds.push(userId);
 
       const { data: followingProfiles } = await supabase
         .from("profile")
         .select("id")
         .in("userId", followingUserIds);
 
+      const { data: friendProfiles } = await supabase
+        .from("profile")
+        .select("id")
+        .in("userId", friendUserIds);
+
       const followingProfileIds = followingProfiles?.map(profile => profile.id) || [];
+      const friendProfileIds = friendProfiles?.map(profile => profile.id) || [];
 
       const from = pageNumber * postsPerPage;
       const to = from + postsPerPage - 1;
 
       const { data: postsData, error: postsError } = await supabase
-        .from("post")
-        .select(`
-          *,
-          profile:profileId (
-            username,
-            userId,
-            name,
-            avatar
-          )
-        `)
-        .in("profileId", followingProfileIds)
-        .eq("privacy", "PUBLIC")
-        .order("createdAt", { ascending: false })
-        .range(from, to);
+      .from("post")
+      .select(`
+        *,
+        profile:profileId (
+          username,
+          userId,
+          name,
+          avatar
+        )
+      `)
+      .or(
+        `and(privacy.eq.PUBLIC, profileId.neq.${profileData.id}),and(privacy.eq.FOLLOWERS,profileId.in.(${followingProfileIds.join(',')})),and(privacy.eq.FRIENDS,profileId.in.(${friendProfileIds.join(',')}))`
+      )
+      .order("createdAt", { ascending: false })
+      .range(from, to);
 
       if (postsError) {
         throw postsError;
@@ -311,7 +321,7 @@ export default function FeedScreen() {
             workoutDuration={post.workoutData?.duration || undefined}
             workoutCalories={post.workoutData?.calories || undefined}
             userId={userId!}
-            comments={5}
+            comments={post.comments}
             imageUrls={post.images || undefined}
             weighIn={post.weighIn}
             isOwnPost={isOwnPost(post)}

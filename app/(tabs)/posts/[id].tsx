@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, Pressable } from "react-native";
+import { ScrollView, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from "@/lib/supabase";
-import { View, ActivityIndicator } from "react-native";
+import { View, TextInput } from "react-native";
 import { Avatar, AvatarFallbackText, AvatarImage } from "@/components/ui/avatar";
 import { Post, formatDate } from "@/app/(tabs)/feed";
 import { Exercise } from "@/components/WorkoutPost";
@@ -18,6 +18,16 @@ import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Box } from "@/components/ui/box";
 import { Ionicons } from "@expo/vector-icons";
+import { Textarea, TextareaInput } from "@/components/ui/textarea";
+import { Button, ButtonText } from "@/components/ui/button";
+
+type Comment = {
+  id: string;
+  created_at: string;
+  userId: string;
+  postId: string;
+  content: string;
+}
 
 export default function PostDetails() {
   const router = useRouter();
@@ -25,6 +35,8 @@ export default function PostDetails() {
   const { id: postId } = useLocalSearchParams();
   const [post, setPost] = useState<Post>();
   const [isLoading, setIsLoading] = useState(true);
+  const [comments, setComments] = useState<Comment[]>();
+  const [commentValue, setCommentValue] = useState("");
 
   const fetchPostDetails = async () => {
     try {
@@ -56,6 +68,7 @@ export default function PostDetails() {
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
         profile: data.profile || null,
+        comments: data.comments
       };
 
       const postWithTaggedFriends = async (post: Post) => {
@@ -73,6 +86,14 @@ export default function PostDetails() {
       };
 
       postWithTaggedFriends(fetchedPost);
+
+      const { data: commentData } = await supabase
+        .from('comment')
+        .select('*')
+        .eq("postId", postId)
+        .order("created_at", { ascending: false });
+
+      setComments(commentData as Comment[]);
     } catch (err) {
       showErrorToast(toast, "Error: Could not fetch post!")
     } finally {
@@ -183,7 +204,7 @@ export default function PostDetails() {
                 <HStack space = "xs" className = "h-16 w-full mb-2 mt-2 border border-gray-300 rounded">
                   {post.workoutData?.duration && (
                     <Box className="flex-1 h-full justify-center items-center">
-                      <Text size="md" className="text-red-600">Duration</Text>
+                      <Text size="md">Duration</Text>
                       <HStack space = "xs">
                         <Text size = "lg" bold>{post.workoutData.duration}</Text>
                       </HStack>
@@ -191,7 +212,7 @@ export default function PostDetails() {
                   )}
                   {post.workoutData?.calories && (
                     <Box className="flex-1 h-full justify-center items-center">
-                      <Text size="md" className="text-gray">Calories</Text>
+                      <Text size="md">Calories</Text>
                       <HStack>
                         <Text size = "lg" bold>{post.workoutData.calories}</Text>
                         <Ionicons name="flame-outline" size={22} color="#FF9500"/>
@@ -200,7 +221,7 @@ export default function PostDetails() {
                   )}
                   {post.weighIn && (
                     <Box className="flex-1 h-full justify-center items-center">
-                      <Text size="md" className="text-gray">Weigh-In</Text>
+                      <Text size="md">Weigh-In</Text>
                       <HStack>
                         <Text size = "lg" bold>{post.weighIn} lbs</Text>
                       </HStack>
@@ -249,6 +270,34 @@ export default function PostDetails() {
             )}
           </VStack>
         )}
+        <VStack className = "pb-3 border-b border-gray-300">
+          <Text size="lg" className = "mb-2" bold>Comments ({post?.comments})</Text>
+          <Box className="rounded p-2 border border-[#6FA8DC]">
+            <VStack>
+              <TextInput maxLength={500} 
+                  placeholder="Add comment..." 
+                  className="p-0 m-0 ml-1 text-lg"
+                  value={commentValue}
+                  onChangeText={setCommentValue}
+                  style={{ minHeight: 40, maxHeight: 200, overflow: 'hidden' }}
+                  multiline
+                  numberOfLines={4}>
+              </TextInput>
+
+              <HStack space = "sm">
+                <Box className = "border rounded-3xl mt-4 p-1 border-gray-300">
+                  <Text size = "sm" className="flex-row font-bold text-gray-500">
+                    {commentValue.length}/500
+                  </Text>
+                </Box>
+                <Box className = "flex-1"></Box>
+                <Button className="bg-[#6FA8DC] mt-2 rounded-3xl">
+                  <ButtonText className="text-white font-bold">Submit</ButtonText>
+                </Button>
+              </HStack>
+            </VStack>
+          </Box>
+        </VStack>
       </VStack>
     </Container>
   );
