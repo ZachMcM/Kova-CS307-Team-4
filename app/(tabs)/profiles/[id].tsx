@@ -120,7 +120,7 @@ export default function ProfileScreen() {
   })
 
   useEffect(() => {
-    queryClient.invalidateQueries({queryKey: ["privacy_data", id]})
+    queryClient.invalidateQueries({ queryKey: ["privacy_data", id] })
   }, [])
 
   useEffect(() => {
@@ -130,7 +130,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     setIsFollower(!!followerData);
   }, [followerData]);
-  
+
   useEffect(() => {
     const fetchUserId = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -169,9 +169,9 @@ export default function ProfileScreen() {
         if (goalDisabled) { setGoal(""); }
         if (bioDisabled) { setBio(""); }
         if (achievementDisabled) { setAchievement(""); }
-        if (ageDisabled) {setAge(""); }
-        if (genderDisabled) {setGender(""); }
-        if (weightDisabled) {setWeight(""); }
+        if (ageDisabled) { setAge(""); }
+        if (genderDisabled) { setGender(""); }
+        if (weightDisabled) { setWeight(""); }
 
         console.log(nameValue);
 
@@ -242,7 +242,7 @@ export default function ProfileScreen() {
     setPrivacyValue(storedPrivacyValue);
     setNameValue(storedName);
     setAge(storedAge);
-    if (profile && hasNoAccess() == "FALSE"){
+    if (profile && hasNoAccess() == "FALSE") {
       profile.avatar = storedAvatar;
       profile.location = storedLocation;
       profile.goal = storedGoal;
@@ -267,7 +267,7 @@ export default function ProfileScreen() {
   };
 
   const disableAchievementInput = () => {
-    setAchievementDisabled(true); 
+    setAchievementDisabled(true);
     setAchievement("");
   }
 
@@ -343,7 +343,7 @@ export default function ProfileScreen() {
     });
 
     if (!pickerResult.canceled) {
-      const file = {uri: pickerResult.assets[0].uri, name: pickerResult.assets[0].uri.split('/').pop(), type: 'image/jpeg'};
+      const file = { uri: pickerResult.assets[0].uri, name: pickerResult.assets[0].uri.split('/').pop(), type: 'image/jpeg' };
 
       try {
         if (userId && profile) {
@@ -396,309 +396,279 @@ export default function ProfileScreen() {
   }
 
   return (
-   <StaticContainer className = "flex px-6 py-16">
-      <VStack space = "md">
-        <Box className = "border-b border-gray-300 pb-2">
+    <StaticContainer className="flex px-6 py-16">
+      <VStack space="md">
+        <Box className="border-b border-gray-300 pb-2">
           {isPending || isFollowingPending || isFollowerPending || isPrivacyPending ? (
             <Spinner />
           )
-          : profile && (
-          <VStack space = "lg">
-            <HStack space = "md">
-              { isEditingProfile ? (
-                <Pressable onPress={pickImage}>
-                  <Avatar className="bg-indigo-600 mt-1" size = "xl">
-                    {profile.avatar ? (
-                      <AvatarImage source={{ uri: profile.avatar }}></AvatarImage>
-                    ) : (
-                      <AvatarFallbackText className="text-white">{profile.name}</AvatarFallbackText>
-                    )}
-                  </Avatar>
-                  <Box className="absolute b-0 t-0 bg-gray-700 p-2 rounded-full flex justify-items-center content-center">
-                    <Icon as={EditIcon} color="white" size="lg" />
-                  </Box>
-                </Pressable>
-              ) : (
-                <Avatar className="bg-indigo-600 mt-1" size = "xl">
-                  {profile.avatar ? (
-                    <AvatarImage source={{ uri: profile.avatar }} />
+            : profile && (
+              <VStack space="lg">
+                <HStack space="md">
+                  {isEditingProfile ? (
+                    <Pressable onPress={pickImage}>
+                      <Avatar className="bg-indigo-600 mt-1" size="xl">
+                        {profile.avatar ? (
+                          <AvatarImage source={{ uri: profile.avatar }}></AvatarImage>
+                        ) : (
+                          <AvatarFallbackText className="text-white">{profile.name}</AvatarFallbackText>
+                        )}
+                      </Avatar>
+                      <Box className="absolute b-0 t-0 bg-gray-700 p-2 rounded-full flex justify-items-center content-center">
+                        <Icon as={EditIcon} color="white" size="lg" />
+                      </Box>
+                    </Pressable>
                   ) : (
-                    <AvatarFallbackText className="text-white">{profile.name}</AvatarFallbackText>
+                    <Avatar className="bg-indigo-600 mt-1" size="xl">
+                      {profile.avatar ? (
+                        <AvatarImage source={{ uri: profile.avatar }} />
+                      ) : (
+                        <AvatarFallbackText className="text-white">{profile.name}</AvatarFallbackText>
+                      )}
+                    </Avatar>
                   )}
-                </Avatar>
-              )}
-              <VStack space = "xs">
+                  <VStack space="xs">
+                    <VStack>
+                      <HStack className="text-wrap">
+                        {isEditingProfile && nameValue.trim() !== "" ? (
+                          <Input className="w-72 h-8">
+                            <InputField value={nameValue} onChangeText={setNameValue} maxLength={30} placeholder="Required"></InputField>
+                          </Input>
+                        ) : isEditingProfile && nameValue.trim() === "" ? (
+                          <Input isInvalid={true} className="w-72 h-8">
+                            <InputField value={nameValue} onChangeText={setNameValue} maxLength={30} placeholder="Required"></InputField>
+                          </Input>
+                        ) : (
+                          <Heading size="xl" className="mb-0 h-8 w-56">{profile.name}</Heading>
+                        )}
+                        {isFriend && (
+                          <Badge size="md" variant="solid" action="muted" className="bg-none text-none rounded-2xl">
+                            <BadgeIcon as={CheckCircleIcon} className="text-[#4d7599]"></BadgeIcon>
+                            <Text className="ml-1 text-[#4d7599] text-sm">Friend</Text>
+                          </Badge>
+                        )}
+                      </HStack>
+                      <Text size="sm">@{profile.username}</Text>
+                    </VStack>
+                    <HStack space="2xl">
+                      <Pressable onPress={hasSpecificAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=friends`)) : (() => { })}>
+                        <VStack>
+                          <Heading size="lg" className="text-center">{profile.friends}</Heading>
+                          <Text size="sm" className="text-center">friends</Text>
+                        </VStack>
+                      </Pressable>
+                      <Pressable onPress={hasSpecificAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=followers`)) : (() => { })}>
+                        <VStack>
+                          <Heading size="lg" className="text-center">{profile.followers}</Heading>
+                          <Text size="sm" className="text-center">followers</Text>
+                        </VStack>
+                      </Pressable>
+                      <Pressable onPress={hasSpecificAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=following`)) : (() => { })}>
+                        <VStack>
+                          <Heading size="lg" className="text-center">{profile.following}</Heading>
+                          <Text size="sm" className="text-center">following</Text>
+                        </VStack>
+                      </Pressable>
+                      {isEditingProfile && getPrivacyIcon("friends_following")}
+                    </HStack>
+                  </VStack>
+                  {userId === id && !isEditingProfile && (
+                    <Button onPress={() => router.replace("/settings")} className="w-0 h-0">
+                      <Icon as={MenuIcon} size="xl" className="mt-8 ml-8 w-8 h-8"></Icon>
+                    </Button>
+                  )}
+                </HStack>
                 <VStack>
-                  <HStack className = "text-wrap">
-                    { isEditingProfile && nameValue.trim() !== "" ? (
-                      <Input className = "w-72 h-8">
-                        <InputField value={nameValue} onChangeText={setNameValue} maxLength = {30} placeholder = "Required"></InputField>
-                      </Input>
-                    ) : isEditingProfile && nameValue.trim() === "" ? (
-                      <Input isInvalid = {true} className = "w-72 h-8">
-                        <InputField value={nameValue} onChangeText={setNameValue} maxLength = {30} placeholder = "Required"></InputField>
-                      </Input>
+                  {isEditingProfile && (
+                    <Box className="p-2 border rounded border-gray-300">
+                      <Button variant="solid" size="xl" action="kova" className="mt-5 mb-5 ml-5 mr-5"
+                        onPress={() => { router.replace("/privacy-editing") }}>
+                        <ButtonText>
+                          Edit Privacy Settings
+                        </ButtonText>
+                      </Button>
+                    </Box>
+                  )}
+                  {hasNoAccess() == "FALSE" && (isEditingProfile || (profile.location || profile.goal || profile.bio || profile.age)) ? (
+                    <Box className="border border-gray-300 rounded p-2 mt-2">
+                      {isEditingProfile && !ageDisabled ? (
+                        <HStack>
+                          <Heading className="mr-1 mt-3">🕯️Age:</Heading>
+                          <Input variant="outline" className="mt-2 w-2/5 mr-0.5">
+                            <InputField id="AgeInput" value={age} onChangeText={(text: string) => { if (text != "" && /^[0-9]+$/.test(text)) { setAge(text) } else { setAge("") } }} maxLength={3} placeholder="Age"></InputField>
+                            <InputSlot>
+                              <Pressable onPress={disableAgeInput}>
+                                <InputIcon as={TrashIcon} className="mr-2 bg-none"></InputIcon>
+                              </Pressable>
+                            </InputSlot>
+                          </Input>
+                          {getPrivacyIcon("age")}
+                        </HStack>
+                      ) : profile.age && hasSpecificAccess("age") && !ageDisabled && age != "" && (
+                        <HStack className="text-wrap">
+                          <Heading className="mr-1">🕯️Age:</Heading>
+                          <View className="w-2/5">
+                            <Heading>{profile.age}</Heading>
+                          </View>
+                        </HStack>
+                      )}
+                      {isEditingProfile && !genderDisabled ? (
+                        <HStack>
+                          <Heading className="mr-1 mt-3">🟡Gender:</Heading>
+                          <Input variant="outline" className="mt-2 w-2/5 mr-0.5">
+                            <InputField id="GenderInput" value={gender} onChangeText={(text: string) => { setGender(text) }} maxLength={15} placeholder="Gender"></InputField>
+                            <InputSlot>
+                              <Pressable onPress={disableGenderInput}>
+                                <InputIcon as={TrashIcon} className="mr-2 bg-none"></InputIcon>
+                              </Pressable>
+                            </InputSlot>
+                          </Input>
+                          {getPrivacyIcon("gender")}
+                        </HStack>
+                      ) : profile.gender && hasSpecificAccess("gender") && !genderDisabled && gender != "" && (
+                        <HStack className="text-wrap">
+                          <Heading size="md" className="mr-1">🟡Gender:</Heading>
+                          <View className="w-2/5">
+                            <Heading size="md">{profile.gender}</Heading>
+                          </View>
+                        </HStack>
+                      )}
+                      {isEditingProfile && !weightDisabled ? (
+                        <HStack>
+                          <Heading size="md" className="mr-1 mt-3">💪Weight:</Heading>
+                          <Input size="md" variant="outline" className="mt-2 w-2/5 mr-0.5">
+                            <InputField id="WeightInput" value={weight} onChangeText={(text: string) => { if (text != "" && /^[0-9]+$/.test(text)) { setWeight(text) } else { setWeight("") } }} maxLength={4} placeholder="Weight"></InputField>
+                            <InputSlot>
+                              <Pressable onPress={disableWeightInput}>
+                                <InputIcon as={TrashIcon} className="mr-2 bg-none"></InputIcon>
+                              </Pressable>
+                            </InputSlot>
+                          </Input>
+                          {getPrivacyIcon("weight")}
+                        </HStack>
+                      ) : profile.weight && hasSpecificAccess("weight") && !weightDisabled && weight != "" && (
+                        <HStack className="text-wrap">
+                          <Heading size="md" className="mr-1">💪Weight:</Heading>
+                          <View className="w-2/5">
+                            <Heading size="md">{profile.weight}</Heading>
+                          </View>
+                        </HStack>
+                      )}
+                      {isEditingProfile && !locationDisabled ? (
+                        <HStack className="mr-7">
+                          <Heading size="md" className="mr-1 mt-3">📍:</Heading>
+                          <Input size="md" variant="outline" className="mt-2 w-11/12 mr-0.5">
+                            <InputField id="locationInput" value={location} onChangeText={setLocation} maxLength={40} placeholder="Add your town or city..."></InputField>
+                            <InputSlot>
+                              <Pressable onPress={disableLocationInput}>
+                                <InputIcon as={TrashIcon} className="mr-2 bg-none"></InputIcon>
+                              </Pressable>
+                            </InputSlot>
+                          </Input>
+                          {getPrivacyIcon("location")}
+                        </HStack>
+                      ) : profile.location && !locationDisabled && hasSpecificAccess("location") && (
+                        <HStack className="text-wrap">
+                          <Heading size="md" className="mr-1">📍:</Heading>
+                          <View className="w-11/12">
+                            <Heading size="md">{profile.location}</Heading>
+                          </View>
+                        </HStack>
+                      )}
+                      {isEditingProfile && !achievementDisabled ? (
+                        <HStack className="mr-7">
+                          <Heading size="md" className="mr-1 mt-3">🏆:</Heading>
+                          <Input size="md" variant="outline" className="mt-2 w-11/12 mr-0.5">
+                            <InputField id="achievementInput" value={achievement} onChangeText={setAchievement} maxLength={40} placeholder="Write something you're proud of..."></InputField>
+                            <InputSlot>
+                              <Pressable onPress={disableAchievementInput}>
+                                <InputIcon as={TrashIcon} className="mr-2 bg-none"></InputIcon>
+                              </Pressable>
+                            </InputSlot>
+                          </Input>
+                          {getPrivacyIcon("achievement")}
+                        </HStack>
+                      ) : profile.achievement && !achievementDisabled && hasSpecificAccess("achievement") && (
+                        <HStack className="text-wrap">
+                          <Heading size="md" className="mr-1">🏆:</Heading>
+                          <View className="w-11/12">
+                            <Heading size="md">{profile.achievement}</Heading>
+                          </View>
+                        </HStack>
+                      )}
+                      {isEditingProfile && !goalDisabled ? (
+                        <HStack className="mr-7">
+                          <Heading size="md" className="mr-1 mt-3">🎯:</Heading>
+                          <Input size="md" variant="outline" className="mt-2 w-11/12 mr-0.5">
+                            <InputField id="goalInput" value={goal} onChangeText={setGoal} maxLength={40} placeholder="Write your next big goal..."></InputField>
+                            <InputSlot>
+                              <Pressable onPress={disableGoalInput}>
+                                <InputIcon as={TrashIcon} className="mr-2 bg-none"></InputIcon>
+                              </Pressable>
+                            </InputSlot>
+                          </Input>
+                          {getPrivacyIcon("goal")}
+                        </HStack>
+                      ) : profile.goal && !goalDisabled && hasSpecificAccess("goal") && (
+                        <HStack className="text-wrap">
+                          <Heading size="md" className="mr-1">🎯:</Heading>
+                          <View className="w-11/12">
+                            <Heading size="md">{profile.goal}</Heading>
+                          </View>
+                        </HStack>
+                      )}
+                      {isEditingProfile ? (
+                        <Textarea className="text-wrap mt-2">
+                          <TextareaInput id="bioInput" value={bio} onChangeText={setBio} maxLength={300} placeholder="Write some information about yourself..."></TextareaInput>
+                          {getPrivacyIcon("bio")}
+                        </Textarea>
+                      ) : profile.bio && hasSpecificAccess("bio") && (
+                        <Text className="mt-2">{profile.bio}</Text>
+                      )}
+                    </Box>
+                  ) : profile && (
+                    <Badge size="md" variant="solid" action="muted" className="bg-none text-none rounded-2xl">
+                      <BadgeIcon as={AlertCircleIcon} className="text-[#4d7599]"></BadgeIcon>
+                      {/*profile.private === "FRIENDS"*/ hasNoAccess() == "FRIENDS" ? (
+                        <Text className="ml-1 text-[#4d7599] text-sm">This user's profile is only visible to friends</Text>
+                      ) : (
+                        <Text className="ml-1 text-[#4d7599] text-sm">This user's profile is private</Text>
+                      )}
+                    </Badge>
+                  )}
+                </VStack>
+                {userId === id && isEditingProfile ? (
+                  <HStack>
+                    <Button size="lg" variant="solid" action="primary" className="bg-[#db5b4d] mr-2 flex-auto" onPress={cancelEdits}>
+                      <ButtonText className="text-white">Cancel</ButtonText>
+                    </Button>
+                    {nameValue.trim() !== "" ? (
+                      <Button size="lg" variant="solid" action="primary" className="bg-[#397a2c] flex-auto" onPress={saveAndSetEditingProfile}>
+                        <ButtonText className="text-white">Save</ButtonText>
+                      </Button>
                     ) : (
-                      <Heading size="xl" className = "mb-0 h-8 w-56">{profile.name}</Heading>
-                    )}
-                    { isFriend && (
-                      <Badge size="md" variant="solid" action="muted" className = "bg-none text-none rounded-2xl">
-                        <BadgeIcon as={CheckCircleIcon} className = "text-[#4d7599]"></BadgeIcon>
-                        <Text className = "ml-1 text-[#4d7599] text-sm">Friend</Text>
-                      </Badge>
+                      <Button isDisabled={true} size="lg" variant="solid" action="primary" className="bg-[#397a2c] flex-auto" onPress={saveAndSetEditingProfile}>
+                        <ButtonText className="text-white">Save</ButtonText>
+                      </Button>
                     )}
                   </HStack>
-                  <Text size="sm">@{profile.username}</Text>
-                </VStack>
-                <HStack space = "2xl">
-                  <Pressable onPress = {hasSpecificAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=friends`)) : (() => {})}>
-                    <VStack>
-                      <Heading size = "lg" className = "text-center">{profile.friends}</Heading>
-                      <Text size = "sm" className = "text-center">friends</Text>
-                    </VStack>
-                  </Pressable>
-                  <Pressable onPress = {hasSpecificAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=followers`)) : (() => {})}>
-                    <VStack>
-                      <Heading size = "lg" className = "text-center">{profile.followers}</Heading>
-                      <Text size = "sm" className = "text-center">followers</Text>
-                    </VStack>
-                  </Pressable>
-                  <Pressable onPress = {hasSpecificAccess("friends_following") ? (() => router.replace(`/relations/${id}?type=following`)) : (() => {})}>
-                    <VStack>
-                      <Heading size = "lg" className = "text-center">{profile.following}</Heading>
-                      <Text size = "sm" className = "text-center">following</Text>
-                    </VStack>
-                  </Pressable>
-                  {isEditingProfile && getPrivacyIcon("friends_following")}
-                </HStack>
-              </VStack>
-              { userId === id && !isEditingProfile && (
-                <Button onPress={() => router.replace("/settings")} className = "w-0 h-0">
-                  <Icon as = {MenuIcon} size = "xl" className = "mt-8 ml-8 w-8 h-8"></Icon>
-                </Button>
-              )}
-            </HStack>
-            <VStack>
-              { isEditingProfile && (
-                <Box className = "p-2 border rounded border-gray-300">
-                  <Button variant="solid" size="xl" action="kova" className="mt-5 mb-5 ml-5 mr-5"
-                  onPress={() => {router.replace("/privacy-editing")}}>
-                    <ButtonText>
-                      Edit Privacy Settings
-                    </ButtonText>
+                ) : userId === id ? (
+                  <Button size="lg" variant="outline" action="primary" className="border-[#6FA8DC]" onPress={saveValuesAndEditProfile}>
+                    <ButtonText className="text-[#6FA8DC]">Edit Profile</ButtonText>
                   </Button>
-                  {/* <HStack>
-                    <Text size = "md" className = "mr-4">🔒 Privacy</Text>
-                    <RadioGroup value = {privacyValues} onChange = {setPrivacyValue}>
-                      <HStack space = "xl">
-                        <Radio value = "PRIVATE" isInvalid = {false} isDisabled = {false}>
-                          <RadioIndicator>
-                            <RadioIcon as = {CircleIcon}></RadioIcon>
-                          </RadioIndicator>
-                          <RadioLabel>Private</RadioLabel>
-                        </Radio>
-                        <Radio value = "FRIENDS" isInvalid = {false} isDisabled = {false}>
-                          <RadioIndicator>
-                            <RadioIcon as = {CircleIcon}></RadioIcon>
-                          </RadioIndicator>
-                          <RadioLabel>Friends</RadioLabel>
-                        </Radio>
-                        <Radio value = "PUBLIC" isInvalid = {false} isDisabled = {false}>
-                          <RadioIndicator>
-                            <RadioIcon as = {CircleIcon}></RadioIcon>
-                          </RadioIndicator>
-                          <RadioLabel>Public</RadioLabel>
-                        </Radio>
-                      </HStack>
-                    </RadioGroup>
-                  </HStack> DEPRECATED TODO REMOVE THIS WHEN EVERYTHING ELSE IS READY */}
-                </Box>
-              )}
-              { /*(getProfileAccess(profile, isFriend) || userId === id)*/hasNoAccess()=="FALSE" && (isEditingProfile || (profile.location || profile.goal || profile.bio || profile.age)) ? (
-                <Box className = "border border-gray-300 rounded p-2 mt-2">
-                  {/**TODO add age gender and weight hstack here */}
-                  {/*<HStack>*/}
-                    { isEditingProfile && !ageDisabled ? (
-                      <HStack>
-                        <Heading className = "mr-1 mt-3">🕯️Age:</Heading>
-                        <Input variant = "outline" className = "mt-2 w-2/5 mr-0.5">
-                          <InputField id = "AgeInput" value={age} onChangeText={(text: string) => {if (text != "" && /^[0-9]+$/.test(text)) {setAge(text)} else {setAge("")}}} maxLength = {3} placeholder = "Age"></InputField>
-                          <InputSlot>
-                            <Pressable onPress={disableAgeInput}>
-                              <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
-                            </Pressable>
-                          </InputSlot>
-                        </Input>
-                        {getPrivacyIcon("age")}
-                      </HStack>
-                    ) : profile.age && hasSpecificAccess("age") && !ageDisabled && age != "" && (
-                      <HStack className = "text-wrap">
-                        <Heading className = "mr-1">🕯️Age:</Heading>
-                        <View className = "w-2/5">
-                          <Heading>{profile.age}</Heading>
-                        </View>
-                      </HStack>
-                    )}
-                    { isEditingProfile && !genderDisabled ? (
-                      <HStack>
-                        <Heading className = "mr-1 mt-3">🟡Gender:</Heading>
-                        <Input variant = "outline" className = "mt-2 w-2/5 mr-0.5">
-                          <InputField id = "GenderInput" value={gender} onChangeText={(text: string) => {setGender(text)}} maxLength = {15} placeholder = "Gender"></InputField>
-                          <InputSlot>
-                            <Pressable onPress={disableGenderInput}>
-                              <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
-                            </Pressable>
-                          </InputSlot>
-                        </Input>
-                        {getPrivacyIcon("gender")}
-                      </HStack>
-                    ) : profile.gender && hasSpecificAccess("gender") && !genderDisabled && gender != "" && (
-                      <HStack className = "text-wrap">
-                        <Heading size = "md" className = "mr-1">🟡Gender:</Heading>
-                        <View className = "w-2/5">
-                          <Heading size = "md">{profile.gender}</Heading>
-                        </View>
-                      </HStack>
-                    )}
-                    { isEditingProfile && !weightDisabled ? (
-                      <HStack>
-                        <Heading size = "md" className = "mr-1 mt-3">💪Weight:</Heading>
-                        <Input size = "md" variant = "outline" className = "mt-2 w-2/5 mr-0.5">
-                          <InputField id = "WeightInput" value={weight} onChangeText={(text: string) => {if (text != "" && /^[0-9]+$/.test(text)) {setWeight(text)} else {setWeight("")}}} maxLength = {4} placeholder = "Weight"></InputField>
-                          <InputSlot>
-                            <Pressable onPress={disableWeightInput}>
-                              <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
-                            </Pressable>
-                          </InputSlot>
-                        </Input>
-                        {getPrivacyIcon("weight")}
-                      </HStack>
-                    ) : profile.weight && hasSpecificAccess("weight") && !weightDisabled && weight != "" && (
-                      <HStack className = "text-wrap">
-                        <Heading size = "md" className = "mr-1">💪Weight:</Heading>
-                        <View className = "w-2/5">
-                          <Heading size = "md">{profile.weight}</Heading>
-                        </View>
-                      </HStack>
-                    )}                    
-                  {/* </HStack> */}
-                  <Text></Text> {/**Here for spacing */}
-                  { isEditingProfile && !locationDisabled ? (
-                    <HStack className="mr-7">
-                      <Heading size = "md" className = "mr-1 mt-3">📍:</Heading>
-                      <Input size = "md" variant = "outline" className = "mt-2 w-11/12 mr-0.5">
-                        <InputField id = "locationInput" value={location} onChangeText={setLocation} maxLength = {40} placeholder = "Add your town or city..."></InputField>
-                        <InputSlot>
-                          <Pressable onPress={disableLocationInput}>
-                            <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
-                          </Pressable>
-                        </InputSlot>
-                      </Input>
-                      {getPrivacyIcon("location")}
-                    </HStack>
-                  ) : profile.location && !locationDisabled && hasSpecificAccess("location") && (
-                    <HStack className = "text-wrap">
-                      <Heading size = "md" className = "mr-1">📍:</Heading>
-                      <View className = "w-11/12">
-                        <Heading size = "md">{profile.location}</Heading>
-                      </View>
-                    </HStack>
-                  )}
-                  { isEditingProfile && !achievementDisabled ? (
-                    <HStack className="mr-7">
-                      <Heading size = "md" className = "mr-1 mt-3">🏆:</Heading>
-                      <Input size = "md" variant = "outline" className = "mt-2 w-11/12 mr-0.5">
-                        <InputField id = "achievementInput" value={achievement} onChangeText={setAchievement} maxLength = {40} placeholder = "Write something you're proud of..."></InputField>
-                        <InputSlot>
-                          <Pressable onPress={disableAchievementInput}>
-                            <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
-                          </Pressable>
-                        </InputSlot>
-                      </Input>
-                      {getPrivacyIcon("achievement")}
-                    </HStack>
-                  ) : profile.achievement && !achievementDisabled && hasSpecificAccess("achievement") && (
-                    <HStack className = "text-wrap">
-                      <Heading size = "md" className = "mr-1">🏆:</Heading>
-                      <View className = "w-11/12">
-                        <Heading size = "md">{profile.achievement}</Heading>
-                      </View>
-                    </HStack>
-                  )}
-                  { isEditingProfile && !goalDisabled ? (
-                    <HStack className="mr-7">
-                      <Heading size = "md" className = "mr-1 mt-3">🎯:</Heading>
-                      <Input size = "md" variant = "outline" className = "mt-2 w-11/12 mr-0.5">
-                        <InputField id = "goalInput" value={goal} onChangeText={setGoal} maxLength = {40} placeholder = "Write your next big goal..."></InputField>
-                        <InputSlot>
-                          <Pressable onPress={disableGoalInput}>
-                            <InputIcon as={TrashIcon} className = "mr-2 bg-none"></InputIcon>
-                          </Pressable>
-                        </InputSlot>
-                      </Input>
-                      {getPrivacyIcon("goal")}
-                    </HStack>
-                  ) : profile.goal && !goalDisabled && hasSpecificAccess("goal") && (
-                    <HStack className = "text-wrap">
-                      <Heading size = "md" className = "mr-1">🎯:</Heading>
-                      <View className = "w-11/12">
-                        <Heading size = "md">{profile.goal}</Heading>
-                      </View>
-                    </HStack>
-                  )}
-                  { isEditingProfile ? (
-                    <Textarea className = "text-wrap mt-2">
-                      <TextareaInput id = "bioInput" value={bio} onChangeText={setBio} maxLength={300} placeholder = "Write some information about yourself..."></TextareaInput>
-                      {getPrivacyIcon("bio")}
-                    </Textarea>
-                  ) : profile.bio && hasSpecificAccess("bio") && (
-                    <Text className = "mt-2">{profile.bio}</Text>
-                  )}
-                </Box>
-              ) : profile && (
-                <Badge size="md" variant="solid" action="muted" className = "bg-none text-none rounded-2xl">
-                  <BadgeIcon as={AlertCircleIcon} className = "text-[#4d7599]"></BadgeIcon>
-                  {/*profile.private === "FRIENDS"*/ hasNoAccess()=="FRIENDS" ? (
-                    <Text className = "ml-1 text-[#4d7599] text-sm">This user's profile is only visible to friends</Text>
-                  ) : (
-                    <Text className = "ml-1 text-[#4d7599] text-sm">This user's profile is private</Text>
-                  )}
-                </Badge>
-              )}
-              </VStack>
-            { userId === id && isEditingProfile ? (
-              <HStack>
-                <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#db5b4d] mr-2 flex-auto" onPress={cancelEdits}>
-                  <ButtonText className = "text-white">Cancel</ButtonText>
-                </Button>
-                { nameValue.trim() !== "" ? (
-                  <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#397a2c] flex-auto" onPress={saveAndSetEditingProfile}>
-                    <ButtonText className = "text-white">Save</ButtonText>
+                ) : isFollowing ? (
+                  <Button size="lg" variant="outline" action="secondary" className="border-[#6FA8DC]" onPress={unfollowProfile}>
+                    <ButtonText className="text-[#6FA8DC]">Unfollow</ButtonText>
                   </Button>
                 ) : (
-                  <Button isDisabled = {true} size = "lg" variant = "solid" action = "primary" className = "bg-[#397a2c] flex-auto" onPress={saveAndSetEditingProfile}>
-                    <ButtonText className = "text-white">Save</ButtonText>
+                  <Button size="lg" variant="solid" action="primary" className="bg-[#6FA8DC]" onPress={followProfile}>
+                    <ButtonText className="text-white">Follow</ButtonText>
                   </Button>
                 )}
-              </HStack>
-            ) : userId === id ? (
-              <Button size = "lg" variant = "outline" action = "primary" className = "border-[#6FA8DC]" onPress={saveValuesAndEditProfile}>
-                <ButtonText className = "text-[#6FA8DC]">Edit Profile</ButtonText>
-              </Button>
-            ) : isFollowing ? (
-              <Button size = "lg" variant = "outline" action = "secondary" className = "border-[#6FA8DC]" onPress={unfollowProfile}>
-                <ButtonText className = "text-[#6FA8DC]">Unfollow</ButtonText>
-              </Button>
-            ) : (
-              <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#6FA8DC]" onPress={followProfile}>
-                <ButtonText className = "text-white">Follow</ButtonText>
-              </Button>
+              </VStack>
             )}
-          </VStack>
-          )}
         </Box>
-
       </VStack>
-   </StaticContainer>
+    </StaticContainer>
   );
 }

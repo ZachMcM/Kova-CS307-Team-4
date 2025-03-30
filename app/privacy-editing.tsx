@@ -48,8 +48,6 @@ export default function PrivacyEditingScreen() {
         setGenderPrivacy(privacy["gender"]);
         setPostsPrivacy(privacy["posts"]);
         setLoading(false);
-        console.log("age " + agePrivacy);
-        console.log("privacy " + privacy);
         return privacy
     }
 
