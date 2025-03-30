@@ -286,7 +286,7 @@ export default function PostDetails() {
 
               <HStack space = "sm">
                 <Box className = "border rounded-3xl mt-4 p-1 border-gray-300">
-                  <Text size = "sm" className="flex-row font-bold text-gray-500">
+                  <Text size = "sm" className="flex-row text-gray-400">
                     {commentValue.length}/500
                   </Text>
                 </Box>
