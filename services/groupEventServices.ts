@@ -86,6 +86,7 @@ export const getProfileEventWorkouts = async (
   const { data, error } = await supabase
     .from("eventWorkout")
     .select()
+    .order("created_at", { ascending: false })
     .eq("groupEventId", eventId)
     .eq("profileId", profileId);
 
