@@ -135,15 +135,14 @@ export const getExercisePoints = (
 
   for (const set of exercise.sets) {
     const setPoints =
-      baseValue *
       set.reps! *
-      event.rep_multiplier! *
-      set.weight! *
-      event.weight_multiplier!;
+      event.rep_multiplier! +
+      (set.weight! *
+      event.weight_multiplier!);
     totalPoints += setPoints;
   }
 
-  return totalPoints;
+  return totalPoints * baseValue;
 };
 
 // function to get the list of competitions the workout contributed to

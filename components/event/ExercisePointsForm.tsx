@@ -10,7 +10,6 @@ import ExerciseCard from "../forms/workout-template/ExerciseCard";
 import { Card } from "../ui/card";
 import { HStack } from "../ui/hstack";
 import { Heading } from "../ui/heading";
-import { NewEventPointsValues } from "./EventForm";
 
 export default function ExercisePointsForm({
   form,
