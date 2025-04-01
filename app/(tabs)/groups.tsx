@@ -1,6 +1,7 @@
 import Container from "@/components/Container";
 import GroupCard from "@/components/GroupCard";
 import { useSession } from "@/components/SessionContext";
+import { Button, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
@@ -9,10 +10,12 @@ import { getAllGroups, getGroupsOfUser } from "@/services/groupServices";
 import { GroupOverview } from "@/types/extended-types";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { RefreshControl, ScrollView } from "react-native";
 
 export default function ProfileScreen() {
   const { session } = useSession();
-
+  
   const { data: groups, isPending } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
@@ -52,6 +55,15 @@ export default function ProfileScreen() {
           </Heading>
           <Text>View all of your groups</Text>
         </VStack>
+        <Button
+          size="xl"
+          action="kova"
+          variant="solid"
+          className="ml-[38px] mr-[38px]"
+          onPress={() => router.replace("./create-group")}
+        >
+          <ButtonText className="text-white">Create Group</ButtonText>
+        </Button>
         {isPending && isUserPending ? (
           <Spinner />
         ) : (
