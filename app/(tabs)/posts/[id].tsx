@@ -17,12 +17,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Box } from "@/components/ui/box";
-import { Ionicons } from "@expo/vector-icons";
-import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { Button, ButtonText } from "@/components/ui/button";
 import CommentCard from "@/components/CommentCard";
-import { P } from "@expo/html-elements";
 import { DetailedWorkoutData } from "@/components/WorkoutData";
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs(['Warning: Text strings must be rendered within a <Text> component']);
 
 export type Comment = {
   id: string;
@@ -333,7 +333,6 @@ export default function PostDetails() {
                   multiline
                   numberOfLines={4}>
               </TextInput>
-
               <HStack space = "sm">
                 <Box className = "border rounded-3xl mt-4 p-1 border-gray-300">
                   <Text size = "sm" className="flex-row text-gray-400">
@@ -346,7 +345,7 @@ export default function PostDetails() {
                     <ButtonText className="text-white font-bold">Submit</ButtonText>
                   </Button>
                 ) : (
-                  <Spinner></Spinner>
+                  <Spinner/>
                 )}
               </HStack>
             </VStack>
@@ -363,7 +362,6 @@ export default function PostDetails() {
           )}
         </VStack>
       </Box>
-
     </Container>
   );
 }

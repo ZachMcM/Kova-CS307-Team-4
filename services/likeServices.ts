@@ -53,7 +53,6 @@ export async function addUserLike(postId: string, userId: string) {
 }
 
 export async function removeUserLike(postId: string, userId: string) {
-    console.log("removing user like");
     let {data, error} = await supabase.from('likeRel')
         .delete()
         .eq('post_id', postId)

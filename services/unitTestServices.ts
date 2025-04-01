@@ -186,7 +186,6 @@ export const socialInformationTests = async () => {
   output += "updateProfile: " + text + "," + text + "," + text + "," + text + "," + privacy + "," + name + ",";
 
   const profile = await getProfile(burnerProfileUserIds[0]);
-  console.log(profile);
   output += "\ngetProfile: " + profile.goal + "," + profile.bio + "," + profile.location + "," + profile.achievement + "," + profile.private + "," + profile.name + ",";
 
   if (profile.name !== name) { valid = false; }

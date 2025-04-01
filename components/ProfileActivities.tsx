@@ -16,6 +16,7 @@ import { Heading } from "./ui/heading";
 import { Card } from "./ui/card";
 import { formatDate, formatDuration, formatTime, Post } from "@/app/(tabs)/feed";
 import { DetailedWorkoutData, SummaryWorkoutData, WorkoutHeader } from "./WorkoutData";
+import { useNavigation } from "@react-navigation/native";
 
 type ProfileActivitiesProps = {
     posts: Post[];
@@ -30,13 +31,13 @@ export const ProfileActivities = ({
 }: ProfileActivitiesProps) => {
 
     const { session } = useSession();
+    const navigation = useNavigation();
 
     const [postViewCount, setPostViewCount] = useState(4); //Initially only view 4 posts
     const [visiblePosts, setVisiblePosts] = useState(posts.length > 4 ? posts.slice(0, 4) : posts.slice());
     const [hasMorePosts, setHasMorePosts] = useState(posts.length > 0 ? true : false);
 
-    const [workoutViewCount, setWorkoutViewCount] = useState(4);
-    const [visibleWorkouts, setVisibleWorkouts] = useState(posts.length > 4 ? posts.slice(0, 4) : posts.slice());
+    const [visibleWorkouts, setVisibleWorkouts] = useState<Post[]>([]);
     const [hasMoreWorkouts, setHasMoreWorkouts] = useState(posts.length > 0 ? true : false);
     const [selectedWorkout, setSelectedWorkout] = useState<string | null>(null);
 
@@ -45,44 +46,65 @@ export const ProfileActivities = ({
             setPostViewCount(posts.length);
             setVisiblePosts(posts);
             setHasMorePosts(false);
+            return;
         }
         setPostViewCount(postViewCount + 10);
         setVisiblePosts(posts.slice(0, postViewCount));
+        setHasMorePosts(true);
     }
 
     const updateWorkoutList = (length: number) => {
         let newWorkouts: Post[] = [];
         let indexCount: number = 0;
-        setWorkoutViewCount(length);
         while (newWorkouts.length < length) {
             if (indexCount >= posts.length) {
                 setHasMoreWorkouts(false);
-                break;
-            } else if (posts[indexCount].workoutData) {
+                setVisibleWorkouts(newWorkouts);
+                return;
+            } else if (posts[indexCount].workoutData && posts[indexCount].workoutData?.exercises.length !== 0) {
                 newWorkouts.push(posts[indexCount]);
             }
             indexCount++;
         }
+        setHasMoreWorkouts(true);
         setVisibleWorkouts(newWorkouts);
     }
 
+    //This useEffect is for resetting the histories if the user leaves and then comes back
     useEffect(() => {
-        setVisiblePosts(posts.slice(0, postViewCount));
-    }, [posts])
+        const unsubscribe = navigation.addListener('focus', () => {
+          {
+            setPostViewCount(4);
+            setVisiblePosts(posts.length > 4 ? posts.slice(0, 4) : posts.slice());
+            setHasMorePosts(posts.length > 0 ? true : false);
+            setVisibleWorkouts([]);
+            setHasMoreWorkouts(posts.length > 0 ? true : false);
+            setSelectedWorkout(null)
+          }
+        });
+    
+        return unsubscribe;
+      }, [navigation]);     
 
     useEffect(() => {
+        setVisiblePosts(posts.slice(0, postViewCount));
+        setHasMorePosts(true);
         updateWorkoutList(visibleWorkouts.length > 4 ? visibleWorkouts.length : 4);
     }, [posts])
 
     useEffect(() => {
         updateWorkoutList(4);
+        if (posts.length === visiblePosts.length) setHasMorePosts(false);
     }, [])
 
     return (
         <View>
-            <VStack space="sm">
+            <VStack space="2xl">
+              <VStack>
                 <Heading size="2xl">Profile Summary</Heading>
                 <Card variant="outline"></Card>
+              </VStack>
+              <VStack>
                 <Heading size="2xl">Workout History</Heading>
                 <Card variant="outline">
                     {isLoading && (
@@ -121,6 +143,7 @@ export const ProfileActivities = ({
                         <ButtonText>{'Render more workouts'}</ButtonText>
                     </Button>
                 )}
+              </VStack>
                 <Heading size="2xl">Post History</Heading>
                 <Card variant="outline">
                     {isLoading && (
@@ -178,7 +201,6 @@ export const ProfileActivities = ({
                             onUpdatePost={updatePostFunc}
                         />
                     ))}
-                    {/*TODO replace router.replace in posts/id with a router.push and router.pop*/}
                 </Card>
                 {posts && posts.length > 0 && hasMorePosts && (
                     <Button

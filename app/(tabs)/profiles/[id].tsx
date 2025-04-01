@@ -28,6 +28,7 @@ import { useSession } from "@/components/SessionContext";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { ProfileActivities } from "@/components/ProfileActivities";
 import { Post } from "../feed";
+import { useNavigation } from "@react-navigation/native";
 
 export default function ProfileScreen() {
 
@@ -36,6 +37,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const navigation = useNavigation();
   const [userId, setUserId] = useState<string | null>(null);
   const { session } = useSession();
 
@@ -126,6 +128,14 @@ export default function ProfileScreen() {
   })
 
   useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (profile && session?.user.id === id) { fetchOwnPosts(); console.log("fetching user posts")}
+    });
+
+    return unsubscribe;
+  }, [navigation, profile]); 
+
+  useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["privacy_data", id] })
   }, [])
 
@@ -160,7 +170,7 @@ export default function ProfileScreen() {
       if (profile.age) { setAge(profile.age.toString() || ""); }
       if (profile.gender) { setGender(profile.gender || ""); }
       if (profile.weight) { setWeight(profile.weight.toString() || ""); }
-      if (session?.user.id === id) { fetchOwnPosts(); }
+      if (session?.user.id === id) { fetchOwnPosts(); console.log("fetching user posts")} //Need this and the navigation to work
     }
   }, [profile]);
 

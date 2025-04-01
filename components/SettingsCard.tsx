@@ -11,7 +11,6 @@ import { useRouter } from "expo-router";
 export default function SettingsCard({ setting }: {setting: any }) {
   const router = useRouter();
 
-  console.log(setting);
   if (setting.type == "banner") {
     console.log("Banner")
     return (
