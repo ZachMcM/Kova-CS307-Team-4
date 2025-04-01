@@ -66,6 +66,44 @@ export type Database = {
         }
         Relationships: []
       }
+      weight_entries: {
+        Row: {
+          id: string
+          user_id: string
+          weight: number
+          unit: string
+          date: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          weight: number
+          unit: string
+          date: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          weight?: number
+          unit?: string
+          date?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["userId"]
+          }
+        ]
+      }
       relTag: {
         Row: {
           created_at: string

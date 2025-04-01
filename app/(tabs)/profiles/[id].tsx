@@ -327,6 +327,11 @@ export default function ProfileScreen() {
     }
   }
 
+  // Navigate to weight tracking page
+  const navigateToWeightTracking = () => {
+    router.push('/weight_tracking');
+  };
+
   // Image upload functionality
   const pickImage = async () => {
     const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -665,7 +670,26 @@ export default function ProfileScreen() {
                     <ButtonText className="text-white">Follow</ButtonText>
                   </Button>
                 )}
+              </HStack>
+            ) : userId === id ? (
+              <VStack space="md">
+                <Button size = "lg" variant = "outline" action = "primary" className = "border-[#6FA8DC]" onPress={saveValuesAndEditProfile}>
+                  <ButtonText className = "text-[#6FA8DC]">Edit Profile</ButtonText>
+                </Button>
+                <Button size = "lg" variant = "outline" action = "primary" className = "border-[#6FA8DC]" onPress={navigateToWeightTracking}>
+                  <ButtonText className = "text-[#6FA8DC]">Weight Tracking</ButtonText>
+                </Button>
               </VStack>
+            ) : isFollowing ? (
+              <Button size = "lg" variant = "outline" action = "secondary" className = "border-[#6FA8DC]" onPress={unfollowProfile}>
+                <ButtonText className = "text-[#6FA8DC]">Unfollow</ButtonText>
+              </Button>
+            ) : (
+              <Button size = "lg" variant = "solid" action = "primary" className = "bg-[#6FA8DC]" onPress={followProfile}>
+                <ButtonText className = "text-white">Follow</ButtonText>
+              </Button>
+              </VStack>
+
             )}
         </Box>
       </VStack>
