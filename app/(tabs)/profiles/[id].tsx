@@ -29,6 +29,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { ProfileActivities } from "@/components/ProfileActivities";
 import { Post } from "../feed";
 import { useNavigation } from "@react-navigation/native";
+import { getWeightEntries } from "@/services/weightServices";
 
 export default function ProfileScreen() {
 
@@ -84,7 +85,6 @@ export default function ProfileScreen() {
   const [storedGender, setStoredGender] = useState("")
   const [gender, setGender] = useState("")
   const [storedWeight, setStoredWeight] = useState("")
-  const [weight, setWeight] = useState("")
 
   //Activity UI related states
   const [posts, setPosts] = useState<any[]>([]);
@@ -99,6 +99,14 @@ export default function ProfileScreen() {
       return profile;
     },
   });
+
+  const { data: weight, isPending: weightIsPending } = useQuery({
+    queryKey: ["weight", id],
+    queryFn: async () => {
+      const weight = (await getWeightEntries(id as string, 1));
+      return `${weight[0].weight} ${weight[0].unit}`;
+    }
+  })
 
   const { data: followingData, isPending: isFollowingPending } = useQuery({
     queryKey: ["followingStatus", userId, id],
@@ -129,6 +137,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
+      queryClient.invalidateQueries({ queryKey: ["weight", id]});
       if (profile && session?.user.id === id) { fetchOwnPosts(); console.log("fetching user posts")}
     });
 
@@ -136,7 +145,8 @@ export default function ProfileScreen() {
   }, [navigation, profile]); 
 
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["privacy_data", id] })
+    queryClient.invalidateQueries({ queryKey: ["privacy_data", id] });
+    queryClient.invalidateQueries({ queryKey: ["weight", id]});
   }, [])
 
   useEffect(() => {
@@ -169,7 +179,6 @@ export default function ProfileScreen() {
       setAchievement(profile.achievement || "");
       if (profile.age) { setAge(profile.age.toString() || ""); }
       if (profile.gender) { setGender(profile.gender || ""); }
-      if (profile.weight) { setWeight(profile.weight.toString() || ""); }
       if (session?.user.id === id) { fetchOwnPosts(); console.log("fetching user posts")} //Need this and the navigation to work
     }
   }, [profile]);
@@ -188,7 +197,6 @@ export default function ProfileScreen() {
         if (achievementDisabled) { setAchievement(""); }
         if (ageDisabled) { setAge(""); }
         if (genderDisabled) { setGender(""); }
-        if (weightDisabled) { setWeight(""); }
 
         await updateProfile(profile.id, goal, bio, location, achievement, privacyValues, nameValue, profile.age, gender, profile.weight);
         setIsEditingProfile(false);
@@ -204,7 +212,6 @@ export default function ProfileScreen() {
         profile.name = nameValue;
         if (age) { profile.age = parseInt(age); }
         if (gender) { profile.gender = gender; }
-        if (weight) { profile.weight = parseInt(weight); }
 
         // Re-enable the inputs
         setGoalDisabled(false);
@@ -574,9 +581,9 @@ export default function ProfileScreen() {
                   {hasNoAccess() == "FALSE" && (isEditingProfile || (profile.location || profile.goal || profile.bio || profile.age)) ? (
                     <Box className="border border-gray-300 rounded p-2 mt-2">
                       {isEditingProfile && !ageDisabled ? (
-                        <HStack>
-                          <Heading className="mr-1 mt-3">🕯️Age:</Heading>
-                          <Input variant="outline" className="mt-2 w-2/5 mr-0.5">
+                        <HStack className="mr-7">
+                          <Heading size="md" className="mr-1 mt-3">🎂:</Heading>
+                          <Input variant="outline" className="mt-2 w-11/12 mr-0.5">
                             <InputField id="AgeInput" value={age} onChangeText={(text: string) => { if (text != "" && /^[0-9]+$/.test(text)) { setAge(text) } else { setAge("") } }} maxLength={3} placeholder="Age"></InputField>
                             <InputSlot>
                               <Pressable onPress={disableAgeInput}>
@@ -588,16 +595,16 @@ export default function ProfileScreen() {
                         </HStack>
                       ) : profile.age && hasSpecificAccess("age") && !ageDisabled && age != "" && (
                         <HStack className="text-wrap">
-                          <Heading className="mr-1">🕯️Age:</Heading>
-                          <View className="w-2/5">
-                            <Heading>{profile.age}</Heading>
+                          <Heading size="md" className="mr-1">🎂:</Heading>
+                          <View className="w-11/12">
+                            <Heading size="md">{profile.age}</Heading>
                           </View>
                         </HStack>
                       )}
                       {isEditingProfile && !genderDisabled ? (
-                        <HStack>
-                          <Heading className="mr-1 mt-3">🟡Gender:</Heading>
-                          <Input variant="outline" className="mt-2 w-2/5 mr-0.5">
+                        <HStack className="mr-7">
+                          <Heading size="md" className="mr-1 mt-3">🚻:</Heading>
+                          <Input variant="outline" className="mt-2 w-11/12 mr-0.5">
                             <InputField id="GenderInput" value={gender} onChangeText={(text: string) => { setGender(text) }} maxLength={15} placeholder="Gender"></InputField>
                             <InputSlot>
                               <Pressable onPress={disableGenderInput}>
@@ -609,30 +616,17 @@ export default function ProfileScreen() {
                         </HStack>
                       ) : profile.gender && hasSpecificAccess("gender") && !genderDisabled && gender != "" && (
                         <HStack className="text-wrap">
-                          <Heading size="md" className="mr-1">🟡Gender:</Heading>
-                          <View className="w-2/5">
+                          <Heading size="md" className="mr-1">🚻:</Heading>
+                          <View className="w-11/12">
                             <Heading size="md">{profile.gender}</Heading>
                           </View>
                         </HStack>
                       )}
-                      {isEditingProfile && !weightDisabled ? (
-                        <HStack>
-                          <Heading size="md" className="mr-1 mt-3">💪Weight:</Heading>
-                          <Input size="md" variant="outline" className="mt-2 w-2/5 mr-0.5">
-                            <InputField id="WeightInput" value={weight} onChangeText={(text: string) => { if (text != "" && /^[0-9]+$/.test(text)) { setWeight(text) } else { setWeight("") } }} maxLength={4} placeholder="Weight"></InputField>
-                            <InputSlot>
-                              <Pressable onPress={disableWeightInput}>
-                                <InputIcon as={TrashIcon} className="mr-2 bg-none"></InputIcon>
-                              </Pressable>
-                            </InputSlot>
-                          </Input>
-                          {getPrivacyIcon("weight")}
-                        </HStack>
-                      ) : profile.weight && hasSpecificAccess("weight") && !weightDisabled && weight != "" && (
+                      {!isEditingProfile && weight && hasSpecificAccess("weight") && !weightDisabled && !weightIsPending && weight != "" && (
                         <HStack className="text-wrap">
-                          <Heading size="md" className="mr-1">💪Weight:</Heading>
-                          <View className="w-2/5">
-                            <Heading size="md">{profile.weight}</Heading>
+                          <Heading size="md" className="mr-1">⚖️:</Heading>
+                          <View className="w-11/12">
+                            <Heading size="md">{weight}</Heading>
                           </View>
                         </HStack>
                       )}
