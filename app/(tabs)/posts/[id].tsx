@@ -22,6 +22,7 @@ import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { Button, ButtonText } from "@/components/ui/button";
 import CommentCard from "@/components/CommentCard";
 import { P } from "@expo/html-elements";
+import { DetailedWorkoutData } from "@/components/WorkoutData";
 
 export type Comment = {
   id: string;
@@ -312,76 +313,7 @@ export default function PostDetails() {
               )}
               {/* Exercise Details */}
               {post.workoutData?.exercises && post.workoutData?.exercises?.length > 0 && (
-                <VStack>
-                  <Text size="lg" bold>
-                    Exercise Details
-                  </Text>
-                  <HStack space = "xs" className = "h-16 w-full mb-2 mt-2 border border-gray-300 rounded">
-                    {post.workoutData?.duration && (
-                      <Box className="flex-1 h-full justify-center items-center">
-                        <Text size="md">Duration</Text>
-                        <HStack space = "xs">
-                          <Text size = "lg" bold>{post.workoutData.duration}</Text>
-                        </HStack>
-                      </Box>
-                    )}
-                    {post.workoutData?.calories && (
-                      <Box className="flex-1 h-full justify-center items-center">
-                        <Text size="md">Calories</Text>
-                        <HStack>
-                          <Text size = "lg" bold>{post.workoutData.calories}</Text>
-                          <Ionicons name="flame-outline" size={22} color="#FF9500"/>
-                        </HStack>
-                      </Box>
-                    )}
-                    {post.weighIn && (
-                      <Box className="flex-1 h-full justify-center items-center">
-                        <Text size="md">Weigh-In</Text>
-                        <HStack>
-                          <Text size = "lg" bold>{post.weighIn} lbs</Text>
-                        </HStack>
-                      </Box>
-                    )}
-                  </HStack>
-                  {post.workoutData.exercises.reduce((rows, exercise, index) => {
-                    if (index % 2 === 0) {
-                      rows.push([exercise]);
-                    } else {
-                      rows[rows.length - 1].push(exercise);
-                    }
-                    return rows;
-                  }, [] as Exercise[][]).map((row, rowIndex) => (
-                    <HStack key={rowIndex} space="xs" className="w-full mb-2">
-                      {row.map((exercise, index) => (
-                        <Box key={index} className="flex-1 rounded border border-gray-300 p-2">
-                          <Text className="font-bold">{exercise.name}</Text>
-                          <View>
-                            {exercise.sets !== undefined && (
-                              <Text>
-                                <Text>Sets: </Text>
-                                <Text>{String(exercise.sets)}</Text>
-                              </Text>
-                            )}
-                            {exercise.reps !== undefined && (
-                              <Text>
-                                <Text>Reps: </Text>
-                                <Text>{String(exercise.reps)}</Text>
-                              </Text>
-                            )}
-                            {exercise.weight && (
-                              <Text>
-                                <Text>Weight: </Text>
-                                <Text>{exercise.weight}</Text>
-                              </Text>
-                            )}
-                          </View>
-                        </Box>
-                      ))}
-                      {/* Add an empty box if there is only one exercise in the row */}
-                      {row.length === 1 && <Box className="flex-1 p-2" />}
-                    </HStack>
-                  ))}
-                </VStack>
+                <DetailedWorkoutData post={post}></DetailedWorkoutData>
               )}
             </VStack>
           )}

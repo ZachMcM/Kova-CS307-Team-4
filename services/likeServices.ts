@@ -29,13 +29,10 @@ export async function getLikes(postId: string): Promise<LikeRelation[]> {
         return [] as LikeRelation[];
     }
 
-    console.log("Likes", JSON.stringify(likeRelations))
-
     return likeRelations as LikeRelation[]
 }
 
 export function getNumOfLikes(likeRelations: LikeRelation[], userId: string, userHasLiked: boolean): number {
-    console.log("Testing -- " + doesUserLike(userId, likeRelations) + ", " + userHasLiked);
     return likeRelations.length + ((userHasLiked && 
         !(doesUserLike(userId, likeRelations))) ? 1 : 0);
 }
@@ -50,11 +47,9 @@ export function doesUserLike(userId: string, likeRelations: LikeRelation[]): boo
 }
 
 export async function addUserLike(postId: string, userId: string) {
-    console.log("Adding user like");
     let {data, error} = await supabase.from('likeRel')
         .insert({post_id: postId, user_id: userId});
     console.log(error);
-    console.log(data);
 }
 
 export async function removeUserLike(postId: string, userId: string) {
@@ -64,6 +59,5 @@ export async function removeUserLike(postId: string, userId: string) {
         .eq('post_id', postId)
         .eq('user_id', userId);
     console.log(error);
-    console.log(data);
 }
 

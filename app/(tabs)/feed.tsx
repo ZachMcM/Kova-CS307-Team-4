@@ -67,6 +67,27 @@ export const formatDate = (dateString: string): string => {
   });
 };
 
+export const formatTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    hour: 'numeric',
+    minute: 'numeric',
+  });
+};
+
+export const formatDuration = (hourMinuteString: string): string => {
+  let split = hourMinuteString.split(":");
+  let minute = parseInt(split[0]);
+  let second = parseInt(split[1]);
+  if (minute === 0) {
+    return second.toString() + " Sec"
+  } else if (minute >= 60) {
+    let hour = minute / 60;
+    return hour.toString() + " Hr " + minute.toString() + " Min";
+  }
+  return minute.toString() + " Min";
+};
+
 export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);

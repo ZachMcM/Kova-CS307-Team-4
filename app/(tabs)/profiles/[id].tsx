@@ -26,6 +26,8 @@ import { View } from "react-native";
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio"
 import { useSession } from "@/components/SessionContext";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { ProfileActivities } from "@/components/ProfileActivities";
+import { Post } from "../feed";
 
 export default function ProfileScreen() {
 
@@ -82,12 +84,16 @@ export default function ProfileScreen() {
   const [storedWeight, setStoredWeight] = useState("")
   const [weight, setWeight] = useState("")
 
+  //Activity UI related states
+  const [posts, setPosts] = useState<any[]>([]);
+  const [postError, setPostError] = useState<Error | null>(null);
+  const [postsIsLoading, setPostsIsLoading] = useState(true);
+
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
       const profile = (await getProfile(id as string));
-      console.log(profile);
       return profile;
     },
   });
@@ -154,6 +160,7 @@ export default function ProfileScreen() {
       if (profile.age) { setAge(profile.age.toString() || ""); }
       if (profile.gender) { setGender(profile.gender || ""); }
       if (profile.weight) { setWeight(profile.weight.toString() || ""); }
+      if (session?.user.id === id) { fetchOwnPosts(); }
     }
   }, [profile]);
 
@@ -172,8 +179,6 @@ export default function ProfileScreen() {
         if (ageDisabled) { setAge(""); }
         if (genderDisabled) { setGender(""); }
         if (weightDisabled) { setWeight(""); }
-
-        console.log(nameValue);
 
         await updateProfile(profile.id, goal, bio, location, achievement, privacyValues, nameValue, profile.age, gender, profile.weight);
         setIsEditingProfile(false);
@@ -363,10 +368,8 @@ export default function ProfileScreen() {
   const hasSpecificAccess = (parameter: string) => {
     if (!privacy_list) return false;
     if (profile?.user_id == session?.user.id || privacy_list[parameter] === "PUBLIC" || (isFriend && privacy_list[parameter] == "FRIENDS")) {
-      console.log("true access for " + parameter + " " + privacy_list[parameter])
       return true
     }
-    console.log("false access for " + parameter)
     return false
   }
 
@@ -394,6 +397,70 @@ export default function ProfileScreen() {
       return <MaterialIcons name="private-connectivity" size={24} className="m-0" color="black" />
     }
   }
+
+  const fetchOwnPosts = async () => {
+    try {
+      const { data: postsData, error: postsError } = await supabase
+      .from("post")
+      .select(`
+        *,
+        profile:profileId (
+          username,
+          userId,
+          name,
+          avatar
+        )
+      `)
+      .eq("profileId", profile?.id)
+      .order("createdAt", { ascending: false })
+
+      setPosts(postsData ? postsData : []);
+
+      if (postsError) {
+        throw postsError;
+      }
+    } catch (err) {
+      console.error("Error fetching own posts:", err);
+      setPostError(err instanceof Error ? err : new Error('Unknown error occurred'));
+    } finally {
+      setPostsIsLoading(false);
+    }
+  }
+
+  //Copied directly from feed
+  //TODO in future sprint, define this function in a context or find a way to easily export it from somewhere else
+  const updateOwnPost = async (postId: string, title: string, description: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('post')
+        .update({ 
+          title, 
+          description,
+          updatedAt: new Date().toISOString()
+        })
+        .eq('id', postId)
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { ...post, title, description, updatedAt: new Date().toISOString() } 
+            : post
+        )
+      );
+      
+      showSuccessToast(toast, 'Post updated successfully');
+      return data;
+    } catch (error) {
+      console.error('Error updating post:', error);
+      showErrorToast(toast, 'Failed to update post');
+      throw error;
+    }
+  };
 
   return (
     <StaticContainer className="flex px-6 py-16">
@@ -668,6 +735,9 @@ export default function ProfileScreen() {
               </VStack>
             )}
         </Box>
+        { profile && id === session?.user.id && (
+          <ProfileActivities posts={posts as Post[]} isLoading={postsIsLoading} updatePostFunc={updateOwnPost}></ProfileActivities>
+        )}
       </VStack>
     </StaticContainer>
   );
