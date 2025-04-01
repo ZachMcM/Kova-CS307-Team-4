@@ -80,3 +80,7 @@ export type GroupOverview = {
 export type MemberRelationship = PublicProfile & {
   role: string;
 }
+
+export type GroupRelWithProfile = Tables<'groupRel'> & {
+  profile: Tables<'profile'>
+}
