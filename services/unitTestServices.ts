@@ -31,7 +31,7 @@ export const exampleTests = (num: number) => {
 };
 
 export type LoginTestParams = {
-  signInUser: (userEmail: string, userPassword: string) => Promise<AuthAccountResponse>,
+  signInUser: (userEmail: string, userPassword: string) => Promise<boolean>,
   testCaseName: string
   testEmail: string,
   testPassword: string,

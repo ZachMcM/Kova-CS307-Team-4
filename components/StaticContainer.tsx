@@ -14,7 +14,9 @@ export default function StaticContainer({
 }) {
   return (
     <KeyboardAvoidingView behavior="padding" className="flex flex-1">
+      <ScrollView keyboardShouldPersistTaps="handled">
       <View className={className ? className : "flex px-6 py-32"}>{children}</View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
