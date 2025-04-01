@@ -121,20 +121,22 @@ export async function createGroup(userId: string,
     return [groupId, profileId] as string[]
 }
 
-export async function getAllGroups() : Promise<GroupOverview[]> {
-    const {data, error} = await supabase
-        .from("group")
-        .select("id,title,icon,description");
-    if (error) {
-        throw new Error(error.message);
-    }
-    const groupOverviews = data.map((row, i) => {
-        return {groupId: row.id, 
-            icon: row.icon, 
-            description: row.description,
-            title: row.title};
-    });
-    return groupOverviews as GroupOverview[]
+export async function getAllGroups(): Promise<GroupOverview[]> {
+  const { data, error } = await supabase
+    .from("group")
+    .select("id,title,icon,description");
+  if (error) {
+    throw new Error(error.message);
+  }
+  const groupOverviews = data.map((row, i) => {
+    return {
+      groupId: row.id,
+      icon: row.icon,
+      description: row.description,
+      title: row.title,
+    };
+  });
+  return groupOverviews as GroupOverview[];
 }
 
 export async function getGroupsOfUser(userId: string) : Promise<string[]> {
@@ -148,8 +150,9 @@ export async function getGroupsOfUser(userId: string) : Promise<string[]> {
     }
     const items = (data) ? data.map((row, i) => {
         return row.groupId;
-    }) : []
-    return items as string[];
+      })
+    : [];
+  return items as string[];
 }
 
 export async function isMemberOfGroup(groupId: string, userId: string): Promise<boolean>{
@@ -207,14 +210,14 @@ export async function setRole(groupId: string, userId: string, role: string) {
 }
 
 export async function getNumOfMembers(groupId: string): Promise<number> {
-    const {data, error} = await supabase
-        .from("groupRel")
-        .select("profileId")
-        .eq("groupId", groupId);
-    if (error) {
-        throw new Error(error.message);
-    }
-    return data.length;
+  const { data, error } = await supabase
+    .from("groupRel")
+    .select("profileId")
+    .eq("groupId", groupId);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data.length;
 }
 
 export async function getMembers(groupId: string): Promise<GroupRelWithProfile[]> {
