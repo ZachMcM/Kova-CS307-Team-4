@@ -115,7 +115,8 @@ export default function EditEventDetails({
                 onChange={(_, date) => {
                   onChange(date);
                 }}
-              />
+                minimumDate={new Date(event.start_date) > new Date() ? new Date(event.start_date) : new Date()}
+                />
             </HStack>
             <FormControlError>
               <FormControlErrorText>

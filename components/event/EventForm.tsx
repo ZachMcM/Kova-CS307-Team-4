@@ -235,6 +235,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
                     onChange={(_, date) => {
                       onChange(date);
                     }}
+                    minimumDate={new Date()}
                   />
                 </HStack>
               </FormControl>
@@ -256,6 +257,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
                     onChange={(_, date) => {
                       onChange(date);
                     }}
+                    minimumDate={new Date()}
                   />
                 </HStack>
                 <FormControlError>
