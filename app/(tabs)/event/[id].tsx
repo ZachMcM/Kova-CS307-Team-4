@@ -214,6 +214,9 @@ function EditTile({
     onSuccess: (data) => {
       console.log(data);
       queryClient.invalidateQueries({ queryKey: ["event", { id: event.id }] });
+      queryClient.invalidateQueries({
+        queryKey: ["group", { id: event.groupId }],
+      });
       setEditTitle(false);
       showSuccessToast(toast, "Successfully edited title");
     },

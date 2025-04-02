@@ -30,6 +30,7 @@ export default function EditEventDetails({
     end_date: z.date({ message: "Must be a valid date" }),
     goal: z
       .number({ required_error: "Must be a valid whole number" })
+      .min(1, { message: "Goal cannot be less than 1" })
       .int()
       .nonnegative()
       .nullish()
@@ -37,7 +38,6 @@ export default function EditEventDetails({
     weightMultiplier: z
       .number({ required_error: "Must be a valid number" })
       .min(1, { message: "Multiplier cannot be less than 1" })
-      .nullish()
       .transform((x) => (x === null || x === undefined ? undefined : x)),
     repMultiplier: z
       .number({ required_error: "Must be a valid number" })
@@ -80,10 +80,19 @@ export default function EditEventDetails({
     },
     onSuccess: (data) => {
       console.log(data);
-      showSuccessToast(toast, "Successfully updated details");
       queryClient.invalidateQueries({
         queryKey: ["event", { id: event.id }],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["group", { id: event.groupId }]
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["event-leaderboard", { id: event.id } ]
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["my-event-workouts", { id: event.id }]
+      })
+      showSuccessToast(toast, "Successfully updated details");
       setEditDetails(false);
     },
   });

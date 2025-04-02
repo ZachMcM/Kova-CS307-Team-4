@@ -5,6 +5,10 @@ import { useState } from "react";
 // Get profile based on provided user_id
 export const getProfiles = async (ids: string[]): Promise<Map<string, Profile>> => {
   const profiles = new Map<string, Profile>();
+  const { data, error } = await supabase
+    .from("profile")
+    .select("*")
+    .containedBy("id", ids)
   for (const id of ids) {
     const profile = await getProfile(id);
     profiles.set(profile.user_id, profile);

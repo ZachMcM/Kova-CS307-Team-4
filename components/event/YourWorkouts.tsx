@@ -24,7 +24,7 @@ export default function YourWorkouts({
   const { session } = useSession();
 
   const { data: workouts, isPending } = useQuery({
-    queryKey: ["my-event-workouts"],
+    queryKey: ["my-event-workouts", { id: event.id }],
     queryFn: async () => {
       const workouts = await getProfileEventWorkouts(
         event.id,

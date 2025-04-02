@@ -2,8 +2,10 @@ import Container from "@/components/Container";
 import EventCard from "@/components/EventCard";
 import { useSession } from "@/components/SessionContext";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
+import { Avatar, AvatarFallbackText, AvatarImage } from "@/components/ui/avatar";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import { AddIcon, InfoIcon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
@@ -16,6 +18,8 @@ import { useLocalSearchParams, useRouter } from "expo-router/build/hooks";
 export default function Group() {
   const { id } = useLocalSearchParams() as { id: string };
 
+  const { session } = useSession()
+
   const { data: group, isPending } = useQuery({
     queryKey: ["group", { id }],
     queryFn: async () => {
@@ -23,8 +27,6 @@ export default function Group() {
       return group;
     },
   });
-
-  const { session } = useSession();
 
   const { data: role, isPending: isRolePending } = useQuery({
     queryKey: ["profile-role", { id }],
@@ -42,12 +44,34 @@ export default function Group() {
         <Spinner />
       ) : (
         <VStack space="xl">
-          <VStack space="sm">
-            <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
-              {group?.title}
-            </Heading>
-            <Text>{group?.description}</Text>
-          </VStack>
+          <HStack space="2xl">
+            <Avatar className="bg-indigo-600" size="md">
+              {group?.icon ? (
+                <AvatarImage source={{ uri: group.icon }} />
+              ) : (
+                <AvatarFallbackText className="text-white">{group?.title![0]}</AvatarFallbackText>
+              )}
+            </Avatar>
+            <VStack space="sm">
+              <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
+                {group?.title}
+              </Heading>
+              <Text>{group?.description}</Text>
+            </VStack>
+          </HStack>
+          <Button
+            variant="solid"
+            action="secondary"
+            onPress={() =>
+              router.push({
+                pathname: "/(tabs)/group/members/[id]",
+                params: { id },
+              })
+            }
+            size="lg"
+          >
+            <ButtonText>View Members</ButtonText>
+          </Button>
           <VStack space="md">
             <Heading size="lg">Competitions</Heading>
             <GroupEvents

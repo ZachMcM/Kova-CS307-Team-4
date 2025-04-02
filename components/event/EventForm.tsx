@@ -56,12 +56,10 @@ const schema = z
     weightMultiplier: z
       .number({ required_error: "Must be a valid number" })
       .min(1, { message: "Multiplier cannot be less than 1" })
-      .nullish()
       .transform((x) => (x === null || x === undefined ? undefined : x)),
     repMultiplier: z
       .number({ required_error: "Must be a valid number" })
       .min(1, { message: "Multiplier cannot be less than 1" })
-      .nullish()
       .transform((x) => (x === null || x === undefined ? undefined : x)),
     title: z
       .string()
@@ -71,9 +69,8 @@ const schema = z
     end_date: z.date({ message: "Must be a valid date" }),
     goal: z
       .number({ required_error: "Must be a valid number" })
-      .min(1, { message: "Goal cannot be negative" })
+      .min(1, { message: "Goal cannot be less than 1" })
       .int()
-      .nullish()
       .transform((x) => (x === null || x === undefined ? undefined : x)),
     type: z.enum(["competition", "collaboration"]),
   })
