@@ -108,6 +108,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="posts/[id]"
+        options={{
+          title: "Posts",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="workout"
         options={{
           title: "Workout",

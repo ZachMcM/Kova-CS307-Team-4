@@ -2,6 +2,20 @@ import { supabase } from "@/lib/supabase";
 import { Profile, PrivateProfile, PublicProfile } from "@/types/profile-types";
 import { useState } from "react";
 
+export interface privacies {
+  // friends_following: string,
+  // age: string,
+  // weight: string,
+  // location: string,
+  // goal: string,
+  // bio: string,
+  // achievement: string,
+  // gender: string,
+  // posts: string,
+  [key: string]: any
+  //TODO later potentially add a 'statistics' privacy too
+}
+
 // Get profile based on provided user_id
 export const getProfiles = async (ids: string[]): Promise<Map<string, Profile>> => {
   const profiles = new Map<string, Profile>();
@@ -40,7 +54,7 @@ export const getProfile = async (id: string): Promise<Profile> => {
   //}
   return {
     id: profile.id,
-    user_id: profile.user_id,
+    user_id: id,     //profile.user_id is bugged and returns undefined in this case, using this as a fix
     name: profile.name,
     username: profile.username,
     avatar: profile.avatar,
@@ -49,14 +63,18 @@ export const getProfile = async (id: string): Promise<Profile> => {
     following: profile.following,
     followers: profile.followers,
     age: profile.age,
+    gender: profile.gender,
+    weight: profile.weight,
     location: profile.location,
     goal: profile.goal,
     bio: profile.bio,
-    achievement: profile.achievement
+    achievement: profile.achievement,
+    privacy_settings: profile.privacy_settings
   } as PublicProfile;
 }
 
-export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, privacy: string, name: string) => {
+export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, 
+                                    privacy: string, name: string, age: number, gender: string, weight: number, privacy_settings?: privacies) => {
   const { error } = await supabase
     .from("profile")
     .update({
@@ -65,14 +83,56 @@ export const updateProfile = async (id:string, goal: string, bio: string, locati
       location: location,
       achievement: achievement,
       private: privacy,
-      name: name
+      name: name,
+      age: age,
+      gender: gender,
+      weight: weight,
     })
     .eq("id", id);
 
   if (error) {
     throw new Error(error.message);
   }
+
+  if (privacy_settings) {
+    const { error: privacy_error } = await supabase
+    .from("profile")
+    .update({
+      privacy_settings: privacy_settings
+    })
+    .eq("id", id);
+
+  if (privacy_error) {
+    throw new Error(privacy_error.message);
+  }
+  }
 };
+
+export const updateProfilePrivacies = async (userId:string, privacy_settings: privacies) => {
+  const { error: privacy_error } = await supabase
+    .from("profile")
+    .update({
+      privacy_settings: privacy_settings
+    })
+    .eq("userId", userId);
+
+  if (privacy_error) {
+    throw new Error(privacy_error.message);
+  }
+}
+
+export const getProfilePrivacies = async (userId: string) => {
+  const { data: privacy_settings, error } = await supabase
+  .from("profile")
+  .select("privacy_settings")
+  .eq("userId", userId)
+  .limit(1).single();
+
+   if (error) throw new Error(error.message);
+
+   console.log("returning " + privacy_settings.privacy_settings["age"]);
+   return privacy_settings.privacy_settings as privacies;
+}
 
 export const isProfileFollowed = async (sourceId: string, targetId: string): Promise<boolean> => {
   const { data: follows, error } = await supabase

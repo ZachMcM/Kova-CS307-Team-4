@@ -30,17 +30,17 @@ export default function SettingsScreen() {
     {
       attribute: "Change email",
       type: "redirect",
-      content: "/profile"
+      content: "/change-email"
     },
     {
       attribute: "Change password",
       type: "redirect",
-      content: "/profile"
+      content: "/change-password"
     },
     {
       attribute: "Change username",
       type: "redirect",
-      content: "/app/(tabs)/profile"
+      content: "/change-username"
     },
     {
       attribute: "Debug: Unit Testing",
@@ -49,7 +49,7 @@ export default function SettingsScreen() {
     {
       attribute: "Unit testing page",
       type: "redirect",
-      content: "/app/unit-tests"
+      content: "/unit-tests"
     }
   ];
 

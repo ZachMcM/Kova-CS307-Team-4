@@ -9,10 +9,13 @@ export type PrivateProfile = {
   following: number;
   followers: number;
   age: number;
+  gender: string,
+  weight: number,
   location: string;
   goal: string;
   bio: string;
   achievement: string;
+  privacy_settings: any;
 };
 
 export type PublicProfile = {
@@ -26,10 +29,13 @@ export type PublicProfile = {
   following: number;
   followers: number;
   age: number;
+  gender: string,
+  weight: number,
   location: string;
   goal: string;
   bio: string;
   achievement: string;
+  privacy_settings: any;
 };
 
 export type Profile = PublicProfile | PrivateProfile;

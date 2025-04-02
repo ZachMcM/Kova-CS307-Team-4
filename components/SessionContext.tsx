@@ -12,6 +12,7 @@ import {
 type SessionContextValues = {
   session: Session | null;
   sessionLoading: boolean;
+  OTPSignIn: boolean;
   setSessionLoading: React.Dispatch<React.SetStateAction<boolean>>;
   createAccount: (
     userEmail: string,
@@ -23,8 +24,21 @@ type SessionContextValues = {
   signInUser: (
     userEmail: string,
     userPassword: string
-  ) => Promise<AuthAccountResponse>;
+  ) => Promise<boolean>;
   signOutUser: () => Promise<void>;
+  updatePassword: (
+    oldPassword: string,
+    updatePassword: string,
+    verifyPassword: string
+  ) => Promise<boolean>;
+  updateEmail: (
+    password: string,
+    newEmail: string
+  ) => Promise<boolean>;
+  updateUsername: (
+    password: string,
+    newUsername: string
+  ) => Promise<boolean>;
 };
 
 const SessionContext = createContext<SessionContextValues | null>(null);
@@ -32,6 +46,7 @@ const SessionContext = createContext<SessionContextValues | null>(null);
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(false);
+  const [OTPSignIn, setOTPSignIn] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -129,7 +144,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signInUser = async (
     userEmail: string,
     userPassword: string
-  ): Promise<AuthAccountResponse> => {
+  ): Promise<boolean> => {
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
     if (!emailRegex.test(userEmail)) {
       throw new Error("Please enter a valid email address");
@@ -137,7 +152,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (userPassword.length == 0) {
       throw new Error("Password field cannot be empty");
     }
-    const { data: signInData, error: passwordError } =
+
+    //Checking for OTP signing in first
+      const { data: OTPData, error: OTPError} = await supabase.auth.verifyOtp({
+        email: userEmail,
+        token: userPassword,
+        type: "email"
+      })
+      if (OTPError) {
+      console.log("No OTP with these credentials");
+      } else {
+        setOTPSignIn(true)
+        return true;
+      }
+
+    const { error: passwordError } =
       await supabase.auth.signInWithPassword({
         email: userEmail,
         password: userPassword,
@@ -148,7 +177,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     console.log("signing in");
 
-    return signInData as AuthAccountResponse;
+    setOTPSignIn(false)
+    return false;
   };
 
   const signOutUser = async () => {
@@ -158,15 +188,130 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(error.message);
   };
 
+  const updatePassword = async (oldPassword: string, updatePassword: string, verifyPassword: string) => {
+  
+    //When not using OTP to reset a forgotten password, do not ask for the old password
+    if (!OTPSignIn) {
+      const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
+        password: oldPassword
+      });
+
+      console.log("verifyData: " + verifyData);
+
+      if (verifyError || !verifyData) {
+        console.log(verifyError)
+        throw new Error("Old Password is not correct")
+      }
+    }
+
+    if (updatePassword != verifyPassword) {
+      throw new Error("Password and confirmed password\nmust match");
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: updatePassword
+    })
+
+    if (updateError) {
+      console.log(updateError.message)
+      if (updateError.message == "New password should be different from the old password.") {
+        throw updateError;  
+      }
+      else throw new Error("New Password must be at least 6 characters\n and include a letter and number");
+    }
+
+    return true;
+  }
+
+  const updateEmail = async (password: string, newEmail: string) => {
+  
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
+    if (!emailRegex.test(newEmail)) {
+      throw new Error("Please enter a valid email address");
+    }
+
+    const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
+      password: password
+    });
+
+    if (verifyError || !verifyData) {
+      console.log(verifyError)
+      throw new Error("Verification Password is not correct")
+    }
+
+    if (newEmail == session?.user.email) {
+      throw new Error("New email cannot be the same as old email")
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      email: newEmail
+    })
+
+    if (updateError) {
+      console.log(updateError.message)
+      throw updateError;
+    }
+
+    return true;
+  }
+
+  const updateUsername = async (password: string, newUsername: string) => {
+  
+    const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
+      password: password
+    });
+
+    if (verifyError || !verifyData) {
+      console.log(verifyError)
+      throw new Error("Verification Password is not correct")
+    }
+
+    if (newUsername == "") {
+      throw new Error("Username cannot be blank");
+    }
+
+    if (newUsername.includes(" ")) {
+      throw new Error("Username cannot include spaces");
+    }
+
+    const {data, error} = await supabase 
+      .from('profile')
+      .select("userId")
+      //.eq('userId', session?.user.id)
+      .eq('username', newUsername)
+
+    if (data && data.length != 0) {
+      console.log("data: " + data)
+      if (data[0].userId == session?.user.id) throw new Error("New username cannot be the same as old username");
+      else throw new Error("Username is already in use");
+    }
+    
+    const {error: fetchError} = await supabase
+      .from('profile')
+      .update({username: newUsername})
+      .eq('userId', session?.user.id);
+
+    if (fetchError) {
+      console.log(fetchError);
+      throw fetchError;
+    }
+
+    return true;
+  }
+
   return (
     <SessionContext.Provider
       value={{
         session,
         sessionLoading,
+        OTPSignIn,
         setSessionLoading,
         createAccount,
         signInUser,
         signOutUser,
+        updatePassword,
+        updateEmail,
+        updateUsername
       }}
     >
       {children}

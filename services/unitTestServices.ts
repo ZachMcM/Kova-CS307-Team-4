@@ -58,15 +58,12 @@ export const exampleTests = (num: number) => {
 };
 
 export type LoginTestParams = {
-  signInUser: (
-    userEmail: string,
-    userPassword: string
-  ) => Promise<AuthAccountResponse>;
-  testCaseName: string;
-  testEmail: string;
-  testPassword: string;
-  expectedError: string | null;
-};
+  signInUser: (userEmail: string, userPassword: string) => Promise<boolean>,
+  testCaseName: string
+  testEmail: string,
+  testPassword: string,
+  expectedError: string | null,
+}
 
 //Login tests
 export const loginTests = async (params: LoginTestParams) => {

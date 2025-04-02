@@ -26,7 +26,7 @@ export default function SettingsCard({ setting }: {setting: any }) {
       <Card variant="outline" className="rounded-none border-l-0 border-r-0 border-t-0">
         <View className = "flex-row justify-end">
           <Text size = "md">{setting.attribute}</Text>
-          <Pressable onPress = {() => router.replace("/unit-tests")} className = "mt-1 ml-auto">
+          <Pressable onPress = {() => router.replace(setting.content/*"/unit-tests"*/)} className = "mt-1 ml-auto">
             <Icon as={ChevronRightIcon}></Icon>
           </Pressable>
         </View>
