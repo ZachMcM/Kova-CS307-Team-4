@@ -26,14 +26,7 @@ export type Post = {
     calories?: string;
     duration?: string;
     exercises: Array<
-      | {
-          info: {
-            id: string;
-            name: string;
-          };
-          sets: Array<any>;
-        }
-      | {
+        {
           name: string;
           reps?: number;
           sets?: number;
@@ -82,8 +75,8 @@ export const formatDuration = (hourMinuteString: string): string => {
   if (minute === 0) {
     return second.toString() + " Sec"
   } else if (minute >= 60) {
-    let hour = minute / 60;
-    return hour.toString() + " Hr " + minute.toString() + " Min";
+    let hour = Math.floor(minute / 60);
+    return hour.toString() + " Hr " + (minute % 60).toString() + " Min";
   }
   return minute.toString() + " Min";
 };
@@ -317,25 +310,12 @@ export default function FeedScreen() {
             exercises={
               post.workoutData?.exercises ? 
                 post.workoutData.exercises.map(exercise => {
-                  if ('info' in exercise && exercise.info && exercise.info.name) {
-                    return { 
-                      name: exercise.info.name,
-                      ...(exercise.sets && exercise.sets.length > 0 ? {
-                        sets: exercise.sets.length,
-                        reps: exercise.sets[0]?.reps,
-                        weight: exercise.sets[0]?.weight ? String(exercise.sets[0].weight) : undefined
-                      } : {})
-                    };
-                  }
-                  else if ('name' in exercise) {
                     return { 
                       name: exercise.name,
                       sets: exercise.sets,
                       reps: exercise.reps,
                       weight: exercise.weight ? String(exercise.weight) : undefined
                     };
-                  }
-                  return { name: 'Unknown exercise' };
                 })
               : []
             }
