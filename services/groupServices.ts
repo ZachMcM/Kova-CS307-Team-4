@@ -178,13 +178,13 @@ export async function joinGroup(groupId: string, userId: string) {
 
 export async function getRole(
   groupId: string,
-  userId: string
+  profileId: string
 ): Promise<string> {
   const { data, error } = await supabase
     .from("groupRel")
     .select("role")
     .eq("groupId", groupId)
-    .eq("userId", userId);
+    .eq("profileId", profileId);
   if (error) {
     throw new Error(error.message);
   }

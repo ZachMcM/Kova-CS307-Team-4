@@ -66,10 +66,10 @@ export default function CollaborationProgress({
         <VStack space="md">
           <HStack className="items-center justify-between">
             <Text>Progress torwards goal</Text>
-            <Text>{Math.round((progress || 0 / event.goal!) * 100)}%</Text>
+            <Text>{Math.round(((progress || 0) / event.goal!) * 100)}%</Text>
           </HStack>
           <Progress
-            value={Math.round((progress || 0 / event.goal!) * 100)}
+            value={Math.round(((progress || 0) / event.goal!) * 100)}
             size="lg"
             orientation="horizontal"
           >

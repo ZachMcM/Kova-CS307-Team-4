@@ -1,14 +1,52 @@
+import { NewEventValues } from "@/components/event/EventForm";
 import { supabase } from "@/lib/supabase";
-import { ExercisePoints, WorkoutContribution } from "@/types/event-types";
 import { Tables } from "@/types/database.types";
+import { ExercisePoints, WorkoutContribution } from "@/types/event-types";
+import {
+  EventWithGroup,
+  EventWorkoutWithProfile,
+  ExtendedEventWithGroup,
+} from "@/types/extended-types";
 import { ExerciseData, Workout } from "@/types/workout-types";
 import { getGroupsOfUser } from "./groupServices";
-import { EventWithGroup, EventWorkoutWithProfile, ExtendedEventWithGroup } from "@/types/extended-types";
-import EditEventDetails, { EditEventDetailsValues } from "@/components/event/EditEventDetails";
 
-export const getEvent = async (
-  id: string
-): Promise<ExtendedEventWithGroup> => {
+export const newEvent = async (
+  groupId: string,
+  {
+    title,
+    start_date,
+    end_date,
+    goal,
+    exercises,
+    repMultiplier,
+    weightMultiplier,
+    type,
+  }: NewEventValues
+): Promise<Tables<"groupEvent">> => {
+  const { data, error } = await supabase
+    .from("groupEvent")
+    .insert({
+      title,
+      start_date,
+      end_date,
+      exercise_points: exercises,
+      rep_multiplier: repMultiplier,
+      weight_multiplier: weightMultiplier,
+      type,
+      goal,
+      groupId,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const getEvent = async (id: string): Promise<ExtendedEventWithGroup> => {
   const { data: event, error } = await supabase
     .from("groupEvent")
     .select(
@@ -50,27 +88,22 @@ export const getUserEvents = async (
     events.forEach((event) => allEvents.push(event));
   }
 
-  console.log("Events", allEvents)
+  console.log("Events", allEvents);
 
   return allEvents;
 };
 
 // function to add competitionWorkout to competition
 
-export const addEventWorkout = async (
-  workout: Workout,
-  profileId: string
-) => {
+export const addEventWorkout = async (workout: Workout, profileId: string) => {
   const events = await getUserEvents(profileId);
 
   for (const event of events) {
-    const { error: insertErr } = await supabase
-      .from("eventWorkout")
-      .insert({
-        groupEventId: event.id,
-        workoutData: workout,
-        profileId,
-      });
+    const { error: insertErr } = await supabase.from("eventWorkout").insert({
+      groupEventId: event.id,
+      workoutData: workout,
+      profileId,
+    });
 
     if (insertErr) {
       console.log(insertErr);
@@ -123,8 +156,7 @@ export const getExercisePoints = (
   event: Tables<"groupEvent">,
   exercise: ExerciseData
 ) => {
-  const exercisePoints =
-    (event.exercise_points as ExercisePoints[]) || [];
+  const exercisePoints = (event.exercise_points as ExercisePoints[]) || [];
   let totalPoints = 0;
   let baseValue = 1;
   for (const compExercise of exercisePoints) {
@@ -135,10 +167,8 @@ export const getExercisePoints = (
 
   for (const set of exercise.sets) {
     const setPoints =
-      set.reps! *
-      event.rep_multiplier! +
-      (set.weight! *
-      event.weight_multiplier!);
+      set.reps! * event.rep_multiplier! +
+      set.weight! * event.weight_multiplier!;
     totalPoints += setPoints;
   }
 
@@ -187,25 +217,41 @@ export const getProfilePoints = (
   return points;
 };
 
-export const editEventDetails = async ({ endDate, goal, weightMultiplier, repMultiplier }: EditEventDetailsValues, eventId: string) => {
-  const { data, error } = await supabase.from("groupEvent").update({
-    end_date: endDate,
+export const editEventDetails = async (
+  {
+    end_date,
     goal,
-    rep_multiplier: repMultiplier,
-    weight_multiplier: weightMultiplier
-  }).eq("id", eventId)
+    weightMultiplier,
+    repMultiplier,
+  }: {
+    end_date: Date;
+    goal?: number;
+    weightMultiplier?: number;
+    repMultiplier?: number;
+  },
+  eventId: string
+) => {
+  const { data, error } = await supabase
+    .from("groupEvent")
+    .update({
+      end_date,
+      goal,
+      rep_multiplier: repMultiplier,
+      weight_multiplier: weightMultiplier,
+    })
+    .eq("id", eventId);
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return data
-}
+  return data;
+};
 
-export const editExercisePointValues = async (pointValues: ExercisePoints[], eventId: string) => {
+export const editTitle = async (title: string, eventId: string ) => {
   const { data, error } = await supabase.from("groupEvent").update({
-    exercise_points: pointValues
-  }).eq("id", eventId)
+    title
+  }).eq("id", eventId).select()
 
   if (error) {
     throw new Error(error.message)
@@ -213,3 +259,21 @@ export const editExercisePointValues = async (pointValues: ExercisePoints[], eve
 
   return data
 }
+
+export const editExercisePointValues = async (
+  pointValues: ExercisePoints[],
+  eventId: string
+) => {
+  const { data, error } = await supabase
+    .from("groupEvent")
+    .update({
+      exercise_points: pointValues,
+    })
+    .eq("id", eventId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};

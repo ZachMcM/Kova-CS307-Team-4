@@ -1,5 +1,6 @@
 import Container from "@/components/Container";
 import EventCard from "@/components/EventCard";
+import { useSession } from "@/components/SessionContext";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -7,7 +8,7 @@ import { AddIcon, InfoIcon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { getGroup } from "@/services/groupServices";
+import { getGroup, getRole } from "@/services/groupServices";
 import { Tables } from "@/types/database.types";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router/build/hooks";
@@ -20,6 +21,16 @@ export default function Group() {
     queryFn: async () => {
       const group = await getGroup(id as string);
       return group;
+    },
+  });
+
+  const { session } = useSession();
+
+  const { data: role, isPending: isRolePending } = useQuery({
+    queryKey: ["profile-role", { id }],
+    queryFn: async () => {
+      const role = await getRole(id, session?.user.user_metadata.profileId);
+      return role;
     },
   });
 
@@ -55,20 +66,22 @@ export default function Group() {
               type="collaborations"
             />
           </VStack>
-          <Button
-            variant="solid"
-            action="secondary"
-            onPress={() =>
-              router.push({
-                pathname: "/new-event/[id]",
-                params: { id },
-              })
-            }
-            size="lg"
-          >
-            <ButtonText>New Event</ButtonText>
-            <ButtonIcon as={AddIcon} />
-          </Button>
+          {!isRolePending && role == "owner" && (
+            <Button
+              variant="solid"
+              action="secondary"
+              onPress={() =>
+                router.push({
+                  pathname: "/new-event/[id]",
+                  params: { id },
+                })
+              }
+              size="lg"
+            >
+              <ButtonText>New Event</ButtonText>
+              <ButtonIcon as={AddIcon} />
+            </Button>
+          )}
         </VStack>
       )}
     </Container>

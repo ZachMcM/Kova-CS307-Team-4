@@ -65,11 +65,6 @@ export default function TabLayout() {
         name="group/[id]"
         options={{
           href: null,
-        }}/>
-      <Tabs.Screen
-        name="groups/[id]"
-        options={{
-          href: null,
         }}
       />
       <Tabs.Screen
@@ -131,7 +126,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create-group"
         options={{
-          href: null
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -149,7 +144,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="new-event/[id]"
         options={{
-          href: null
+          href: null,
         }}
       />
     </Tabs>
