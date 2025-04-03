@@ -41,6 +41,7 @@ export type Post = {
         }
     >;
   } | null;
+  template_id?: string | null;
   taggedFriends?: string[] | null;
   taggedFriendsData?: Array<{
     userId: string;

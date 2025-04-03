@@ -77,14 +77,20 @@ export default function PostScreen() {
     checkSession();
     
     const workoutDataParam = params.workoutData || (params.params && JSON.parse(params.params as string).workoutData);
+    console.log("Raw workout data param:", workoutDataParam);
     
     if (workoutDataParam) {
       try {
         const parsedData = JSON.parse(workoutDataParam as string);
+        console.log("Parsed workout data:", parsedData);
+        // Check for template ID
+        console.log("Template ID:", parsedData.templateId);
+        
         const processedWorkoutData = {
           duration: parsedData.duration || '0 minutes',
           calories: '0 kcal',
-          exercises: []
+          exercises: [],
+          templateId: parsedData.templateId || null // Store template ID if present
         };
         
         if (parsedData.stats) {
@@ -115,6 +121,7 @@ export default function PostScreen() {
         }
         
         setWorkoutData(processedWorkoutData);
+        console.log("Processed workout data:", processedWorkoutData);
         setIncludeWorkoutData(true);
         
         if (parsedData.exercises && Array.isArray(parsedData.exercises) && parsedData.exercises.length > 0) {
@@ -181,6 +188,8 @@ export default function PostScreen() {
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
+    
+    console.log("Final workout data being submitted:", workoutData);
     
     const illegalCharactersRegex = /[<>{}[\]\\^~|`]/g;
     
@@ -253,6 +262,7 @@ export default function PostScreen() {
         privacy: postPrivacy,
         imageUrl: null,
         workoutData: includeWorkoutData ? workoutData : null,
+        template_id: includeWorkoutData && workoutData.templateId ? workoutData.templateId : null,
         taggedFriends: taggedFriends.length > 0 ? taggedFriends : null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

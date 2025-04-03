@@ -102,6 +102,7 @@ export default function PostDetails() {
               exercises: data.workoutData.exercises as Exercise[], // Cast to Exercise[]
             }
           : null,
+        template_id: data.template_id || null,
         taggedFriends: data.taggedFriends || [],
         taggedFriendsData: data.taggedFriendsData || [],
         createdAt: data.createdAt,
@@ -109,6 +110,8 @@ export default function PostDetails() {
         profile: data.profile || null,
         comments: data.comments
       };
+
+      console.log("TEMPLATE ID: " + fetchedPost.template_id)
 
       const postWithTaggedFriends = async (post: Post) => {
         if (post.taggedFriends && post.taggedFriends.length > 0) {
@@ -315,6 +318,7 @@ export default function PostDetails() {
                 <VStack>
                   <Text size="lg" bold>
                     Exercise Details
+                    {post.template_id && <Text size="xs" className="text-gray-500 ml-2">(Template ID: {post.template_id})</Text>}
                   </Text>
                   <HStack space = "xs" className = "h-16 w-full mb-2 mt-2 border border-gray-300 rounded">
                     {post.workoutData?.duration && (
