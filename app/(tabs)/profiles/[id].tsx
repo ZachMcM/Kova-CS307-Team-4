@@ -26,6 +26,11 @@ import { View } from "react-native";
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio"
 import { useSession } from "@/components/SessionContext";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { ProfileActivities } from "@/components/ProfileActivities";
+import { Post } from "../feed";
+import { useNavigation } from "@react-navigation/native";
+import { getWeightEntries } from "@/services/weightServices";
+import Container from "@/components/Container";
 
 export default function ProfileScreen() {
 
@@ -34,6 +39,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const navigation = useNavigation();
   const [userId, setUserId] = useState<string | null>(null);
   const { session } = useSession();
 
@@ -80,17 +86,28 @@ export default function ProfileScreen() {
   const [storedGender, setStoredGender] = useState("")
   const [gender, setGender] = useState("")
   const [storedWeight, setStoredWeight] = useState("")
-  const [weight, setWeight] = useState("")
+
+  //Activity UI related states
+  const [posts, setPosts] = useState<any[]>([]);
+  const [postError, setPostError] = useState<Error | null>(null);
+  const [postsIsLoading, setPostsIsLoading] = useState(true);
 
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
       const profile = (await getProfile(id as string));
-      console.log(profile);
       return profile;
     },
   });
+
+  const { data: weight, isPending: weightIsPending } = useQuery({
+    queryKey: ["weight", id],
+    queryFn: async () => {
+      const weight = (await getWeightEntries(id as string, 1));
+      return `${weight[0].weight} ${weight[0].unit}`;
+    }
+  })
 
   const { data: followingData, isPending: isFollowingPending } = useQuery({
     queryKey: ["followingStatus", userId, id],
@@ -120,7 +137,17 @@ export default function ProfileScreen() {
   })
 
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["privacy_data", id] })
+    const unsubscribe = navigation.addListener('focus', () => {
+      queryClient.invalidateQueries({ queryKey: ["weight", id]});
+      if (profile && session?.user.id === id) { fetchOwnPosts(); console.log("fetching user posts")}
+    });
+
+    return unsubscribe;
+  }, [navigation, profile]); 
+
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["privacy_data", id] });
+    queryClient.invalidateQueries({ queryKey: ["weight", id]});
   }, [])
 
   useEffect(() => {
@@ -153,7 +180,7 @@ export default function ProfileScreen() {
       setAchievement(profile.achievement || "");
       if (profile.age) { setAge(profile.age.toString() || ""); }
       if (profile.gender) { setGender(profile.gender || ""); }
-      if (profile.weight) { setWeight(profile.weight.toString() || ""); }
+      if (session?.user.id === id) { fetchOwnPosts(); console.log("fetching user posts")} //Need this and the navigation to work
     }
   }, [profile]);
 
@@ -171,9 +198,6 @@ export default function ProfileScreen() {
         if (achievementDisabled) { setAchievement(""); }
         if (ageDisabled) { setAge(""); }
         if (genderDisabled) { setGender(""); }
-        if (weightDisabled) { setWeight(""); }
-
-        console.log(nameValue);
 
         await updateProfile(profile.id, goal, bio, location, achievement, privacyValues, nameValue, profile.age, gender, profile.weight);
         setIsEditingProfile(false);
@@ -189,7 +213,6 @@ export default function ProfileScreen() {
         profile.name = nameValue;
         if (age) { profile.age = parseInt(age); }
         if (gender) { profile.gender = gender; }
-        if (weight) { profile.weight = parseInt(weight); }
 
         // Re-enable the inputs
         setGoalDisabled(false);
@@ -368,10 +391,8 @@ export default function ProfileScreen() {
   const hasSpecificAccess = (parameter: string) => {
     if (!privacy_list) return false;
     if (profile?.user_id == session?.user.id || privacy_list[parameter] === "PUBLIC" || (isFriend && privacy_list[parameter] == "FRIENDS")) {
-      console.log("true access for " + parameter + " " + privacy_list[parameter])
       return true
     }
-    console.log("false access for " + parameter)
     return false
   }
 
@@ -400,8 +421,72 @@ export default function ProfileScreen() {
     }
   }
 
+  const fetchOwnPosts = async () => {
+    try {
+      const { data: postsData, error: postsError } = await supabase
+      .from("post")
+      .select(`
+        *,
+        profile:profileId (
+          username,
+          userId,
+          name,
+          avatar
+        )
+      `)
+      .eq("profileId", profile?.id)
+      .order("createdAt", { ascending: false })
+
+      setPosts(postsData ? postsData : []);
+
+      if (postsError) {
+        throw postsError;
+      }
+    } catch (err) {
+      console.error("Error fetching own posts:", err);
+      setPostError(err instanceof Error ? err : new Error('Unknown error occurred'));
+    } finally {
+      setPostsIsLoading(false);
+    }
+  }
+
+  //Copied directly from feed
+  //TODO in future sprint, define this function in a context or find a way to easily export it from somewhere else
+  const updateOwnPost = async (postId: string, title: string, description: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('post')
+        .update({ 
+          title, 
+          description,
+          updatedAt: new Date().toISOString()
+        })
+        .eq('id', postId)
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { ...post, title, description, updatedAt: new Date().toISOString() } 
+            : post
+        )
+      );
+      
+      showSuccessToast(toast, 'Post updated successfully');
+      return data;
+    } catch (error) {
+      console.error('Error updating post:', error);
+      showErrorToast(toast, 'Failed to update post');
+      throw error;
+    }
+  };
+
   return (
-    <StaticContainer className="flex px-6 py-16">
+    <Container className="flex px-6 py-16">
       <VStack space="md">
         <Box className="border-b border-gray-300 pb-2">
           {isPending || isFollowingPending || isFollowerPending || isPrivacyPending ? (
@@ -497,9 +582,9 @@ export default function ProfileScreen() {
                   {hasNoAccess() == "FALSE" && (isEditingProfile || (profile.location || profile.goal || profile.bio || profile.age)) ? (
                     <Box className="border border-gray-300 rounded p-2 mt-2">
                       {isEditingProfile && !ageDisabled ? (
-                        <HStack>
-                          <Heading className="mr-1 mt-3">🕯️Age:</Heading>
-                          <Input variant="outline" className="mt-2 w-2/5 mr-0.5">
+                        <HStack className="mr-7">
+                          <Heading size="md" className="mr-1 mt-3">🎂:</Heading>
+                          <Input variant="outline" className="mt-2 w-11/12 mr-0.5">
                             <InputField id="AgeInput" value={age} onChangeText={(text: string) => { if (text != "" && /^[0-9]+$/.test(text)) { setAge(text) } else { setAge("") } }} maxLength={3} placeholder="Age"></InputField>
                             <InputSlot>
                               <Pressable onPress={disableAgeInput}>
@@ -511,16 +596,16 @@ export default function ProfileScreen() {
                         </HStack>
                       ) : profile.age && hasSpecificAccess("age") && !ageDisabled && age != "" && (
                         <HStack className="text-wrap">
-                          <Heading className="mr-1">🕯️Age:</Heading>
-                          <View className="w-2/5">
-                            <Heading>{profile.age}</Heading>
+                          <Heading size="md" className="mr-1">🎂:</Heading>
+                          <View className="w-11/12">
+                            <Heading size="md">{profile.age}</Heading>
                           </View>
                         </HStack>
                       )}
                       {isEditingProfile && !genderDisabled ? (
-                        <HStack>
-                          <Heading className="mr-1 mt-3">🟡Gender:</Heading>
-                          <Input variant="outline" className="mt-2 w-2/5 mr-0.5">
+                        <HStack className="mr-7">
+                          <Heading size="md" className="mr-1 mt-3">🚻:</Heading>
+                          <Input variant="outline" className="mt-2 w-11/12 mr-0.5">
                             <InputField id="GenderInput" value={gender} onChangeText={(text: string) => { setGender(text) }} maxLength={15} placeholder="Gender"></InputField>
                             <InputSlot>
                               <Pressable onPress={disableGenderInput}>
@@ -532,30 +617,17 @@ export default function ProfileScreen() {
                         </HStack>
                       ) : profile.gender && hasSpecificAccess("gender") && !genderDisabled && gender != "" && (
                         <HStack className="text-wrap">
-                          <Heading size="md" className="mr-1">🟡Gender:</Heading>
-                          <View className="w-2/5">
+                          <Heading size="md" className="mr-1">🚻:</Heading>
+                          <View className="w-11/12">
                             <Heading size="md">{profile.gender}</Heading>
                           </View>
                         </HStack>
                       )}
-                      {isEditingProfile && !weightDisabled ? (
-                        <HStack>
-                          <Heading size="md" className="mr-1 mt-3">💪Weight:</Heading>
-                          <Input size="md" variant="outline" className="mt-2 w-2/5 mr-0.5">
-                            <InputField id="WeightInput" value={weight} onChangeText={(text: string) => { if (text != "" && /^[0-9]+$/.test(text)) { setWeight(text) } else { setWeight("") } }} maxLength={4} placeholder="Weight"></InputField>
-                            <InputSlot>
-                              <Pressable onPress={disableWeightInput}>
-                                <InputIcon as={TrashIcon} className="mr-2 bg-none"></InputIcon>
-                              </Pressable>
-                            </InputSlot>
-                          </Input>
-                          {getPrivacyIcon("weight")}
-                        </HStack>
-                      ) : profile.weight && hasSpecificAccess("weight") && !weightDisabled && weight != "" && (
+                      {!isEditingProfile && weight && hasSpecificAccess("weight") && !weightDisabled && !weightIsPending && weight != "" && (
                         <HStack className="text-wrap">
-                          <Heading size="md" className="mr-1">💪Weight:</Heading>
-                          <View className="w-2/5">
-                            <Heading size="md">{profile.weight}</Heading>
+                          <Heading size="md" className="mr-1">⚖️:</Heading>
+                          <View className="w-11/12">
+                            <Heading size="md">{weight}</Heading>
                           </View>
                         </HStack>
                       )}
@@ -634,7 +706,7 @@ export default function ProfileScreen() {
                   ) : profile && (
                     <Badge size="md" variant="solid" action="muted" className="bg-none text-none rounded-2xl">
                       <BadgeIcon as={AlertCircleIcon} className="text-[#4d7599]"></BadgeIcon>
-                      {/*profile.private === "FRIENDS"*/ hasNoAccess() == "FRIENDS" ? (
+                      {hasNoAccess() == "FRIENDS" ? (
                         <Text className="ml-1 text-[#4d7599] text-sm">This user's profile is only visible to friends</Text>
                       ) : (
                         <Text className="ml-1 text-[#4d7599] text-sm">This user's profile is private</Text>
@@ -679,7 +751,10 @@ export default function ProfileScreen() {
               </VStack>
             )}
         </Box>
+        { profile && id === session?.user.id && (
+          <ProfileActivities posts={posts as Post[]} isLoading={postsIsLoading} updatePostFunc={updateOwnPost}></ProfileActivities>
+        )}
       </VStack>
-    </StaticContainer>
+    </Container>
   );
 }

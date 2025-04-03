@@ -6,7 +6,17 @@ import { WeightEntry, WeightEntryInsert, WeightEntryUpdate } from "@/types/weigh
  * @param userId The user ID
  * @returns Array of weight entries
  */
-export const getWeightEntries = async (userId: string): Promise<WeightEntry[]> => {
+export const getWeightEntries = async (userId: string, limit?: number): Promise<WeightEntry[]> => {
+  if (limit) {
+    const { data, error } = await supabase
+    .from("weight_entries")
+    .select("*")
+    .eq("user_id", userId)
+    .order("date", { ascending: false })
+    .limit(limit);
+    if (error) throw new Error(error.message);
+    return data as WeightEntry[];
+  } 
   const { data, error } = await supabase
     .from("weight_entries")
     .select("*")
