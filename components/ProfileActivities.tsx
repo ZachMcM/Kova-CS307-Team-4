@@ -22,6 +22,8 @@ import { WorkoutData } from "@/types/workout-types";
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio";
 import { Icon, TrashIcon, EditIcon, AddIcon, ChevronLeftIcon, DownloadIcon } from "@/components/ui/icon";
+import { Box } from "./ui/box";
+import { Accordion, AccordionContent, AccordionContentText, AccordionHeader, AccordionTitleText } from "./ui/accordion";
 
 type ProfileActivitiesProps = {
     posts: Post[];
@@ -32,6 +34,8 @@ type ProfileActivitiesProps = {
 type FavoriteExercise = {
     name: string;
     count: number;
+    weight: number;
+    unit: string;
 }
 
 type PersonalBest = {
@@ -59,8 +63,9 @@ export const ProfileActivities = ({
     const [hasMoreWorkouts, setHasMoreWorkouts] = useState(posts.length > 0 ? true : false);
     const [selectedWorkout, setSelectedWorkout] = useState<string | null>(null);
 
+    const [favoritesViewCount, setFavoritesViewCount] = useState(4);
+
     const [timePeriod, setTimePeriod] = useState("week")
-    const [workoutGraphData, setWorkoutGraphData] = useState<Post[]>([]); //Only take PB's from this, not pulling from all exercises in DB
     const [userPostCount, setUserPostCount] = useState({
       totalPosts: posts.length,
       totalPostsYear: 0,
@@ -74,12 +79,6 @@ export const ProfileActivities = ({
       favoritesWeek: [] as FavoriteExercise[],
 
     });
-    const [personalBests, setPersonalBests] = useState({
-      personalBests: [] as PersonalBest[],
-      personalBestsYear: [] as PersonalBest[],
-      personalBestsMonth: [] as PersonalBest[],
-      personalBestsWeek: [] as PersonalBest[],
-    })
     const [totalWorkouts, setTotalWorkouts] = useState({
       totalWorkouts: workouts.length,
       totalWorkoutsYear: 0,
@@ -99,49 +98,33 @@ export const ProfileActivities = ({
       workoutsWeek: [] as Post[],
     })
 
-    const filterEntriesByTimePeriod = (entries: Post[]) => {
-      const now = new Date();
-      const filteredEntries = entries.filter(entry => {
-        const entryDate = new Date(entry.createdAt);
-        const diffTime = Math.abs(now.getTime() - entryDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        switch (timePeriod) {
-          case 'week':
-            return diffDays <= 7;
-          case 'month':
-            return diffDays <= 30;
-          case 'year':
-            return diffDays <= 365;
-          default:
-            return true;
-        }
-      });
-      
-      return filteredEntries;
-    };
-
     const calculateStats = () => {
       const now = new Date();
       const DOWArray = [0, 1, 2, 3, 4, 5, 6].slice(0, now.getDay() + 1);
-      const postsYear = posts.map((post) => {
-        if ((new Date(post.createdAt)).getFullYear()=== now.getFullYear()) return post;
-      });
-      const workoutsYear = postsYear.map((post) => {
-        if (post?.workoutData && post.workoutData.exercises.length !== 0) return post;
-      });
-      const postsMonth = posts.map((post) => {
-        if ((new Date(post.createdAt)).getMonth()=== now.getMonth()) return post;
-      });
-      const workoutsMonth = postsMonth.map((post) => {
-        if (post?.workoutData && post.workoutData.exercises.length !== 0) return post;
-      });
-      const postsWeek = posts.map((post) => {
-        if (DOWArray.includes((new Date(post.createdAt)).getDay())) return post;
-      });
-      const workoutsWeek = postsWeek.map((post) => {
-        if (post?.workoutData && post.workoutData.exercises.length !== 0) return post;
-      });
+
+      const postsYear = posts.filter((post) => 
+        (new Date(post.createdAt)).getFullYear() === now.getFullYear()
+      );
+      
+      const workoutsYear = postsYear.filter((post) => 
+        post?.workoutData && post.workoutData.exercises.length !== 0
+      );
+      
+      const postsMonth = posts.filter((post) => 
+        (new Date(post.createdAt)).getMonth() === now.getMonth()
+      );
+      
+      const workoutsMonth = postsMonth.filter((post) => 
+        post?.workoutData && post.workoutData.exercises.length !== 0
+      );
+      
+      const postsWeek = posts.filter((post) => 
+        DOWArray.includes((new Date(post.createdAt)).getDay())
+      );
+      
+      const workoutsWeek = postsWeek.filter((post) => 
+        post?.workoutData && post.workoutData.exercises.length !== 0
+      );
       setUserPostCount({
         totalPosts: posts.length,
         totalPostsYear: postsYear.length,
@@ -172,16 +155,9 @@ export const ProfileActivities = ({
         favoritesMonth: [] as FavoriteExercise[],
         favoritesWeek: [] as FavoriteExercise[],
       };
-      let personalBestData = {
-        personalBests: [] as PersonalBest[],
-        personalBestsYear: [] as PersonalBest[],
-        personalBestsMonth: [] as PersonalBest[],
-        personalBestsWeek: [] as PersonalBest[],
-      }
-      const addFavorites = (data: WorkoutData, favoriteArray: FavoriteExercise[], personalBestArray: PersonalBest[]) => {
+      const addFavorites = (data: WorkoutData, favoriteArray: FavoriteExercise[]) => {
         data.exercises.map((exercise) => {
           let favoriteIndex = favoriteArray.findIndex(favorite => favorite.name === exercise.name);
-          let personalBestIndex = personalBestArray.findIndex(pb => pb.exerciseName === exercise.name);
           let weight = exercise.weight ? (
             exercise.weight.split(" ")[1] === "kg" ? (
               parseInt(exercise.weight.split(" ")[0]) * 2.2046226218 //kg to lbs
@@ -189,43 +165,45 @@ export const ProfileActivities = ({
               parseInt(exercise.weight.split(" ")[0])
             )
           ) : 0
+          let oldWeight = favoriteIndex !== -1 && favoriteArray[favoriteIndex].weight && favoriteArray[favoriteIndex].unit ? (
+            favoriteArray[favoriteIndex].unit === "kg" ? (
+              favoriteArray[favoriteIndex].weight * 2.2046226218 //kg to lbs
+            ) : (
+              favoriteArray[favoriteIndex].weight
+            )
+          ) : 0
           if (favoriteIndex > -1) {
-            favoriteArray[favoriteIndex].count += ((exercise.reps ? exercise.reps : 0) + 0.5*(exercise.sets ? exercise.sets : 0)); //Set multiplier included here
+            favoriteArray[favoriteIndex].count += (exercise.sets ? exercise.sets : 0)
+            if (exercise.weight && oldWeight < weight) {
+              favoriteArray[favoriteIndex].weight = parseInt(exercise.weight.split(" ")[0])
+              favoriteArray[favoriteIndex].unit = exercise.weight.split(" ")[1]
+            }
           } else {
             favoriteArray.push({
               name: exercise.name,
-              count: exercise.sets
-            } as FavoriteExercise)
-          }
-          if (personalBestIndex > -1) {
-            if (exercise.weight && personalBestArray[personalBestIndex].weight < weight) {
-              personalBestArray[personalBestIndex].weight = weight;
-            }
-          } else {
-            personalBestArray.push({
-              exerciseName: exercise.name,
+              count: exercise.sets,
               weight: weight,
-              unit: exercise.weight ? exercise.weight?.split(" ")[1] : "lbs",
-            })
+              unit: exercise.weight ? exercise.weight.split(" ")[1] : "lbs",
+            } as FavoriteExercise)
           }
         })
       }
       workouts.map((workout) => {
         if (!workout.workoutData || !workout.workoutData.duration) return;
         secondData.totalSeconds += (parseInt(workout.workoutData.duration.split(":")[1]) + parseInt(workout.workoutData.duration.split(":")[0])*60);
-        addFavorites(workout.workoutData as WorkoutData, favoriteData.favorites, personalBestData.personalBests);
+        addFavorites(workout.workoutData as WorkoutData, favoriteData.favorites);
 
         if (workoutsYear.includes(workout)) {
           secondData.totalSecondsMonth += (parseInt(workout.workoutData.duration.split(":")[1]) + parseInt(workout.workoutData.duration.split(":")[0])*60);
-          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesYear, personalBestData.personalBestsYear);
+          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesYear);
         }
         if (workoutsMonth.includes(workout)) {
           secondData.totalSecondsMonth += (parseInt(workout.workoutData.duration.split(":")[1]) + parseInt(workout.workoutData.duration.split(":")[0])*60);
-          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesMonth, personalBestData.personalBestsMonth);
+          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesMonth);
         }
         if (workoutsWeek.includes(workout)) {
           secondData.totalSecondsWeek += (parseInt(workout.workoutData.duration.split(":")[1]) + parseInt(workout.workoutData.duration.split(":")[0])*60);
-          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesWeek, personalBestData.personalBestsWeek);
+          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesWeek);
         }
       });
       setTotalMinutes({
@@ -234,8 +212,8 @@ export const ProfileActivities = ({
         totalMinutesMonth: secondData.totalSecondsMonth / 60,
         totalMinutesWeek: secondData.totalSecondsWeek / 60,
       });
+      favoriteData.favorites.sort((a, b) => b.count - a.count);
       setFavoriteExercises(favoriteData);
-      setPersonalBests(personalBestData);
     }
 
     // Prepare chart data
@@ -299,7 +277,6 @@ export const ProfileActivities = ({
           workoutData.workouts.forEach(workout => {
             if (!workout || !workout.createdAt) return;
             const year = (new Date(workout.createdAt)).getFullYear().toString();
-            console.log("year ", year)
             if (!labels.includes(year)) {
               labels.push(year);
               data.push(0);
@@ -327,7 +304,6 @@ export const ProfileActivities = ({
         }
       }
 
-      console.log("labels: ", labels, "data: ", data);
       return {
         labels: labels,
         datasets: [{
@@ -396,7 +372,6 @@ export const ProfileActivities = ({
           workoutData.workouts.forEach(workout => {
             if (!workout || !workout.createdAt) return;
             const year = (new Date(workout.createdAt)).getFullYear().toString();
-            console.log("year ", year)
             if (!labels.includes(year)) {
               labels.push(year);
               data.push(0);
@@ -424,7 +399,6 @@ export const ProfileActivities = ({
         }
       }
 
-      console.log("labels: ", labels, "data: ", data);
       return {
         labels: labels,
         datasets: [{
@@ -476,6 +450,7 @@ export const ProfileActivities = ({
           {
             setPostViewCount(4);
             setWorkoutViewCount(4);
+            setFavoritesViewCount(4);
             setVisiblePosts(posts.length > 4 ? posts.slice(0, 4) : posts.slice());
             setHasMorePosts(posts.length > 0 ? true : false);
             setVisibleWorkouts([]);
@@ -502,6 +477,10 @@ export const ProfileActivities = ({
         calculateStats();
         if (posts.length === visiblePosts.length) setHasMorePosts(false);
     }, [])
+
+    useEffect(() => {
+      calculateStats();
+    }, [workouts])
 
     return (
         <View>
@@ -547,7 +526,8 @@ export const ProfileActivities = ({
                       timePeriod[0].toUpperCase() + timePeriod.slice(1)
                     )}
                   </Heading>
-                  <LineChart
+                  {prepareWorkoutCountChart().labels.length > 1 ? (
+                    <LineChart
                     data={prepareWorkoutCountChart()}
                     width={Dimensions.get('window').width - 85}
                     height={220}
@@ -570,6 +550,31 @@ export const ProfileActivities = ({
                       marginVertical: 8,
                     }}
                   />
+                  ) : (
+                    <BarChart
+                    data={prepareWorkoutCountChart()}
+                    width={Dimensions.get('window').width - 85}
+                    height={220}
+                    yAxisLabel=""
+                    yAxisSuffix=""
+                    fromZero
+                    chartConfig={{
+                      backgroundColor: '#ffffff',
+                      backgroundGradientFrom: '#ffffff',
+                      backgroundGradientTo: '#ffffff',
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(111, 168, 220, ${opacity})`,
+                      barPercentage: 0.95,
+                      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                      propsForLabels: {
+                        fontSize: 12,
+                      },
+                    }}
+                    style={{
+                      marginVertical: 8,
+                    }}
+                  />
+                  )}
                   <Heading size="xl">Workout Minutes: {timePeriod === "month" ? (
                       (new Date()).toLocaleDateString('en-us', {month: "long"})
                     )  : timePeriod === "year" ? (
@@ -578,7 +583,8 @@ export const ProfileActivities = ({
                       timePeriod[0].toUpperCase() + timePeriod.slice(1)
                     )}
                   </Heading>
-                  <LineChart
+                  {prepareWorkoutMinuteChart().labels.length > 1 ? (
+                    <LineChart
                     data={prepareWorkoutMinuteChart()}
                     width={Dimensions.get('window').width - 85}
                     height={220}
@@ -601,11 +607,56 @@ export const ProfileActivities = ({
                       marginVertical: 8,
                     }}
                   />
+                  ) : (
+                    <BarChart
+                    data={prepareWorkoutMinuteChart()}
+                    width={Dimensions.get('window').width - 85}
+                    height={220}
+                    yAxisLabel=""
+                    yAxisSuffix=""
+                    fromZero
+                    chartConfig={{
+                      backgroundColor: '#ffffff',
+                      backgroundGradientFrom: '#ffffff',
+                      backgroundGradientTo: '#ffffff',
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(111, 168, 220, ${opacity})`,
+                      barPercentage: 0.95,
+                      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                      propsForLabels: {
+                        fontSize: 12,
+                      },
+                    }}
+                    style={{
+                      marginVertical: 8,
+                    }}
+                  />
+                  )}
+                  <Card variant="outline">
+                    <Heading className="mb-5" size="xl">Favorite Exercises ⭐</Heading>
+                    {favoriteExercises.favorites.length === 0} ? (
+                      <Heading size="lg">No workouts recorded yet. Do a workout to get some data!</Heading>
+                    ) : (
+                    {favoriteExercises && favoriteExercises.favorites.slice(0, favoritesViewCount).map((favorite) => (
+                      <Card className="mb-3" variant="filled" key={favorite.name}>
+                        <Heading size="lg">{favorite.name}</Heading>
+                        <Heading size="md">Personal Best: {favorite.weight} {favorite.unit}</Heading>
+                        <Text size="md">You have done {favorite.count} sets of this exercise!</Text>
+                      </Card>
+                    ))}
+                    {favoriteExercises && favoriteExercises.favorites.length > favoritesViewCount && (
+                      <Button
+                        onPress={() => { setFavoritesViewCount(favoritesViewCount + 4); }}
+                      >
+                        <ButtonText>{'Render more Favorites'}</ButtonText>
+                      </Button>
+                    )})
+                  </Card>
                 </Card>
               </VStack>
               <VStack>
                 <Heading size="2xl">Workout History</Heading>
-                <Card variant="outline">
+                <Card className="my-3" variant="outline">
                     {isLoading && (
                         <Text>Loading Workouts...</Text>
                     )}

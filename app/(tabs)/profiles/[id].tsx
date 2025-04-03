@@ -30,6 +30,7 @@ import { ProfileActivities } from "@/components/ProfileActivities";
 import { Post } from "../feed";
 import { useNavigation } from "@react-navigation/native";
 import { getWeightEntries } from "@/services/weightServices";
+import Container from "@/components/Container";
 
 export default function ProfileScreen() {
 
@@ -485,7 +486,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <StaticContainer className="flex px-6 py-16">
+    <Container className="flex px-6 py-16">
       <VStack space="md">
         <Box className="border-b border-gray-300 pb-2">
           {isPending || isFollowingPending || isFollowerPending || isPrivacyPending ? (
@@ -705,7 +706,7 @@ export default function ProfileScreen() {
                   ) : profile && (
                     <Badge size="md" variant="solid" action="muted" className="bg-none text-none rounded-2xl">
                       <BadgeIcon as={AlertCircleIcon} className="text-[#4d7599]"></BadgeIcon>
-                      {/*profile.private === "FRIENDS"*/ hasNoAccess() == "FRIENDS" ? (
+                      {hasNoAccess() == "FRIENDS" ? (
                         <Text className="ml-1 text-[#4d7599] text-sm">This user's profile is only visible to friends</Text>
                       ) : (
                         <Text className="ml-1 text-[#4d7599] text-sm">This user's profile is private</Text>
@@ -754,6 +755,6 @@ export default function ProfileScreen() {
           <ProfileActivities posts={posts as Post[]} isLoading={postsIsLoading} updatePostFunc={updateOwnPost}></ProfileActivities>
         )}
       </VStack>
-    </StaticContainer>
+    </Container>
   );
 }
