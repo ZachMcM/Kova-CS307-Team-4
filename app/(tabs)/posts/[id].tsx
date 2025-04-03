@@ -140,7 +140,6 @@ export default function PostDetails() {
         comments: data.comments
       };
 
-      console.log("POST: " + JSON.stringify(fetchedPost))
 
       const postWithTaggedFriends = async (post: Post) => {
         if (post.taggedFriends && post.taggedFriends.length > 0) {
@@ -261,8 +260,6 @@ export default function PostDetails() {
 
     try {
       setIsCopyingTemplate(true);
-
-      console.log("POST: " + JSON.stringify(post.workoutData?.exercises))
 
       const { data: templateData, error: templateError } = await supabase
         .from('template')
