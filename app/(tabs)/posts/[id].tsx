@@ -17,11 +17,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Box } from "@/components/ui/box";
-import { Ionicons } from "@expo/vector-icons";
-import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { Button, ButtonText } from "@/components/ui/button";
 import CommentCard from "@/components/CommentCard";
-import { P } from "@expo/html-elements";
+import { DetailedWorkoutData } from "@/components/WorkoutData";
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs(['Warning: Text strings must be rendered within a <Text> component']);
 
 export type Comment = {
   id: string;
@@ -312,76 +313,7 @@ export default function PostDetails() {
               )}
               {/* Exercise Details */}
               {post.workoutData?.exercises && post.workoutData?.exercises?.length > 0 && (
-                <VStack>
-                  <Text size="lg" bold>
-                    Exercise Details
-                  </Text>
-                  <HStack space = "xs" className = "h-16 w-full mb-2 mt-2 border border-gray-300 rounded">
-                    {post.workoutData?.duration && (
-                      <Box className="flex-1 h-full justify-center items-center">
-                        <Text size="md">Duration</Text>
-                        <HStack space = "xs">
-                          <Text size = "lg" bold>{post.workoutData.duration}</Text>
-                        </HStack>
-                      </Box>
-                    )}
-                    {post.workoutData?.calories && (
-                      <Box className="flex-1 h-full justify-center items-center">
-                        <Text size="md">Calories</Text>
-                        <HStack>
-                          <Text size = "lg" bold>{post.workoutData.calories}</Text>
-                          <Ionicons name="flame-outline" size={22} color="#FF9500"/>
-                        </HStack>
-                      </Box>
-                    )}
-                    {post.weighIn && (
-                      <Box className="flex-1 h-full justify-center items-center">
-                        <Text size="md">Weigh-In</Text>
-                        <HStack>
-                          <Text size = "lg" bold>{post.weighIn} lbs</Text>
-                        </HStack>
-                      </Box>
-                    )}
-                  </HStack>
-                  {post.workoutData.exercises.reduce((rows, exercise, index) => {
-                    if (index % 2 === 0) {
-                      rows.push([exercise]);
-                    } else {
-                      rows[rows.length - 1].push(exercise);
-                    }
-                    return rows;
-                  }, [] as Exercise[][]).map((row, rowIndex) => (
-                    <HStack key={rowIndex} space="xs" className="w-full mb-2">
-                      {row.map((exercise, index) => (
-                        <Box key={index} className="flex-1 rounded border border-gray-300 p-2">
-                          <Text className="font-bold">{exercise.name}</Text>
-                          <View>
-                            {exercise.sets !== undefined && (
-                              <Text>
-                                <Text>Sets: </Text>
-                                <Text>{String(exercise.sets)}</Text>
-                              </Text>
-                            )}
-                            {exercise.reps !== undefined && (
-                              <Text>
-                                <Text>Reps: </Text>
-                                <Text>{String(exercise.reps)}</Text>
-                              </Text>
-                            )}
-                            {exercise.weight && (
-                              <Text>
-                                <Text>Weight: </Text>
-                                <Text>{exercise.weight}</Text>
-                              </Text>
-                            )}
-                          </View>
-                        </Box>
-                      ))}
-                      {/* Add an empty box if there is only one exercise in the row */}
-                      {row.length === 1 && <Box className="flex-1 p-2" />}
-                    </HStack>
-                  ))}
-                </VStack>
+                <DetailedWorkoutData post={post}></DetailedWorkoutData>
               )}
             </VStack>
           )}
@@ -401,7 +333,6 @@ export default function PostDetails() {
                   multiline
                   numberOfLines={4}>
               </TextInput>
-
               <HStack space = "sm">
                 <Box className = "border rounded-3xl mt-4 p-1 border-gray-300">
                   <Text size = "sm" className="flex-row text-gray-400">
@@ -414,7 +345,7 @@ export default function PostDetails() {
                     <ButtonText className="text-white font-bold">Submit</ButtonText>
                   </Button>
                 ) : (
-                  <Spinner></Spinner>
+                  <Spinner/>
                 )}
               </HStack>
             </VStack>
@@ -431,7 +362,6 @@ export default function PostDetails() {
           )}
         </VStack>
       </Box>
-
     </Container>
   );
 }

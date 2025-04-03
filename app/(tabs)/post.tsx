@@ -23,6 +23,7 @@ import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/to
 import { uploadPostImages } from '@/services/postServices';
 import { Image } from '@/components/ui/image';
 import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/components/ui/radio';
+import { SummaryWorkoutData } from '@/components/WorkoutData';
 
 const defaultWorkoutData = {
   duration: '0 minutes',
@@ -330,13 +331,8 @@ export default function PostScreen() {
       const files: String[] = pickerResult.assets.map((asset) => {
         return asset.uri;
       });
-
-      console.log(images);
-      console.log(files);
-
+      
       const unionFiles = Array.from(new Set([...images, ...files]));
-
-      console.log(unionFiles)
 
       setImages(unionFiles);
     }
@@ -347,13 +343,13 @@ export default function PostScreen() {
   };
 
   return (
-    <ScrollView style={styles.scrollView}>
+    <ScrollView style={postStyles.scrollView}>
       <Container>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle} size="xl" bold>Create Post</Text>
+        <View style={postStyles.header}>
+          <Text style={postStyles.headerTitle} size="xl" bold>Create Post</Text>
         </View>
 
-        <VStack space="md" style={styles.formContainer}>
+        <VStack space="md" style={postStyles.formContainer}>
           <VStack space="xs">
             <Text size="sm" bold>Title</Text>
             <Input variant="outline" isInvalid={!!titleError}>
@@ -363,7 +359,7 @@ export default function PostScreen() {
                 onChangeText={handleTitleChange}
               />
             </Input>
-            {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+            {titleError ? <Text style={postStyles.errorText}>{titleError}</Text> : null}
           </VStack>
 
           <VStack space="xs">
@@ -375,11 +371,11 @@ export default function PostScreen() {
                 onChangeText={handleDescriptionChange}
               />
             </Textarea>
-            {descriptionError ? <Text style={styles.errorText}>{descriptionError}</Text> : null}
+            {descriptionError ? <Text style={postStyles.errorText}>{descriptionError}</Text> : null}
           </VStack>
 
           <VStack space="xs">
-            <HStack style={styles.toggleContainer} space="md">
+            <HStack style={postStyles.toggleContainer} space="md">
               <Text size="sm" bold>Include Workout Data</Text>
               <Switch
                 value={includeWorkoutData}
@@ -390,32 +386,11 @@ export default function PostScreen() {
           </VStack>
 
           {includeWorkoutData && (
-            <View style={styles.workoutDataContainer}>
-              <Text size="sm" bold style={styles.sectionTitle}>Workout Summary</Text>
-              
-              <HStack style={styles.workoutSummary} space="lg">
-                <VStack style={styles.summaryItem}>
-                  <Text size="xs">Duration</Text>
-                  <Text size="sm" bold>{workoutData.duration}</Text>
-                </VStack>
-                <VStack style={styles.summaryItem}>
-                  <Text size="xs">Calories</Text>
-                  <Text size="sm" bold>{workoutData.calories}</Text>
-                </VStack>
-              </HStack>
-
-              <Text size="sm" bold style={styles.exercisesTitle}>Exercises</Text>
-              {workoutData.exercises.map((exercise: { name: string; sets: number; reps: number; weight: string }, index: number) => (
-                <View key={index} style={styles.exerciseItem}>
-                  <Text size="sm" bold>{exercise.name}</Text>
-                  <Text size="xs">{exercise.sets} sets × {exercise.reps} reps • {exercise.weight}</Text>
-                </View>
-              ))}
-            </View>
+            <SummaryWorkoutData workoutData={workoutData}></SummaryWorkoutData>
           )}
 
           <VStack space="xs">
-            <HStack style={styles.toggleContainer} space="md">
+            <HStack style={postStyles.toggleContainer} space="md">
               <Text size="sm" bold>Tag Friends</Text>
               <Button 
                 size="sm" 
@@ -427,11 +402,11 @@ export default function PostScreen() {
             </HStack>
             
             {taggedFriends.length > 0 && (
-              <HStack style={styles.selectedFriendsContainer} space="sm" className="flex-wrap">
+              <HStack style={postStyles.selectedFriendsContainer} space="sm" className="flex-wrap">
                 {taggedFriends.map(friendId => {
                   const friend = friends?.find(f => f.userId === friendId);
                   return friend ? (
-                    <HStack key={friendId} style={styles.selectedFriendChip} space="xs" className="items-center">
+                    <HStack key={friendId} style={postStyles.selectedFriendChip} space="xs" className="items-center">
                       <Avatar size="xs">
                         {friend.avatar ? (
                           <AvatarImage source={{ uri: friend.avatar }} />
@@ -450,7 +425,7 @@ export default function PostScreen() {
             )}
             
             {showFriendSelector && (
-              <VStack style={styles.friendSelectorContainer} space="sm">
+              <VStack style={postStyles.friendSelectorContainer} space="sm">
                 <Input variant="outline">
                   <InputField
                     placeholder="Search friends..."
@@ -464,9 +439,9 @@ export default function PostScreen() {
                 ) : filteredFriends.length === 0 ? (
                   <Text>No friends found</Text>
                 ) : (
-                  <ScrollView style={styles.friendsList} nestedScrollEnabled={true}>
+                  <ScrollView style={postStyles.friendsList} nestedScrollEnabled={true}>
                     {filteredFriends.map(friend => (
-                      <HStack key={friend.userId} style={styles.friendItem} space="md" className="items-center">
+                      <HStack key={friend.userId} style={postStyles.friendItem} space="md" className="items-center">
                         <Checkbox 
                           value="checked"
                           isChecked={taggedFriends.includes(friend.userId)}
@@ -580,13 +555,13 @@ export default function PostScreen() {
               </HStack>
             </RadioGroup>
             {postPrivacy === "PUBLIC" ? (
-              <Text size="xs" style={styles.privacyHint}>Public posts can be seen by everyone</Text>
+              <Text size="xs" style={postStyles.privacyHint}>Public posts can be seen by everyone</Text>
             ) : postPrivacy === "FRIENDS" ? (
-              <Text size="xs" style={styles.privacyHint}>Friends posts can only be seen by your friends</Text>
+              <Text size="xs" style={postStyles.privacyHint}>Friends posts can only be seen by your friends</Text>
             ) : postPrivacy === "FOLLOWERS" ? (
-              <Text size="xs" style={styles.privacyHint}>Followers posts can only be seen by your followers</Text>
+              <Text size="xs" style={postStyles.privacyHint}>Followers posts can only be seen by your followers</Text>
             ) : postPrivacy === "PRIVATE" && (
-              <Text size="xs" style={styles.privacyHint}>Private posts are only visible to you</Text>
+              <Text size="xs" style={postStyles.privacyHint}>Private posts are only visible to you</Text>
             )}
           </VStack>
 
@@ -596,10 +571,10 @@ export default function PostScreen() {
             variant="solid"
             onPress={handleSubmit}
             isDisabled={isSubmitting || !!titleError || !!descriptionError}
-            style={styles.submitButton}
+            style={postStyles.submitButton}
             disabled={isSubmitting}
           >
-            <Text style={styles.buttonText} bold>
+            <Text style={postStyles.buttonText} bold>
               {isSubmitting ? 'Posting...' : 'Post Workout'}
             </Text>
           </Button>
@@ -609,7 +584,7 @@ export default function PostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+export const postStyles = StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: '#f5f5f5',

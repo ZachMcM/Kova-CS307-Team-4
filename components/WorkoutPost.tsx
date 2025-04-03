@@ -167,8 +167,6 @@ export const WorkoutPost = ({
     }
   };
 
-  console.log(imageUrls);
-
   return (
     <>
       <View style={styles.container}>
