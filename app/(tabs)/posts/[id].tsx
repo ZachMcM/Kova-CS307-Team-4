@@ -97,6 +97,7 @@ export default function PostDetails() {
   const fetchPostDetails = async () => {
     try {
       setComments([]);
+      setWrittenComments(0);
       setIsLoading(true);
       
       const { data } = await supabase
