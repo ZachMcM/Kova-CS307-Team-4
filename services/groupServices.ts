@@ -137,8 +137,7 @@ export async function getAllGroups(): Promise<GroupOverview[]> {
   return groupOverviews as GroupOverview[];
 }
 
-export async function getGroupsOfUser(userId: string) : Promise<string[]> {
-    const profileId = (await getProfile(userId)).id
+export async function getGroupsOfUser(profileId: string) : Promise<string[]> {
     const {data, error} = await supabase
         .from("groupRel")
         .select("groupId")
