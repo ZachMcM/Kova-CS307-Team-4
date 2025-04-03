@@ -52,3 +52,33 @@ export const pushComment = async (postId: string, comment: any) => {
     return { error: err, success: false };
   }
 }
+
+export const clearComments = async (postId: string) => {
+  try {  
+    // First delete all comments for the given postId
+    const { error: deleteError } = await supabase
+      .from("comment")
+      .delete()
+      .eq("postId", postId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    // Then update the post to set the comments count to 0
+    const { error: updateError } = await supabase
+      .from("post")
+      .update({ comments: 0 })
+      .eq("id", postId);
+    
+    if (updateError) {
+      throw updateError;
+    }
+
+    return { success: true };
+  }
+  catch (err) {
+    console.error("Failed to clear comments:", err);
+    return { error: err, success: false };
+  }
+}
