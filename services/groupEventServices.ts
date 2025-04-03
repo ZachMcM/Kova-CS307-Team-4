@@ -225,9 +225,9 @@ export const editEventDetails = async (
     repMultiplier,
   }: {
     end_date: Date;
-    goal?: number;
-    weightMultiplier?: number;
-    repMultiplier?: number;
+    goal?: number | null;
+    weightMultiplier?: number | null;
+    repMultiplier?: number | null;
   },
   eventId: string
 ) => {

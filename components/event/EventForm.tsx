@@ -46,37 +46,39 @@ const schema = z
       .object({
         exerciseId: z.string(),
         exerciseName: z.string(),
-        points: z
-          .number({ required_error: "Must be a valid number" })
+        points: z.coerce
+          .number({ invalid_type_error: "Must be a valid number" })
+          .min(1, { message: "Points cannot be less than 1" })
           .nonnegative()
-          .nullish()
-          .transform((x) => (x === null || x === undefined ? undefined : x)),
+          .nullish(),
       })
       .array(),
-    weightMultiplier: z
-      .number({ required_error: "Must be a valid number" })
-      .min(1, { message: "Multiplier cannot be less than 1" })
-      .transform((x) => (x === null || x === undefined ? undefined : x)),
-    repMultiplier: z
-      .number({ required_error: "Must be a valid number" })
-      .min(1, { message: "Multiplier cannot be less than 1" })
-      .transform((x) => (x === null || x === undefined ? undefined : x)),
+    weightMultiplier: z.coerce
+      .number({ invalid_type_error: "Must be a valid number" })
+      .min(1, { message: "Weight Multiplier cannot be less than 1" })
+      .nonnegative()
+      .nullish(),
+    repMultiplier: z.coerce
+      .number({ invalid_type_error: "Must be a valid number" })
+      .min(1, { message: "Rep Multiplier cannot be less than 1" })
+      .nonnegative()
+      .nullish(),
     title: z
       .string()
       .min(1, { message: "Title is required" })
       .max(250, { message: "Title must be less than 250 characters" }),
     start_date: z.date({ message: "Must be a valid date" }),
     end_date: z.date({ message: "Must be a valid date" }),
-    goal: z
-      .number({ required_error: "Must be a valid number" })
+    goal: z.coerce
+      .number({ invalid_type_error: "Must be a valid number" })
       .min(1, { message: "Goal cannot be less than 1" })
-      .int()
-      .transform((x) => (x === null || x === undefined ? undefined : x)),
+      .nonnegative()
+      .nullish(),
     type: z.enum(["competition", "collaboration"]),
   })
   .refine((data) => data.start_date <= data.end_date, {
     message: "End date must be after start date",
-    path: ["end_date"]
+    path: ["end_date"],
   });
 
 export type NewEventValues = z.infer<typeof schema>;
@@ -103,13 +105,13 @@ export default function EventForm({ groupId }: { groupId: string }) {
 
   const toast = useToast();
   const queryClient = useQueryClient();
-  const router = useRouter()
+  const router = useRouter();
 
   const { mutate: createEvent, isPending } = useMutation({
     mutationFn: async (values: NewEventValues) => {
       // call to insert event
-      const data = await newEvent(groupId, values)
-      return data
+      const data = await newEvent(groupId, values);
+      return data;
     },
     onSuccess: (data) => {
       console.log(data);
@@ -119,8 +121,8 @@ export default function EventForm({ groupId }: { groupId: string }) {
       showSuccessToast(toast, "Successfully created new event");
       router.push({
         pathname: "/(tabs)/event/[id]",
-        params: { id: data?.id }
-      })
+        params: { id: data?.id },
+      });
     },
     onError: (err) => {
       console.log(err);
@@ -203,8 +205,8 @@ export default function EventForm({ groupId }: { groupId: string }) {
               <Heading size="md">Goal</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>
@@ -245,7 +247,9 @@ export default function EventForm({ groupId }: { groupId: string }) {
             control={form.control}
             name="end_date"
             render={({ field: { onChange, value } }) => (
-              <FormControl isInvalid={form.formState.errors.end_date != undefined}>
+              <FormControl
+                isInvalid={form.formState.errors.end_date != undefined}
+              >
                 <HStack className="items-center">
                   <Heading size="md">End Date:</Heading>
                   <DateTimePicker
@@ -262,13 +266,13 @@ export default function EventForm({ groupId }: { groupId: string }) {
                 </HStack>
                 <FormControlError>
                   <FormControlErrorText>
-                  {form.formState.errors.end_date?.message}
+                    {form.formState.errors.end_date?.message}
                   </FormControlErrorText>
                 </FormControlError>
               </FormControl>
             )}
-          />        
-        </VStack>        
+          />
+        </VStack>
       </Card>
       <Controller
         control={form.control}
@@ -279,8 +283,8 @@ export default function EventForm({ groupId }: { groupId: string }) {
               <Heading size="md">Weight Multiplier</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>
@@ -302,8 +306,8 @@ export default function EventForm({ groupId }: { groupId: string }) {
               <Heading size="md">Rep Multiplier</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>

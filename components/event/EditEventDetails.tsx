@@ -26,28 +26,29 @@ export default function EditEventDetails({
   event: Tables<"groupEvent">;
   setEditDetails: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const schema = z.object({
-    end_date: z.date({ message: "Must be a valid date" }),
-    goal: z
-      .number({ required_error: "Must be a valid whole number" })
-      .min(1, { message: "Goal cannot be less than 1" })
-      .int()
-      .nonnegative()
-      .nullish()
-      .transform((x) => (x === null || x === undefined ? undefined : x)),
-    weightMultiplier: z
-      .number({ required_error: "Must be a valid number" })
-      .min(1, { message: "Multiplier cannot be less than 1" })
-      .transform((x) => (x === null || x === undefined ? undefined : x)),
-    repMultiplier: z
-      .number({ required_error: "Must be a valid number" })
-      .min(1, { message: "Multiplier cannot be less than 1" })
-      .nullish()
-      .transform((x) => (x === null || x === undefined ? undefined : x)),
-  }).refine((data) => new Date(event.start_date) <= data.end_date, {
-    message: "End date must be after start date",
-    path: ["end_date"],
-  });
+  const schema = z
+    .object({
+      end_date: z.date({ message: "Must be a valid date" }),
+      goal: z.coerce
+        .number({ invalid_type_error: "Must be a valid number" })
+        .min(1, { message: "Goal cannot be less than 1" })
+        .nonnegative()
+        .nullish(),
+      weightMultiplier: z.coerce
+        .number({ invalid_type_error: "Must be a valid number" })
+        .min(1, { message: "Weight Multiplier cannot be less than 1" })
+        .nonnegative()
+        .nullish(),
+      repMultiplier: z.coerce
+        .number({ invalid_type_error: "Must be a valid number" })
+        .min(1, { message: "Weight Multiplier cannot be less than 1" })
+        .nonnegative()
+        .nullish(),
+    })
+    .refine((data) => new Date(event.start_date) <= data.end_date, {
+      message: "End date must be after start date",
+      path: ["end_date"],
+    });
 
   type EditEventDetailsValues = z.infer<typeof schema>;
 
@@ -84,14 +85,14 @@ export default function EditEventDetails({
         queryKey: ["event", { id: event.id }],
       });
       queryClient.invalidateQueries({
-        queryKey: ["group", { id: event.groupId }]
-      })
+        queryKey: ["group", { id: event.groupId }],
+      });
       queryClient.invalidateQueries({
-        queryKey: ["event-leaderboard", { id: event.id } ]
-      })
+        queryKey: ["event-leaderboard", { id: event.id }],
+      });
       queryClient.invalidateQueries({
-        queryKey: ["my-event-workouts", { id: event.id }]
-      })
+        queryKey: ["my-event-workouts", { id: event.id }],
+      });
       showSuccessToast(toast, "Successfully updated details");
       setEditDetails(false);
     },
@@ -115,8 +116,12 @@ export default function EditEventDetails({
                 onChange={(_, date) => {
                   onChange(date);
                 }}
-                minimumDate={new Date(event.start_date) > new Date() ? new Date(event.start_date) : new Date()}
-                />
+                minimumDate={
+                  new Date(event.start_date) > new Date()
+                    ? new Date(event.start_date)
+                    : new Date()
+                }
+              />
             </HStack>
             <FormControlError>
               <FormControlErrorText>
@@ -135,8 +140,8 @@ export default function EditEventDetails({
               <Heading size="md">Goal</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>
@@ -158,8 +163,8 @@ export default function EditEventDetails({
               <Heading size="md">Weight Multiplier</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>
@@ -181,8 +186,8 @@ export default function EditEventDetails({
               <Heading size="md">Rep Multiplier</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>
