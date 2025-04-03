@@ -21,21 +21,9 @@ import { Button, ButtonText } from "@/components/ui/button";
 import CommentCard from "@/components/CommentCard";
 import { DetailedWorkoutData } from "@/components/WorkoutData";
 import { LogBox } from 'react-native';
+import { Comment, getComments, pushComment } from "@/services/commentServices";
 
 LogBox.ignoreLogs(['Warning: Text strings must be rendered within a <Text> component']);
-
-export type Comment = {
-  id: string;
-  created_at: string;
-  profile: {
-    userId: string;
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  postId: string;
-  content: string;
-}
 
 type ReducedProfile = {
   username: string;
@@ -170,31 +158,25 @@ export default function PostDetails() {
   }, [postId]);
 
   const fetchMoreComments = async () => {
-    if (!fetchingComments) {
+    if (!fetchingComments && !Array.isArray(postId)) {
       setFetchingComments(true);
       const pageStart = (PAGE_SIZE * page) + writtenComments;
-      const pageEnd = (PAGE_SIZE * (page + 1)) + writtenComments;
+      const pageEnd = (PAGE_SIZE * (page + 1)) + writtenComments - 1;
 
-      console.log("Page " + page + ": " + pageStart + " - " + (pageEnd - 1));
+      console.log("Page " + page + ": " + pageStart + " - " + pageEnd);
 
+      getComments(postId, pageStart, pageEnd).then((commentData => {
+        const newComments = commentData as Comment[];
 
-      const { data: commentData } = await supabase
-        .from('comment')
-        .select('*, profile:userId ( userId, username, name, avatar )')
-        .eq("postId", postId)
-        .order("created_at", { ascending: false })
-        .range(pageStart, pageEnd - 1);
+        for (let i = 0; i < newComments.length; i++) {
+          console.log("ADDING " + newComments[i])
+          comments?.push(newComments[i]);
+        }
 
-      const newComments = commentData as Comment[];
-
-      for (let i = 0; i < newComments.length; i++) {
-        console.log("ADDING " + newComments[i])
-        comments?.push(newComments[i]);
-      }
-
-      setPage(prevPage => prevPage + 1);
-      setFetchedComments(prevFetchedComments => prevFetchedComments + PAGE_SIZE);
-      setFetchingComments(false);
+        setPage(prevPage => prevPage + 1);
+        setFetchedComments(prevFetchedComments => prevFetchedComments + PAGE_SIZE);
+        setFetchingComments(false);
+      }));
     }
   }
 
@@ -208,43 +190,37 @@ export default function PostDetails() {
       created_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from("comment")
-      .insert(comment)
-      .select();
-    
-    if (error) {
-      showErrorToast(toast, "Error: Failed to post comment!")
-    }
-    else {
-      const {data: incData, error: incError } = await supabase.rpc('increment_comments', {post_id: post?.id});
+    if (post) {
+      const {data, success} = await pushComment(post?.id, comment);
 
-      console.log("PROFILE: " + userProfile)
-
-      if (userProfile) {
-        console.log("ADDING COMMENT TO UI")
-        const facadeComment: Comment = {
-          id: "",
-          created_at: comment.created_at,
-          profile: {
-            userId: userId,
-            name: userProfile.name,
-            username: userProfile.username,
-            avatar: userProfile.avatar
-          },
-          postId: comment.content,
-          content: comment.content
-        };
-        comments?.unshift(facadeComment);
+      if (!success) {
+        showErrorToast(toast, "Error: Failed to post comment!");
+      }
+      else {
+        if (userProfile) {
+          const facadeComment: Comment = {
+            id: "",
+            created_at: comment.created_at,
+            profile: {
+              userId: userId,
+              name: userProfile.name,
+              username: userProfile.username,
+              avatar: userProfile.avatar
+            },
+            postId: comment.content,
+            content: comment.content
+          };
+          comments?.unshift(facadeComment);
+        }
+  
+        showSuccessToast(toast, "Posted comment!")
+        setCommentValue("");
+        setWrittenComments(prevWrittenComments => prevWrittenComments + 1);
+        setDisplayComments(prevDisplayComments => prevDisplayComments + 1);
       }
 
-      showSuccessToast(toast, "Posted comment!")
-      setCommentValue("");
-      setWrittenComments(prevWrittenComments => prevWrittenComments + 1);
-      setDisplayComments(prevDisplayComments => prevDisplayComments + 1);
+      setIsSubmitPending(false);
     }
-
-    setIsSubmitPending(false);
   }
 
   return (
