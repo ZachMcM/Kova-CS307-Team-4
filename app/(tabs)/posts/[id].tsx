@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, Pressable } from "react-native";
+import { ScrollView, Pressable, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { View, TextInput } from "react-native";
@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import Container from "@/components/Container";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
-import { ChevronLeftIcon, ClockIcon, Icon } from "@/components/ui/icon";
+import { ChevronLeftIcon, ClockIcon, Icon, CopyIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { Spinner } from "@/components/ui/spinner";
 import { Heading } from "@/components/ui/heading";
@@ -19,7 +19,7 @@ import { Image } from "@/components/ui/image";
 import { Box } from "@/components/ui/box";
 import { Ionicons } from "@expo/vector-icons";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
 import CommentCard from "@/components/CommentCard";
 import { P } from "@expo/html-elements";
 
@@ -58,6 +58,8 @@ export default function PostDetails() {
   const [page, setPage] = useState(1);
   const [allCommentsFetched, setAllCommentsFetched] = useState(false);
   const [commentsWritten, setCommentsWritten] = useState(0);
+  const [isCurrentUserPost, setIsCurrentUserPost] = useState(false);
+  const [isCopyingTemplate, setIsCopyingTemplate] = useState(false);
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -77,6 +79,12 @@ export default function PostDetails() {
     fetchUserProfile();
   }, []);
 
+  useEffect(() => {
+    if (post && userId) {
+      setIsCurrentUserPost(post.profile?.userId === userId);
+    }
+  }, [post, userId]);
+
   const fetchPostDetails = async () => {
     try {
       setIsLoading(true);
@@ -86,6 +94,23 @@ export default function PostDetails() {
         .select(`*, profile:profileId ( username, userId, name, avatar )`)
         .eq("id", postId)
         .single();
+
+      // If post has a template_id, check if it's a copy
+      if (data.template_id) {
+        const { data: templateCheck } = await supabase
+          .from('template')
+          .select('originalTemplateId')
+          .eq('id', data.template_id)
+          .single();
+
+        if (templateCheck?.originalTemplateId) {
+          // If it's a copy, use the original template id
+          data.workoutData.originalTemplateId = templateCheck.originalTemplateId;
+        } else {
+          // If it's an original template, use its own id
+          data.workoutData.originalTemplateId = data.template_id;
+        }
+      }
 
       const fetchedPost: Post = {
         id: data.id,
@@ -99,7 +124,8 @@ export default function PostDetails() {
         workoutData: data.workoutData
           ? {
               ...data.workoutData,
-              exercises: data.workoutData.exercises as Exercise[], // Cast to Exercise[]
+              exercises: data.workoutData.exercises as Exercise[],
+              originalTemplateId: data.workoutData.originalTemplateId
             }
           : null,
         template_id: data.template_id || null,
@@ -111,7 +137,7 @@ export default function PostDetails() {
         comments: data.comments
       };
 
-      console.log("TEMPLATE ID: " + fetchedPost.template_id)
+      console.log("POST: " + JSON.stringify(fetchedPost))
 
       const postWithTaggedFriends = async (post: Post) => {
         if (post.taggedFriends && post.taggedFriends.length > 0) {
@@ -224,6 +250,86 @@ export default function PostDetails() {
     setIsSubmitPending(false);
   }
 
+  const copyTemplate = async () => {
+    if (!post || !post.template_id || !userId) {
+      showErrorToast(toast, "Cannot copy template: Missing required information");
+      return;
+    }
+
+    try {
+      setIsCopyingTemplate(true);
+
+      console.log("POST: " + JSON.stringify(post.workoutData?.exercises))
+
+      const { data: templateData, error: templateError } = await supabase
+        .from('template')
+        .select('*')
+        .eq('id', post.template_id)
+        .single();
+
+      if (templateError) {
+        throw new Error(`Failed to fetch template: ${templateError.message}`);
+      }
+
+      if (!templateData) {
+        throw new Error('Template not found');
+      }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("profile")
+        .select("id")
+        .eq("userId", userId)
+        .single();
+
+      if (profileError) {
+        throw new Error(`Failed to get profile: ${profileError.message}`);
+      }
+
+      const newTemplate = {
+        name: `Copy of ${templateData.name}`,
+        description: templateData.description,
+        data: templateData.data,
+        profileId: profileData.id,
+        creatorProfileId: profileData.id,
+        originalTemplateId: templateData.id,
+        created_at: new Date().toISOString(),
+      };
+
+      const { data: newTemplateData, error: insertError } = await supabase
+        .from('template')
+        .insert(newTemplate)
+        .select();
+
+      if (insertError) {
+        throw new Error(`Failed to create template copy: ${insertError.message}`);
+      }
+
+      showSuccessToast(toast, "Template copied successfully!");
+      
+      Alert.alert(
+        "Template Copied",
+        "The template has been copied to your templates. Would you like to view it now?",
+        [
+          {
+            text: "No",
+            style: "cancel"
+          },
+          {
+            text: "Yes",
+            onPress: () => {
+              router.replace(`/templates/${newTemplateData[0].id}`);
+            }
+          }
+        ]
+      );
+    } catch (error: any) {
+      console.error('Error copying template:', error);
+      showErrorToast(toast, `Error copying template: ${error.message}`);
+    } finally {
+      setIsCopyingTemplate(false);
+    }
+  };
+
   return (
     <Container className = "flex">
       <Box className = "flex px-6 pt-16 mb-2">
@@ -295,6 +401,37 @@ export default function PostDetails() {
               {post.description.length > 0 ? (
                 <Text size = "md" className = "text-wrap mt-2">{post.description}</Text>
               ) : (<></>)}
+
+              {/* Template information - show only if this is a template post and not the current user's post */}
+              {post.template_id && !isCurrentUserPost && (
+                <Button 
+                  className="mt-4 mb-2" 
+                  variant="solid" 
+                  action="primary"
+                  onPress={copyTemplate}
+                  isDisabled={isCopyingTemplate}
+                >
+                  <ButtonIcon as={CopyIcon} className="mr-1" />
+                  <ButtonText>{isCopyingTemplate ? "Copying..." : "Copy This Template"}</ButtonText>
+                </Button>
+              )}
+
+              {/* If template is a copy, show the original */}
+              {post && post.workoutData && post.workoutData.originalTemplateId && (
+                <Pressable 
+                  className="mt-2 mb-4" 
+                  onPress={() => {
+                    if (post && post.workoutData && post.workoutData.originalTemplateId) {
+                      router.push(`/templates/${post.workoutData.originalTemplateId}`);
+                    }
+                  }}
+                >
+                  <Text className="text-blue-500 italic">
+                    Based on another template - View original
+                  </Text>
+                </Pressable>
+              )}
+
               {/* Images */}
               {post.images && post.images.length > 0 ? (
                 <ScrollView horizontal className = "mb-4 mt-4">
@@ -318,7 +455,6 @@ export default function PostDetails() {
                 <VStack>
                   <Text size="lg" bold>
                     Exercise Details
-                    {post.template_id && <Text size="xs" className="text-gray-500 ml-2">(Template ID: {post.template_id})</Text>}
                   </Text>
                   <HStack space = "xs" className = "h-16 w-full mb-2 mt-2 border border-gray-300 rounded">
                     {post.workoutData?.duration && (
@@ -347,11 +483,28 @@ export default function PostDetails() {
                       </Box>
                     )}
                   </HStack>
-                  {post.workoutData.exercises.reduce((rows, exercise, index) => {
-                    if (index % 2 === 0) {
-                      rows.push([exercise]);
+                  {post.workoutData.exercises.reduce((rows: Exercise[][], exercise: any, index: number) => {
+                    // Convert exercise to Exercise type first
+                    let normalizedExercise: Exercise;
+                    
+                    if ('info' in exercise) {
+                      normalizedExercise = {
+                        name: exercise.info?.name || 'Unknown Exercise',
+                        sets: exercise.sets?.length || 0,
+                        reps: exercise.sets?.reduce((acc: number, set: any) => acc + (set.reps || 0), 0) || 0,
+                        weight: exercise.sets?.length > 0 && exercise.sets[exercise.sets.length - 1].weight 
+                          ? `${exercise.sets[exercise.sets.length - 1].weight} lbs` 
+                          : undefined
+                      };
                     } else {
-                      rows[rows.length - 1].push(exercise);
+                      normalizedExercise = exercise as Exercise;
+                    }
+                    
+                    // Now use the normalized exercise
+                    if (index % 2 === 0) {
+                      rows.push([normalizedExercise]);
+                    } else {
+                      rows[rows.length - 1].push(normalizedExercise);
                     }
                     return rows;
                   }, [] as Exercise[][]).map((row, rowIndex) => (
