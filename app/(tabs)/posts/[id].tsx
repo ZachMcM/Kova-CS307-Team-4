@@ -57,29 +57,46 @@ export default function PostDetails() {
   const [userId, setUserId] = useState("");
   const [userProfile, setUserProfile] = useState<ReducedProfile>();
   const [page, setPage] = useState(1);
-  const [allCommentsFetched, setAllCommentsFetched] = useState(false);
-  const [commentsWritten, setCommentsWritten] = useState(0);
+  const [displayComments, setDisplayComments] = useState(0);
+  const [fetchedComments, setFetchedComments] = useState(0);
+  const [writtenComments, setWrittenComments] = useState(0);
+  const [fetchingComments, setFetchingComments] = useState(false);
 
   useEffect(() => {
-    const fetchUserId = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUserId(session.user.id);
-      }
-    };
+    console.log("User profile updated: " + userProfile);
+  }, [userProfile])
 
-    fetchUserId();
-
-    const fetchUserProfile = async () => {
-      const {data} = await supabase.from("profile").select(`username, name, avatar`).eq("userId", userId).single();
-      setUserProfile(data as ReducedProfile);
-    }
-
-    fetchUserProfile();
+  useEffect(() => {
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (session) {
+          setUserId(session.user.id);
+          return session.user.id;
+        }
+        return null;
+      })
+      .then((id) => {
+        if (id) {
+          return supabase
+            .from("profile")
+            .select(`username, name, avatar`)
+            .eq("userId", id)
+            .single();
+        }
+      })
+      .then((response) => {
+        if (response && response.data) {
+          setUserProfile(response.data as ReducedProfile);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user data:", error);
+      });
   }, []);
 
   const fetchPostDetails = async () => {
     try {
+      setComments([]);
       setIsLoading(true);
       
       const { data } = await supabase
@@ -123,6 +140,7 @@ export default function PostDetails() {
           }
         }
         setPost(post);
+        setDisplayComments(post.comments);
       };
 
       postWithTaggedFriends(fetchedPost);
@@ -135,6 +153,8 @@ export default function PostDetails() {
         .range(0, PAGE_SIZE - 1);
 
       setComments(commentData as Comment[]);
+      setFetchedComments(PAGE_SIZE);
+      setPage(1);
     } catch (err) {
       showErrorToast(toast, "Error: Could not fetch post!")
     } finally {
@@ -149,28 +169,32 @@ export default function PostDetails() {
   }, [postId]);
 
   const fetchMoreComments = async () => {
-    const pageStart = PAGE_SIZE * page + commentsWritten;
-    const pageEnd = PAGE_SIZE * (page + 1) + commentsWritten;
+    if (!fetchingComments) {
+      setFetchingComments(true);
+      const pageStart = (PAGE_SIZE * page) + writtenComments;
+      const pageEnd = (PAGE_SIZE * (page + 1)) + writtenComments;
 
-    const { data: commentData } = await supabase
-      .from('comment')
-      .select('*, profile:userId ( userId, username, name, avatar )')
-      .eq("postId", postId)
-      .order("created_at", { ascending: false })
-      .range(pageStart, pageEnd - 1);
+      console.log("Page " + page + ": " + pageStart + " - " + (pageEnd - 1));
 
-    const newComments = commentData as Comment[];
 
-    if (PAGE_SIZE != newComments.length) {
-      setAllCommentsFetched(true);
+      const { data: commentData } = await supabase
+        .from('comment')
+        .select('*, profile:userId ( userId, username, name, avatar )')
+        .eq("postId", postId)
+        .order("created_at", { ascending: false })
+        .range(pageStart, pageEnd - 1);
+
+      const newComments = commentData as Comment[];
+
+      for (let i = 0; i < newComments.length; i++) {
+        console.log("ADDING " + newComments[i])
+        comments?.push(newComments[i]);
+      }
+
+      setPage(prevPage => prevPage + 1);
+      setFetchedComments(prevFetchedComments => prevFetchedComments + PAGE_SIZE);
+      setFetchingComments(false);
     }
-
-    for (let i = 0; i < newComments.length; i++) {
-      console.log("ADDING " + newComments[i])
-      comments?.push(newComments[i]);
-    }
-
-    setPage(page + 1);
   }
 
   const handleCommentSubmit = async () => {
@@ -211,12 +235,12 @@ export default function PostDetails() {
           content: comment.content
         };
         comments?.unshift(facadeComment);
-        if (post) { post.comments += 1; }
       }
 
       showSuccessToast(toast, "Posted comment!")
       setCommentValue("");
-      setCommentsWritten(commentsWritten + 1);
+      setWrittenComments(prevWrittenComments => prevWrittenComments + 1);
+      setDisplayComments(prevDisplayComments => prevDisplayComments + 1);
     }
 
     setIsSubmitPending(false);
@@ -321,7 +345,7 @@ export default function PostDetails() {
       </Box>
       <Box className = "mb-12 pb-16 px-6 pt-2 bg-[#f7f7f7] border-t border-gray-300">
         <VStack className = "pb-3 border-b border-gray-300">
-          <Text size="lg" className = "mb-2" bold>Comments ({post?.comments})</Text>
+          <Text size="lg" className = "mb-2" bold>Comments ({displayComments})</Text>
           <Box className="rounded p-2 border border-[#6FA8DC]">
             <VStack>
               <TextInput maxLength={500} 
@@ -355,10 +379,12 @@ export default function PostDetails() {
           {comments && comments.map((comment: Comment) => (
             <CommentCard key = {comment.created_at} comment = {comment}></CommentCard>
           ))}
-          {!allCommentsFetched && post && post.comments > PAGE_SIZE && (
+          {post && post.comments > fetchedComments + writtenComments ? (
             <Button onPress = {fetchMoreComments}>
               <ButtonText>Load more</ButtonText>
             </Button>
+          ) : isLoading || fetchingComments && (
+            <Spinner></Spinner>
           )}
         </VStack>
       </Box>
