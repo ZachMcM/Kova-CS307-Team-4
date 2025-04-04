@@ -1,6 +1,5 @@
 import Container from "@/components/Container";
 import MemberCard from "@/components/MemberCard";
-import { useSession } from "@/components/SessionContext";
 import {
   Avatar,
   AvatarFallbackText,
@@ -15,12 +14,10 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
   getGroup,
-  getGroupProfiles,
-  getMembers,
+  getMembers
 } from "@/services/groupServices";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router/build/hooks";
-import { useEffect } from "react";
 
 export default function GroupMembers() {
   const { id: groupId } = useLocalSearchParams() as { id: string };
@@ -41,9 +38,7 @@ export default function GroupMembers() {
       return members;
     },
   });
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["groupRel", { groupId }] });
-  }, []);
+
   const router = useRouter();
 
   return (
@@ -93,7 +88,10 @@ export default function GroupMembers() {
               ) : (
                 Array.isArray(members) &&
                 members.map((member) => (
-                  <MemberCard key={member.profileId} groupRel={member} />
+                  <MemberCard
+                    key={member.profileId + (Math.random() * 2).toString()}
+                    groupRel={member}
+                  />
                 ))
               )}
             </VStack>
