@@ -226,11 +226,9 @@ export async function updateFeed() {
   }
 
   const stringified_item = JSON.stringify(parsed_item);
-  console.log("Stringified item: " + stringified_item);
   AsyncStorage.setItem("feed-items", stringified_item);
 }
 
 export async function resetFeed() {
-  console.log("removing feed items")
   AsyncStorage.removeItem("feed-items");
 }

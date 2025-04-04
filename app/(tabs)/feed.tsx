@@ -11,34 +11,31 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { getFollowing, getFriends } from "@/services/profileServices";
 
-type Post = {
+export type Post = {
   id: string;
   profileId: string;
   title: string;
   description: string;
   location: string | null;
-  isPublic: boolean;
-  imageUrl: string | null;
+  privacy: string;
+  images: string[] | null;
+  weighIn: number;
   workoutData: {
     calories?: string;
     duration?: string;
     exercises: Array<
-      | {
-          info: {
-            id: string;
-            name: string;
-          };
-          sets: Array<any>;
-        }
-      | {
+        {
           name: string;
           reps?: number;
           sets?: number;
           weight?: string;
         }
     >;
+    originalTemplateId?: string | null;
   } | null;
+  template_id?: string | null;
   taggedFriends?: string[] | null;
   taggedFriendsData?: Array<{
     userId: string;
@@ -53,15 +50,37 @@ type Post = {
     name: string;
     avatar?: string;
   };
+  comments: number;
 };
 
-const formatDate = (dateString: string): string => {
+export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'short', 
     day: 'numeric' 
   });
+};
+
+export const formatTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    hour: 'numeric',
+    minute: 'numeric',
+  });
+};
+
+export const formatDuration = (hourMinuteString: string): string => {
+  let split = hourMinuteString.split(":");
+  let minute = parseInt(split[0]);
+  let second = parseInt(split[1]);
+  if (minute === 0) {
+    return second.toString() + " Sec"
+  } else if (minute >= 60) {
+    let hour = Math.floor(minute / 60);
+    return hour.toString() + " Hr " + (minute % 60).toString() + " Min";
+  }
+  return minute.toString() + " Min";
 };
 
 export default function FeedScreen() {
@@ -104,35 +123,45 @@ export default function FeedScreen() {
         .select("targetId")
         .eq("sourceId", userId);
 
-      const followingUserIds = followingData?.map(item => item.targetId) || [];
+      const followingUserIds = (await getFollowing(userId)).map(follower => follower.userId);
+      const friendUserIds = (await getFriends(userId)).map(friend => friend.userId);
       
-      followingUserIds.push(userId);
+      //followingUserIds.push(userId);
 
       const { data: followingProfiles } = await supabase
         .from("profile")
         .select("id")
         .in("userId", followingUserIds);
 
+      const { data: friendProfiles } = await supabase
+        .from("profile")
+        .select("id")
+        .in("userId", friendUserIds);
+
       const followingProfileIds = followingProfiles?.map(profile => profile.id) || [];
+      const friendProfileIds = friendProfiles?.map(profile => profile.id) || [];
 
       const from = pageNumber * postsPerPage;
       const to = from + postsPerPage - 1;
 
       const { data: postsData, error: postsError } = await supabase
-        .from("post")
-        .select(`
-          *,
-          profile:profileId (
-            username,
-            userId,
-            name,
-            avatar
-          )
-        `)
-        .in("profileId", followingProfileIds)
-        .eq("isPublic", true)
-        .order("createdAt", { ascending: false })
-        .range(from, to);
+      .from("post")
+      .select(`
+        *,
+        profile:profileId (
+          username,
+          userId,
+          name,
+          avatar
+        )
+      `)
+      .or(
+        `and(privacy.eq.PUBLIC, profileId.neq.${profileData.id}),and(privacy.eq.FOLLOWERS,profileId.in.(${followingProfileIds.join(',')})),and(privacy.eq.FRIENDS,profileId.in.(${friendProfileIds.join(',')}))`
+      )
+      .order("createdAt", { ascending: false })
+      .range(from, to);
+
+      console.log("TEMPLATE ID: " + postsData?.[0]?.template_id);
 
       if (postsError) {
         throw postsError;
@@ -285,36 +314,25 @@ export default function FeedScreen() {
             exercises={
               post.workoutData?.exercises ? 
                 post.workoutData.exercises.map(exercise => {
-                  if ('info' in exercise && exercise.info && exercise.info.name) {
-                    return { 
-                      name: exercise.info.name,
-                      ...(exercise.sets && exercise.sets.length > 0 ? {
-                        sets: exercise.sets.length,
-                        reps: exercise.sets[0]?.reps,
-                        weight: exercise.sets[0]?.weight ? String(exercise.sets[0].weight) : undefined
-                      } : {})
-                    };
-                  }
-                  else if ('name' in exercise) {
                     return { 
                       name: exercise.name,
                       sets: exercise.sets,
                       reps: exercise.reps,
                       weight: exercise.weight ? String(exercise.weight) : undefined
                     };
-                  }
-                  return { name: 'Unknown exercise' };
                 })
               : []
             }
             workoutDuration={post.workoutData?.duration || undefined}
             workoutCalories={post.workoutData?.calories || undefined}
             userId={userId!}
-            comments={5}
-            imageUrl={post.imageUrl || undefined}
+            comments={post.comments}
+            imageUrls={post.images || undefined}
+            weighIn={post.weighIn}
             isOwnPost={isOwnPost(post)}
             onUpdatePost={updatePost}
             taggedFriends={post.taggedFriendsData}
+            templateId={post.template_id || undefined}
           />
         ))}
 

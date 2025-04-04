@@ -80,7 +80,6 @@ export async function updateGroup (
   return true;
 }
 
-/*
 export const getGroupProfiles = async (
   id: string
 ): Promise<Tables<"profile">[]> => {
@@ -103,7 +102,6 @@ export const getGroupProfiles = async (
 
   return profiles;
 };
-*/
 
 export async function createGroup(profileId: string, 
     title: string,

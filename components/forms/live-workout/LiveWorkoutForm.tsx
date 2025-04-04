@@ -162,6 +162,7 @@ export default function LiveWorkoutForm() {
       const duration = formatCalculateTime(calculateTime(startTime, endTime!));
 
       const postData = {
+        templateId: workoutData.templateId,
         duration,
         exercises: workoutData.exercises,
         stats: workoutStats,

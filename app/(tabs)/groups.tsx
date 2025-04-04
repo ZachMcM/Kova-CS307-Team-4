@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView } from "react-native";
 
-export default function ProfileScreen() {
+export default function Groups() {
   const { session } = useSession();
   const router = useRouter();
 
@@ -33,10 +33,15 @@ export default function ProfileScreen() {
   const { data: userGroups, isPending: isUserPending } = useQuery({
     queryKey: ["groupRel"],
     queryFn: async () => {
+<<<<<<< HEAD
       console.log("Performing user query")
       const userGroups = await getUserGroups(session!.user.user_metadata.profileId)
       console.log(userGroups)
       return userGroups
+=======
+      const userGroupsIds = await getGroupsOfUser(session!.user.user_metadata.profileId)
+      return userGroupsIds
+>>>>>>> main
     }
   })
 

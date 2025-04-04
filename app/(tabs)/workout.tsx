@@ -9,8 +9,7 @@ import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getUserTemplates } from "@/services/templateServices";
-import { ExtendedTemplateWithCreator } from "@/types/extended-types";
-import { compareToQuery, createWordCounter, templatesToSearch } from "@/types/searcher-types";
+import { createWordCounter, templatesToSearch } from "@/types/searcher-types";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -22,7 +21,9 @@ export default function Workout() {
     queryKey: ["templates"],
     queryFn: async () => {
       console.log("Attempting to load");
-      const templates = await getUserTemplates(session?.user.user_metadata.profileId);
+      const templates = await getUserTemplates(
+        session?.user.user_metadata.profileId
+      );
       console.log("Loaded: " + templates);
       return templates;
     },
@@ -70,7 +71,7 @@ export default function Workout() {
               .map((_, i) => <TemplateCardSkeleton key={i} />)
           : templates &&
             templates
-              .filter(template => template.name?.includes(templateQuery))
+              .filter((template) => template.name?.includes(templateQuery))
               .map((template) => (
                 <TemplateCard key={template.id} template={template} />
               ))}

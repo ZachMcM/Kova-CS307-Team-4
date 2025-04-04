@@ -115,6 +115,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="posts/[id]"
+        options={{
+          title: "Posts",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="workout"
         options={{
           title: "Workout",
@@ -159,6 +166,12 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="new-event/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="templates/[id]"
         options={{
           href: null
         }}

@@ -11,10 +11,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Animated,
-  Image,
   Modal,
   StyleSheet,
   Text,
@@ -25,6 +24,9 @@ import {
 import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { HStack } from "./ui/hstack";
 import { Spinner } from "./ui/spinner";
+import { Image } from "./ui/image";
+import { ScrollView } from "./ui/scroll-view";
+import { supabase } from "@/lib/supabase";
 
 export type Exercise = {
   name: string;
@@ -50,12 +52,14 @@ type WorkoutPostProps = {
   exercises: Exercise[];
   userId: string;
   comments: number;
-  imageUrl?: string;
+  imageUrls?: string[];
   workoutDuration?: string;
   workoutCalories?: string;
   isOwnPost?: boolean;
   postId?: string;
   taggedFriends?: TaggedFriend[];
+  weighIn?: number;
+  templateId?: string;
   onUpdatePost?: (
     postId: string,
     title: string,
@@ -73,13 +77,15 @@ export const WorkoutPost = ({
   description,
   exercises,
   comments,
-  imageUrl,
+  imageUrls,
   workoutDuration,
   workoutCalories,
   isOwnPost = false,
   postId,
   userId,
   taggedFriends = [],
+  weighIn,
+  templateId,
   onUpdatePost,
 }: WorkoutPostProps) => {
   const [expanded, setExpanded] = useState(false);
@@ -208,35 +214,57 @@ export const WorkoutPost = ({
                 <Ionicons name="pencil" size={18} color="#007AFF" />
               </TouchableOpacity>
             )}
-            <TouchableOpacity onPress={toggleExpand} activeOpacity={0.9}>
-              <Ionicons
-                name={expanded ? "chevron-up" : "chevron-down"}
-                size={24}
-                color="#666"
-              />
-            </TouchableOpacity>
           </View>
         </View>
-
         {/* Content */}
         <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
-          <Text
-            style={[
-              styles.description,
-              expanded
-                ? styles.expandedDescription
-                : styles.collapsedDescription,
-            ]}
-            numberOfLines={expanded ? undefined : 2}
-          >
-            {description}
-          </Text>
+          <Pressable onPress = {() => {router.replace(`/posts/${postId}`)}}>
+            <Text style={styles.title}>{title}</Text>
+            {description.length > 0 ? (
+              <Text
+                style={[
+                  styles.description,
+                  expanded
+                    ? styles.expandedDescription
+                    : styles.collapsedDescription,
+                ]}
+                numberOfLines={expanded ? undefined : 2}
+              >
+                {description}
+              </Text>
+            ) : (<></>)}
+            {/* Exercise Tags */}
+            <View style={styles.exerciseTags}>
+              {exercises.map((exercise, index) => (
+                <View key={index} style={styles.tag}>
+                  <Text style={styles.tagText}>{exercise.name}</Text>
+                </View>
+              ))}
+            </View>
+          </Pressable>
+          {/* Workout Image */}
+          {imageUrls && imageUrls.length > 0 ? (
+            <ScrollView horizontal style={{ marginBottom: 12 }}>
+              <HStack space = "md">
+                {imageUrls.map((url, index) => (
+                  <Image
+                    key={index}
+                    size = "2xl"
+                    source={{ uri: url }}
+                    className = "rounded-2xl"
+                    alt = "false"
+                  />
+                ))}
+              </HStack>
+            </ScrollView>
+          ) : (
+            <></>
+          )}
 
           {/* Tagged Friends */}
           {taggedFriends.length > 0 && (
             <View style={styles.taggedFriendsContainer}>
-              <HStack>
+              <HStack className = "flex-wrap">
                 <GText>With </GText>
                 {taggedFriends.map((friend, index) => (
                   <Pressable
@@ -245,32 +273,23 @@ export const WorkoutPost = ({
                       router.replace(`/profiles/${friend.userId}`);
                     }}
                   >
-                    <GText className="font-bold text-blue-500">
-                      {friend.name}
-                      {index < taggedFriends.length - 1 ? ", " : ""}
-                    </GText>
+                    <HStack space = "xs">
+                      <Avatar size = "xs" className="bg-indigo-600">
+                        {friend.avatar ? (
+                          <AvatarImage source={{ uri: friend.avatar }}></AvatarImage>
+                        ) : ( 
+                          <AvatarFallbackText className="text-white">{friend.name}</AvatarFallbackText>
+                        )}
+                      </Avatar>
+                      <GText className="font-bold text-blue-500">
+                        {friend.name}
+                        {index < taggedFriends.length - 1 ? ", " : ""}
+                      </GText>
+                    </HStack>
                   </Pressable>
                 ))}
               </HStack>
             </View>
-          )}
-
-          {/* Exercise Tags */}
-          <View style={styles.exerciseTags}>
-            {exercises.map((exercise, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{exercise.name}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Workout Image */}
-          {imageUrl && (
-            <Image
-              source={{ uri: imageUrl }}
-              style={[styles.image, expanded && styles.expandedImage]}
-              resizeMode="cover"
-            />
           )}
 
           {/* Expanded Details */}

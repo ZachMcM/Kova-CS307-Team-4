@@ -91,8 +91,8 @@ export default function ExercisePointsForm({
                   <Input size="sm" className=" flex-1">
                     <InputField
                       placeholder="1"
-                      value={value?.toString() || ""}
-                      onChangeText={(text) => onChange(Number(text) || 0)}
+                      value={value?.toString()}
+                      onChangeText={onChange}
                       keyboardType="numeric"
                     />
                   </Input>

@@ -19,28 +19,6 @@ import { Input, InputField } from "../ui/input";
 import { useToast } from "../ui/toast";
 import { VStack } from "../ui/vstack";
 
-const schema = z.object({
-  endDate: z.date({ message: "Must be a valid date" }),
-  goal: z
-    .number({ required_error: "Must be a valid whole number" })
-    .int()
-    .nonnegative()
-    .nullish()
-    .transform((x) => (x === null || x === undefined ? undefined : x)),
-  weightMultiplier: z
-    .number({ required_error: "Must be a valid number" })
-    .min(1, { message: "Multiplier cannot be less than 1" })
-    .nullish()
-    .transform((x) => (x === null || x === undefined ? undefined : x)),
-  repMultiplier: z
-    .number({ required_error: "Must be a valid number" })
-    .min(1, { message: "Multiplier cannot be less than 1" })
-    .nullish()
-    .transform((x) => (x === null || x === undefined ? undefined : x)),
-});
-
-export type EditEventDetailsValues = z.infer<typeof schema>;
-
 export default function EditEventDetails({
   event,
   setEditDetails,
@@ -48,10 +26,36 @@ export default function EditEventDetails({
   event: Tables<"groupEvent">;
   setEditDetails: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const schema = z
+    .object({
+      end_date: z.date({ message: "Must be a valid date" }),
+      goal: z.coerce
+        .number({ invalid_type_error: "Must be a valid number" })
+        .min(1, { message: "Goal cannot be less than 1" })
+        .nonnegative()
+        .nullish(),
+      weightMultiplier: z.coerce
+        .number({ invalid_type_error: "Must be a valid number" })
+        .min(1, { message: "Weight Multiplier cannot be less than 1" })
+        .nonnegative()
+        .nullish(),
+      repMultiplier: z.coerce
+        .number({ invalid_type_error: "Must be a valid number" })
+        .min(1, { message: "Weight Multiplier cannot be less than 1" })
+        .nonnegative()
+        .nullish(),
+    })
+    .refine((data) => new Date(event.start_date) <= data.end_date, {
+      message: "End date must be after start date",
+      path: ["end_date"],
+    });
+
+  type EditEventDetailsValues = z.infer<typeof schema>;
+
   const form = useForm<EditEventDetailsValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      endDate: new Date(event.end_date!),
+      end_date: new Date(event.end_date!),
       goal: event.goal!,
       weightMultiplier: event.weight_multiplier!,
       repMultiplier: event.rep_multiplier!,
@@ -77,11 +81,20 @@ export default function EditEventDetails({
     },
     onSuccess: (data) => {
       console.log(data);
-      showSuccessToast(toast, "Successfully updated details");
       queryClient.invalidateQueries({
         queryKey: ["event", { id: event.id }],
       });
-      setEditDetails(false)
+      queryClient.invalidateQueries({
+        queryKey: ["group", { id: event.groupId }],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["event-leaderboard", { id: event.id }],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["my-event-workouts", { id: event.id }],
+      });
+      showSuccessToast(toast, "Successfully updated details");
+      setEditDetails(false);
     },
   });
 
@@ -89,21 +102,33 @@ export default function EditEventDetails({
     <VStack space="xl">
       <Controller
         control={form.control}
-        name="endDate"
+        name="end_date"
         render={({ field: { onChange, value } }) => (
-          <VStack space="sm">
-            <Heading size="md">End Date</Heading>
-            <DateTimePicker
-              design="material"
-              style={{
-                flex: 1
-              }}
-              value={value}
-              onChange={(_, date) => {
-                onChange(date);
-              }}
-            />
-          </VStack>
+          <FormControl isInvalid={form.formState.errors.end_date != undefined}>
+            <HStack className="items-center">
+              <Heading size="md">End Date:</Heading>
+              <DateTimePicker
+                design="material"
+                style={{
+                  flex: 1,
+                }}
+                value={value}
+                onChange={(_, date) => {
+                  onChange(date);
+                }}
+                minimumDate={
+                  new Date(event.start_date) > new Date()
+                    ? new Date(event.start_date)
+                    : new Date()
+                }
+              />
+            </HStack>
+            <FormControlError>
+              <FormControlErrorText>
+                {form.formState.errors.end_date?.message}
+              </FormControlErrorText>
+            </FormControlError>
+          </FormControl>
         )}
       />
       <Controller
@@ -115,8 +140,8 @@ export default function EditEventDetails({
               <Heading size="md">Goal</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>
@@ -138,8 +163,8 @@ export default function EditEventDetails({
               <Heading size="md">Weight Multiplier</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>
@@ -161,8 +186,8 @@ export default function EditEventDetails({
               <Heading size="md">Rep Multiplier</Heading>
               <Input>
                 <InputField
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  value={value?.toString() || "0"}
+                  onChangeText={onChange}
+                  value={value?.toString()}
                   keyboardType="numeric"
                 />
               </Input>
@@ -182,7 +207,11 @@ export default function EditEventDetails({
         </Button>
         <Button action="kova" onPress={form.handleSubmit(onSubmit)}>
           <ButtonText>Save</ButtonText>
-          {isPending ? <ButtonSpinner color="#FFF" size="small" /> : <ButtonIcon as={CheckIcon} />}
+          {isPending ? (
+            <ButtonSpinner color="#FFF" size="small" />
+          ) : (
+            <ButtonIcon as={CheckIcon} />
+          )}
         </Button>
       </HStack>
     </VStack>

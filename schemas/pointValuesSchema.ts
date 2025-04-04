@@ -5,11 +5,11 @@ export const pointValuesSchema = z.object({
     .object({
       exerciseId: z.string(),
       exerciseName: z.string(),
-      points: z
-        .number({ required_error: "Must be a valid number" })
+      points: z.coerce
+        .number({ invalid_type_error: "Must be a valid number" })
+        .min(1, { message: "Points cannot be less than 1" })
         .nonnegative()
-        .nullish()
-        .transform((x) => (x === null || x === undefined ? undefined : x)),
+        .nullish(),
     })
     .array(),
 });

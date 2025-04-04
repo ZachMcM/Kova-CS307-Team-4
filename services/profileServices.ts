@@ -2,6 +2,20 @@ import { supabase } from "@/lib/supabase";
 import { Profile, PrivateProfile, PublicProfile } from "@/types/profile-types";
 import { useState } from "react";
 
+export interface privacies {
+  // friends_following: string,
+  // age: string,
+  // weight: string,
+  // location: string,
+  // goal: string,
+  // bio: string,
+  // achievement: string,
+  // gender: string,
+  // posts: string,
+  [key: string]: any
+  //TODO later potentially add a 'statistics' privacy too
+}
+
 // Get profile based on provided user_id
 export const getProfiles = async (ids: string[]): Promise<Map<string, Profile>> => {
   const profiles = new Map<string, Profile>();
@@ -42,7 +56,7 @@ export const getProfile = async (id: string): Promise<Profile> => {
   //}
   return {
     id: profile.id,
-    user_id: profile.user_id,
+    user_id: id,     //profile.user_id is bugged and returns undefined in this case, using this as a fix
     name: profile.name,
     username: profile.username,
     avatar: profile.avatar,
@@ -51,14 +65,18 @@ export const getProfile = async (id: string): Promise<Profile> => {
     following: profile.following,
     followers: profile.followers,
     age: profile.age,
+    gender: profile.gender,
+    weight: profile.weight,
     location: profile.location,
     goal: profile.goal,
     bio: profile.bio,
-    achievement: profile.achievement
+    achievement: profile.achievement,
+    privacy_settings: profile.privacy_settings
   } as PublicProfile;
 }
 
-export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, privacy: string, name: string) => {
+export const updateProfile = async (id:string, goal: string, bio: string, location: string, achievement: string, 
+                                    privacy: string, name: string, age: number, gender: string, weight: number, privacy_settings?: privacies) => {
   const { error } = await supabase
     .from("profile")
     .update({
@@ -67,14 +85,56 @@ export const updateProfile = async (id:string, goal: string, bio: string, locati
       location: location,
       achievement: achievement,
       private: privacy,
-      name: name
+      name: name,
+      age: age,
+      gender: gender,
+      weight: weight,
     })
     .eq("id", id);
 
   if (error) {
     throw new Error(error.message);
   }
+
+  if (privacy_settings) {
+    const { error: privacy_error } = await supabase
+    .from("profile")
+    .update({
+      privacy_settings: privacy_settings
+    })
+    .eq("id", id);
+
+  if (privacy_error) {
+    throw new Error(privacy_error.message);
+  }
+  }
 };
+
+export const updateProfilePrivacies = async (userId:string, privacy_settings: privacies) => {
+  const { error: privacy_error } = await supabase
+    .from("profile")
+    .update({
+      privacy_settings: privacy_settings
+    })
+    .eq("userId", userId);
+
+  if (privacy_error) {
+    throw new Error(privacy_error.message);
+  }
+}
+
+export const getProfilePrivacies = async (userId: string) => {
+  const { data: privacy_settings, error } = await supabase
+  .from("profile")
+  .select("privacy_settings")
+  .eq("userId", userId)
+  .limit(1).single();
+
+   if (error) throw new Error(error.message);
+
+   console.log("returning " + privacy_settings.privacy_settings["age"]);
+   return privacy_settings.privacy_settings as privacies;
+}
 
 export const isProfileFollowed = async (sourceId: string, targetId: string): Promise<boolean> => {
   const { data: follows, error } = await supabase
@@ -104,45 +164,59 @@ export const isProfileFollowing = async (sourceId: string, targetId: string): Pr
 
 export const followUser = async (sourceId: string, targetId: string) => {
   try {
-    await supabase.from("followingRel").insert([{ sourceId: sourceId, targetId: targetId }]);
-    await supabase.rpc('increment_following', { user_id: sourceId });
-    await supabase.rpc('increment_followers', { user_id: targetId });
-  } catch (error) {
-    throw new Error("Failed to insert follow relationship");
-  }
-
-  // Check if both users follow eachother
-  const isMutualFollow = await isProfileFollowed(targetId, sourceId);
-
-  if (isMutualFollow) {
-    try {
-      await supabase.rpc('increment_friends', { user_id: sourceId });
-      await supabase.rpc('increment_friends', { user_id: targetId });
-    } catch {
-      throw new Error("Failed to insert friend relationship");
+    // Input validation
+    if (!sourceId || !targetId) {
+      throw new Error("Source ID and Target ID are required");
     }
+    
+    // Call the stored procedure
+    const { data, error } = await supabase.rpc('follow_user', {
+      source_id: sourceId,
+      target_id: targetId
+    });
+    
+    // Handle any errors from the RPC call
+    if (error) {
+      console.error("Error following user:", error);
+      throw error;
+    }
+    
+    return { success: true, data };
+  } catch (err) {
+    console.error("Failed to follow user:", err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : "Unknown error occurred" 
+    };
   }
 }
 
 export const unfollowUser = async (sourceId: string, targetId: string) => {
   try {
-    await supabase.from("followingRel").delete().eq("sourceId", sourceId).eq("targetId", targetId);
-    await supabase.rpc('decrement_following', { user_id: sourceId });
-    await supabase.rpc('decrement_followers', { user_id: targetId });
-  } catch (error) {
-    throw new Error("Failed to delete follow relationship");
-  }
-
-  // Check if both users follow eachother
-  const isMutualFollow = await isProfileFollowed(targetId, sourceId);
-
-  if (isMutualFollow) {
-    try {
-      await supabase.rpc('decrement_friends', { user_id: sourceId });
-      await supabase.rpc('decrement_friends', { user_id: targetId });
-    } catch {
-      throw new Error("Failed to delete friend relationship");
+    // Input validation
+    if (!sourceId || !targetId) {
+      throw new Error("Source ID and Target ID are required");
     }
+    
+    // Call the stored procedure
+    const { data, error } = await supabase.rpc('unfollow_user', {
+      source_id: sourceId,
+      target_id: targetId
+    });
+    
+    // Handle any errors from the RPC call
+    if (error) {
+      console.error("Error unfollowing user:", error);
+      throw error;
+    }
+    
+    return { success: true, data };
+  } catch (err) {
+    console.error("Failed to unfollow user:", err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : "Unknown error occurred" 
+    };
   }
 }
 

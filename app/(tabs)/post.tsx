@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View, TouchableOpacity, Alert } from 'react-nat
 import { Text } from '@/components/ui/text';
 import { Input, InputField } from '@/components/ui/input';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
@@ -15,8 +15,15 @@ import { useSession } from '@/components/SessionContext';
 import { getFriends } from '@/services/profileServices';
 import { useQuery } from '@tanstack/react-query';
 import { Checkbox, CheckboxIndicator, CheckboxLabel, CheckboxIcon } from '@/components/ui/checkbox';
-import { CheckIcon } from '@/components/ui/icon';
+import { AddIcon, CheckIcon, CircleIcon, CloseIcon, Icon, RemoveIcon, TrashIcon } from '@/components/ui/icon';
 import { Avatar, AvatarImage, AvatarFallbackText } from '@/components/ui/avatar';
+import * as ImagePicker from 'expo-image-picker';
+import { useToast } from "@/components/ui/toast";
+import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
+import { uploadPostImages } from '@/services/postServices';
+import { Image } from '@/components/ui/image';
+import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/components/ui/radio';
+import { SummaryWorkoutData } from '@/components/WorkoutData';
 
 const defaultWorkoutData = {
   duration: '0 minutes',
@@ -28,7 +35,7 @@ export default function PostScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
+  const [weighIn, setWeighIn] = useState(Number);
   const [includeWorkoutData, setIncludeWorkoutData] = useState(true);
   const [workoutData, setWorkoutData] = useState<any>(defaultWorkoutData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,11 +44,16 @@ export default function PostScreen() {
   const [friendSearch, setFriendSearch] = useState('');
   const [titleError, setTitleError] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
+  const [postPrivacy, setPostPrivacy] = useState("PUBLIC");
   
   const { session } = useSession();
   const userId = session?.user?.id || null;
+
+  const toast = useToast();
   
   const params = useLocalSearchParams();
+
+  const [images, setImages] = useState<String[]>([]);
   
   const { data: friends, isLoading: isLoadingFriends } = useQuery({
     queryKey: ["friends", userId],
@@ -66,14 +78,20 @@ export default function PostScreen() {
     checkSession();
     
     const workoutDataParam = params.workoutData || (params.params && JSON.parse(params.params as string).workoutData);
+    console.log("Raw workout data param:", workoutDataParam);
     
     if (workoutDataParam) {
       try {
         const parsedData = JSON.parse(workoutDataParam as string);
+        console.log("Parsed workout data:", parsedData);
+        // Check for template ID
+        console.log("Template ID:", parsedData.templateId);
+        
         const processedWorkoutData = {
           duration: parsedData.duration || '0 minutes',
           calories: '0 kcal',
-          exercises: []
+          exercises: [],
+          templateId: parsedData.templateId || null // Store template ID if present
         };
         
         if (parsedData.stats) {
@@ -104,6 +122,7 @@ export default function PostScreen() {
         }
         
         setWorkoutData(processedWorkoutData);
+        console.log("Processed workout data:", processedWorkoutData);
         setIncludeWorkoutData(true);
         
         if (parsedData.exercises && Array.isArray(parsedData.exercises) && parsedData.exercises.length > 0) {
@@ -171,6 +190,8 @@ export default function PostScreen() {
   const handleSubmit = async () => {
     if (isSubmitting) return;
     
+    console.log("Final workout data being submitted:", workoutData);
+    
     const illegalCharactersRegex = /[<>{}[\]\\^~|`]/g;
     
     if (illegalCharactersRegex.test(title)) {
@@ -221,18 +242,33 @@ export default function PostScreen() {
       }
       
       const profileId = profileData.id;
+
+      const files = images.map((uri, index) => {
+        const fileName = uri.split('/').pop() || `image_${index}`;
+        const fileType = uri.split('.').pop() || 'jpeg';
+        return {
+          uri: uri.toString(),
+          name: fileName,
+          type: `image/${fileType}`,
+        } as unknown as File;
+      });
+
+      const imageURLs = await uploadPostImages(userId, files);
       
       const postData = {
         profileId: profileId,
         title,
         description,
         location: location || null,
-        isPublic: isPublic,
+        privacy: postPrivacy,
         imageUrl: null,
         workoutData: includeWorkoutData ? workoutData : null,
+        template_id: includeWorkoutData && workoutData.templateId ? workoutData.templateId : null,
         taggedFriends: taggedFriends.length > 0 ? taggedFriends : null,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        images: imageURLs,
+        weighIn: weighIn
       };
 
       const { data, error } = await supabase
@@ -263,7 +299,9 @@ export default function PostScreen() {
       setTitle('');
       setDescription('');
       setLocation('');
-      setIsPublic(true);
+      setImages([]);
+      setWeighIn(-1);
+      setPostPrivacy("PUBLIC");
       setIncludeWorkoutData(true);
       setWorkoutData(defaultWorkoutData);
       setTaggedFriends([]);
@@ -283,14 +321,45 @@ export default function PostScreen() {
     friend.name.toLowerCase().includes(friendSearch.toLowerCase())
   ) || [];
 
+
+  // Image upload functionality
+  const showImageSelector = async () => {
+    const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (result.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled) {
+      const files: String[] = pickerResult.assets.map((asset) => {
+        return asset.uri;
+      });
+      
+      const unionFiles = Array.from(new Set([...images, ...files]));
+
+      setImages(unionFiles);
+    }
+  };
+
+  const handleRemoveImage = (uri: string) => {
+    setImages((prevImages) => prevImages.filter((image) => image !== uri));
+  };
+
   return (
-    <ScrollView style={styles.scrollView}>
+    <ScrollView style={postStyles.scrollView}>
       <Container>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle} size="xl" bold>Create Post</Text>
+        <View style={postStyles.header}>
+          <Text style={postStyles.headerTitle} size="xl" bold>Create Post</Text>
         </View>
 
-        <VStack space="md" style={styles.formContainer}>
+        <VStack space="md" style={postStyles.formContainer}>
           <VStack space="xs">
             <Text size="sm" bold>Title</Text>
             <Input variant="outline" isInvalid={!!titleError}>
@@ -300,7 +369,7 @@ export default function PostScreen() {
                 onChangeText={handleTitleChange}
               />
             </Input>
-            {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+            {titleError ? <Text style={postStyles.errorText}>{titleError}</Text> : null}
           </VStack>
 
           <VStack space="xs">
@@ -312,11 +381,11 @@ export default function PostScreen() {
                 onChangeText={handleDescriptionChange}
               />
             </Textarea>
-            {descriptionError ? <Text style={styles.errorText}>{descriptionError}</Text> : null}
+            {descriptionError ? <Text style={postStyles.errorText}>{descriptionError}</Text> : null}
           </VStack>
 
           <VStack space="xs">
-            <HStack style={styles.toggleContainer} space="md">
+            <HStack style={postStyles.toggleContainer} space="md">
               <Text size="sm" bold>Include Workout Data</Text>
               <Switch
                 value={includeWorkoutData}
@@ -327,32 +396,11 @@ export default function PostScreen() {
           </VStack>
 
           {includeWorkoutData && (
-            <View style={styles.workoutDataContainer}>
-              <Text size="sm" bold style={styles.sectionTitle}>Workout Summary</Text>
-              
-              <HStack style={styles.workoutSummary} space="lg">
-                <VStack style={styles.summaryItem}>
-                  <Text size="xs">Duration</Text>
-                  <Text size="sm" bold>{workoutData.duration}</Text>
-                </VStack>
-                <VStack style={styles.summaryItem}>
-                  <Text size="xs">Calories</Text>
-                  <Text size="sm" bold>{workoutData.calories}</Text>
-                </VStack>
-              </HStack>
-
-              <Text size="sm" bold style={styles.exercisesTitle}>Exercises</Text>
-              {workoutData.exercises.map((exercise: { name: string; sets: number; reps: number; weight: string }, index: number) => (
-                <View key={index} style={styles.exerciseItem}>
-                  <Text size="sm" bold>{exercise.name}</Text>
-                  <Text size="xs">{exercise.sets} sets × {exercise.reps} reps • {exercise.weight}</Text>
-                </View>
-              ))}
-            </View>
+            <SummaryWorkoutData workoutData={workoutData}></SummaryWorkoutData>
           )}
 
           <VStack space="xs">
-            <HStack style={styles.toggleContainer} space="md">
+            <HStack style={postStyles.toggleContainer} space="md">
               <Text size="sm" bold>Tag Friends</Text>
               <Button 
                 size="sm" 
@@ -364,11 +412,11 @@ export default function PostScreen() {
             </HStack>
             
             {taggedFriends.length > 0 && (
-              <HStack style={styles.selectedFriendsContainer} space="sm" className="flex-wrap">
+              <HStack style={postStyles.selectedFriendsContainer} space="sm" className="flex-wrap">
                 {taggedFriends.map(friendId => {
                   const friend = friends?.find(f => f.userId === friendId);
                   return friend ? (
-                    <HStack key={friendId} style={styles.selectedFriendChip} space="xs" className="items-center">
+                    <HStack key={friendId} style={postStyles.selectedFriendChip} space="xs" className="items-center">
                       <Avatar size="xs">
                         {friend.avatar ? (
                           <AvatarImage source={{ uri: friend.avatar }} />
@@ -387,7 +435,7 @@ export default function PostScreen() {
             )}
             
             {showFriendSelector && (
-              <VStack style={styles.friendSelectorContainer} space="sm">
+              <VStack style={postStyles.friendSelectorContainer} space="sm">
                 <Input variant="outline">
                   <InputField
                     placeholder="Search friends..."
@@ -401,9 +449,9 @@ export default function PostScreen() {
                 ) : filteredFriends.length === 0 ? (
                   <Text>No friends found</Text>
                 ) : (
-                  <ScrollView style={styles.friendsList} nestedScrollEnabled={true}>
+                  <ScrollView style={postStyles.friendsList} nestedScrollEnabled={true}>
                     {filteredFriends.map(friend => (
-                      <HStack key={friend.userId} style={styles.friendItem} space="md" className="items-center">
+                      <HStack key={friend.userId} style={postStyles.friendItem} space="md" className="items-center">
                         <Checkbox 
                           value="checked"
                           isChecked={taggedFriends.includes(friend.userId)}
@@ -428,7 +476,39 @@ export default function PostScreen() {
               </VStack>
             )}
           </VStack>
-
+          <VStack space="xs">
+            <Text size="sm" bold>Pictures</Text>
+              <ScrollView horizontal>
+                <HStack space = "md">
+                  {images.map((file, index) => (
+                    <View key={index} style={{ position: 'relative' }}>
+                      {/* Image */}
+                      <Image
+                        source={{ uri: file.toString() }}
+                        style={{ width: 100, height: 100, borderRadius: 8 }}
+                      />
+                      {/* 'X' Icon */}
+                      <TouchableOpacity
+                        style={{
+                          position: 'absolute',
+                          top: 2,
+                          right: 2,
+                          borderRadius: 12,
+                          padding: 0,
+                          opacity: 0.6
+                        }}
+                        onPress={() => handleRemoveImage(file.toString())}
+                      >
+                        <Icon as = {CloseIcon}></Icon>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <Button variant = "outline" size="sm" style = {{width: 70, height: 70, borderRadius: 8}} onPress={() => showImageSelector()}>
+                    <ButtonIcon as = {AddIcon}></ButtonIcon>
+                  </Button>
+                </HStack>
+              </ScrollView>
+          </VStack>
           <VStack space="xs">
             <Text size="sm" bold>Location</Text>
             <Input variant="outline">
@@ -440,19 +520,59 @@ export default function PostScreen() {
             </Input>
           </VStack>
           <VStack space="xs">
-            <HStack style={styles.toggleContainer} space="md">
-              <Text size="sm" bold>Make Post Public</Text>
-              <Switch
-                value={isPublic}
-                onValueChange={setIsPublic}
-                size="md"
-              />
+            <HStack space = "sm">
+              <Text size="sm" className = "mt-2 mr-28" bold>Weigh-in (optional)</Text>
+              <Input variant="outline" className = "w-20">
+                <InputField
+                  placeholder=""
+                  value={weighIn > 0 ? weighIn.toString() : ""}
+                  onChangeText={(text) => setWeighIn(Number(text) || -1)}
+                  keyboardType="numeric"
+                  className = "text-center"
+                />
+              </Input>
+              <Text className = "mt-2">lbs</Text>
             </HStack>
-            <Text size="xs" style={styles.privacyHint}>
-              {isPublic 
-                ? "Public posts can be seen by everyone" 
-                : "Private posts are only visible to you"}
-            </Text>
+          </VStack>
+          <VStack space="xs">
+            <Text size="sm" className = "mb-1" bold>Post Privacy</Text>
+            <RadioGroup value = {postPrivacy} onChange = {setPostPrivacy}>
+              <HStack space = "md">
+                <Radio value = "PRIVATE" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Private</RadioLabel>
+                </Radio>
+                <Radio value = "FOLLOWERS" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Followers</RadioLabel>
+                </Radio>
+                <Radio value = "FRIENDS" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Friends</RadioLabel>
+                </Radio>
+                <Radio value = "PUBLIC" isInvalid = {false} isDisabled = {false}>
+                  <RadioIndicator>
+                    <RadioIcon as = {CircleIcon}></RadioIcon>
+                  </RadioIndicator>
+                  <RadioLabel>Public</RadioLabel>
+                </Radio>
+              </HStack>
+            </RadioGroup>
+            {postPrivacy === "PUBLIC" ? (
+              <Text size="xs" style={postStyles.privacyHint}>Public posts can be seen by everyone</Text>
+            ) : postPrivacy === "FRIENDS" ? (
+              <Text size="xs" style={postStyles.privacyHint}>Friends posts can only be seen by your friends</Text>
+            ) : postPrivacy === "FOLLOWERS" ? (
+              <Text size="xs" style={postStyles.privacyHint}>Followers posts can only be seen by your followers</Text>
+            ) : postPrivacy === "PRIVATE" && (
+              <Text size="xs" style={postStyles.privacyHint}>Private posts are only visible to you</Text>
+            )}
           </VStack>
 
           <Button
@@ -461,10 +581,10 @@ export default function PostScreen() {
             variant="solid"
             onPress={handleSubmit}
             isDisabled={isSubmitting || !!titleError || !!descriptionError}
-            style={styles.submitButton}
+            style={postStyles.submitButton}
             disabled={isSubmitting}
           >
-            <Text style={styles.buttonText} bold>
+            <Text style={postStyles.buttonText} bold>
               {isSubmitting ? 'Posting...' : 'Post Workout'}
             </Text>
           </Button>
@@ -474,7 +594,7 @@ export default function PostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+export const postStyles = StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: '#f5f5f5',

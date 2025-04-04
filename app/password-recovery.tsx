@@ -14,7 +14,30 @@ import { supabase } from "@/lib/supabase";
 import { createAccount } from "@/services/loginServices";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";
+import { makeRedirectUri } from "expo-auth-session"
 
+
+// const redirectURL = makeRedirectUri();
+
+const sendPasswordReset = async (email: string) => {
+  const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
+  if (!emailRegex.test(email)) {
+    throw new Error("Please enter a valid email address");
+  }
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email,
+    options: {
+      shouldCreateUser: false
+    }
+  });
+  if (error) {
+    console.log(error);
+    throw error;
+  }
+  console.log("SUCCESS, recovery email sent");
+
+}
 
 export default function PasswordRecoveryScreen() {
     const [RecoveryEmail, setEmail] = useState("");
@@ -59,11 +82,15 @@ export default function PasswordRecoveryScreen() {
           action="kova"
           className="mt-5 mb-5"
           onPress={() => {
-            showSuccessToast(toast, "Password recovery not yet implemented, redirecting to login");
-            router.replace("/login");
+            sendPasswordReset(RecoveryEmail).then(() => {
+              showSuccessToast(toast, "8-digit one time password sent, login using that password to reset your account")
+              router.replace("/login");
+            }).catch((error) => {
+              showErrorToast(toast, error.message)
+            })
           }}
         >
-          <ButtonText className="text-white">Send Password Recovery</ButtonText>
+          <ButtonText className="text-white">Send Password Recovery Code</ButtonText>
         </Button>
       </VStack>
     </Card>
