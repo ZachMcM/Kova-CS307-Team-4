@@ -12,7 +12,7 @@ import { Text } from "@/components/ui/text"
 import { Spinner } from "@/components/ui/spinner"
 
 // Remember to import your tests from services
-import { followerTests, LoginTestParams, loginTests, PasswordResetTestParams, passwordResetTests, RegisterTestParams, registrationTests, socialInformationTests, testCounters } from '@/services/unitTestServices';
+import { PasswordResetTestParams, passwordResetTests, commentTests, followerTests, LoginTestParams, loginTests, RegisterTestParams, registrationTests, socialInformationTests, testCounters } from '@/services/unitTestServices';
 import { useSession } from '@/components/SessionContext';
 import { ProfileActivities } from '@/components/ProfileActivities';
 
@@ -117,6 +117,13 @@ export default function SettingsScreen() {
       ] as PasswordResetTestParams[],
       totalTests: 5
     },
+    {
+      if: "9",
+      name: "Comments tests",
+      function: commentTests,
+      params: [],
+      totalTests: 5
+    }
   ]
 
   const runTest = async (test: any) => {

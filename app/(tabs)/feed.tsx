@@ -33,7 +33,9 @@ export type Post = {
           weight?: string;
         }
     >;
+    originalTemplateId?: string | null;
   } | null;
+  template_id?: string | null;
   taggedFriends?: string[] | null;
   taggedFriendsData?: Array<{
     userId: string;
@@ -158,6 +160,8 @@ export default function FeedScreen() {
       )
       .order("createdAt", { ascending: false })
       .range(from, to);
+
+      console.log("TEMPLATE ID: " + postsData?.[0]?.template_id);
 
       if (postsError) {
         throw postsError;
@@ -328,6 +332,7 @@ export default function FeedScreen() {
             isOwnPost={isOwnPost(post)}
             onUpdatePost={updatePost}
             taggedFriends={post.taggedFriendsData}
+            templateId={post.template_id || undefined}
           />
         ))}
 
