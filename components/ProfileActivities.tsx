@@ -660,8 +660,9 @@ export const ProfileActivities = ({
                   )}
                   <Card variant="outline">
                     <Heading className="mb-5" size="xl">Favorite Exercises ⭐</Heading>
-                    {favoriteExercises.favorites.length === 0} ? (
-                      <Heading size="lg">No workouts recorded yet. Do a workout to get some data!</Heading>
+                    {favoriteExercises.favorites.length === 0} && (
+                      {/* <Heading size="lg">No workouts recorded yet. Do a workout to get some data!</Heading>
+                      <Text>{favoriteExercises.favorites.length}</Text> */}
                     ) : (
                     {favoriteExercises && favoriteExercises.favorites.slice(0, favoritesViewCount).map((favorite) => (
                       <Card className="mb-3" variant="filled" key={favorite.name}>

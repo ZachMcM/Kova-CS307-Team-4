@@ -33,13 +33,15 @@ export async function getLikes(postId: string): Promise<LikeRelation[]> {
 }
 
 export function getNumOfLikes(likeRelations: LikeRelation[], userId: string, userHasLiked: boolean): number {
+    if (!likeRelations || !userId) return 0;
     return likeRelations.length + ((userHasLiked && 
         !(doesUserLike(userId, likeRelations))) ? 1 : 0);
 }
 
 export function doesUserLike(userId: string, likeRelations: LikeRelation[]): boolean {
+    if (!likeRelations) return false;
     for (const likeRel of likeRelations) {
-        if (likeRel.userId === userId) {
+        if (likeRel && likeRel.userId === userId) {
             return true;
         }
     }
