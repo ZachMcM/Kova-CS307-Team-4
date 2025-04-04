@@ -187,14 +187,6 @@ export default function PrivacyEditingScreen() {
           </Button>
         </HStack>
         <HStack>
-          <Text size = "xl" className = "mr-4 bg">🏋️Posts Privacy</Text>
-          <Button size="xs" className={postsPrivacy === "PUBLIC" ? "rounded-full bg-teal-300" : (
-            postsPrivacy === "FRIENDS" ? "rounded-full bg-green-600" : "rounded-full bg-orange-400"
-          )} onPress={() => {incrementPrivacy(postsPrivacy, setPostsPrivacy)}}>
-            {getPrivacyIcon(postsPrivacy)}
-          </Button>
-        </HStack>
-        <HStack>
           <Text size = "xl" className = "mr-4 bg">🕯️Age Privacy</Text>
           <Button size="xs" className={agePrivacy === "PUBLIC" ? "rounded-full bg-teal-300" : (
             agePrivacy === "FRIENDS" ? "rounded-full bg-green-600" : "rounded-full bg-orange-400"
