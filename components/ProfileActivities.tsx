@@ -105,6 +105,7 @@ export const ProfileActivities = ({
       );
       
       const postsMonth = posts.filter((post) => 
+        (new Date(post.createdAt)).getFullYear() === now.getFullYear() &&
         (new Date(post.createdAt)).getMonth() === now.getMonth()
       );
       
@@ -113,6 +114,8 @@ export const ProfileActivities = ({
       );
       
       const postsWeek = posts.filter((post) => 
+        (new Date(post.createdAt)).getFullYear() === now.getFullYear() &&
+        (new Date(post.createdAt)).getMonth() === now.getMonth() &&
         DOWArray.includes((new Date(post.createdAt)).getDay())
       );
       
@@ -206,7 +209,10 @@ export const ProfileActivities = ({
         totalMinutesMonth: secondData.totalSecondsMonth / 60,
         totalMinutesWeek: secondData.totalSecondsWeek / 60,
       });
-      favoriteData.favorites.sort((a, b) => b.count - a.count);
+      favoriteData.favorites.sort((a, b) => {
+        if (a.count === b.count) return b.weight - a.weight;
+        return b.count - a.count;
+      });
       setFavoriteExercises(favoriteData);
     }
 
@@ -272,8 +278,18 @@ export const ProfileActivities = ({
             if (!workout || !workout.createdAt) return;
             const year = (new Date(workout.createdAt)).getFullYear().toString();
             if (!labels.includes(year)) {
-              labels.push(year);
-              data.push(0);
+              let low = 0;
+              let high = labels.length;
+              while (low < high) {
+                let mid = Math.floor((low + high)/2);
+                if (parseInt(labels[mid]) < parseInt(year)) {
+                  low = mid + 1;
+                } else {
+                  high = mid;
+                }
+              }
+              labels.splice(low, 0, year);
+              data.splice(low, 0, 0);
             }
             const index = (labels.indexOf(year));
             data[index] += 1;
@@ -369,8 +385,18 @@ export const ProfileActivities = ({
             if (!workout || !workout.createdAt) return;
             const year = (new Date(workout.createdAt)).getFullYear().toString();
             if (!labels.includes(year)) {
-              labels.push(year);
-              data.push(0);
+              let low = 0;
+              let high = labels.length;
+              while (low < high) {
+                let mid = Math.floor((low + high)/2);
+                if (parseInt(labels[mid]) < parseInt(year)) {
+                  low = mid + 1;
+                } else {
+                  high = mid;
+                }
+              }
+              labels.splice(low, 0, year);
+              data.splice(low, 0, 0);
             }
             const index = (labels.indexOf(year));
             data[index] += workout.workoutData?.duration ? parseInt(workout.workoutData.duration.split(":")[0]) : 0;
@@ -537,6 +563,7 @@ export const ProfileActivities = ({
                       backgroundColor: '#ffffff',
                       backgroundGradientFrom: '#ffffff',
                       backgroundGradientTo: '#ffffff',
+                      // decimalPlaces: Math.max(...prepareWorkoutCountChart().datasets[0].data) > 2 ? 0 : 1,
                       decimalPlaces: 0,
                       color: (opacity = 1) => `rgba(111, 168, 220, ${opacity})`,
                       barPercentage: 0.95,
