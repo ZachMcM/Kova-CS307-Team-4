@@ -33,15 +33,10 @@ export default function Groups() {
   const { data: userGroups, isPending: isUserPending } = useQuery({
     queryKey: ["groupRel"],
     queryFn: async () => {
-<<<<<<< HEAD
       console.log("Performing user query")
       const userGroups = await getUserGroups(session!.user.user_metadata.profileId)
       console.log(userGroups)
       return userGroups
-=======
-      const userGroupsIds = await getGroupsOfUser(session!.user.user_metadata.profileId)
-      return userGroupsIds
->>>>>>> main
     }
   })
 
