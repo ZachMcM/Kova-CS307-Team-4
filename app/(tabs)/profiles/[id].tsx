@@ -773,7 +773,7 @@ export default function ProfileScreen() {
             )}
         </Box>
         {
-          groups && userGroups && id === session?.user.id && (
+          groups && userGroups && userGroups.length !== 0 && id === session?.user.id && (
             <>
               <Heading>Your Groups</Heading>
               <VStack space="md">
