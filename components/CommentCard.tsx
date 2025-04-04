@@ -7,6 +7,8 @@ import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { Heading } from "./ui/heading";
 import { Text } from "./ui/text";
 import { Comment } from "@/services/commentServices";
+import { Button, ButtonText } from "./ui/button";
+import { useState } from "react";
 
 function formatDate(date: string) {
   const now = new Date();
@@ -31,6 +33,7 @@ function formatDate(date: string) {
  
 export default function CommentCard({ comment }: {comment: Comment}) {
   const router = useRouter();
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <Box className = "bg-white p-2 mb-2 rounded border-gray-300 border">
@@ -55,7 +58,16 @@ export default function CommentCard({ comment }: {comment: Comment}) {
             <Text size = "xs">{formatDate(comment.created_at)}</Text>
           </VStack>
         </HStack>
-        <Text>{comment.content}</Text>
+        {comment.content.length > 200 && !expanded ? (
+          <VStack>
+            <Text>{comment.content.substring(0, 200)} ...</Text>
+            <Button onPress = {() => setExpanded(true)} className = "w-min mt-1">
+              <ButtonText>more</ButtonText>
+            </Button>
+          </VStack>
+        ) : (expanded || comment.content.length < 201) && (
+          <Text>{comment.content}</Text>
+        )}
       </VStack>
     </Box>
   );
