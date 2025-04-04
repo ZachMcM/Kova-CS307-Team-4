@@ -301,7 +301,7 @@ export default function WeightTrackingScreen() {
 
   return (
     <StaticContainer className="flex">
-      <ScrollView className="flex px-6 py-16">
+      <ScrollView className="flex px-6 py-16" keyboardShouldPersistTaps="handled">
         <VStack space="md">
           <HStack space="md" className="items-center">
             <Pressable onPress={() => router.back()}>

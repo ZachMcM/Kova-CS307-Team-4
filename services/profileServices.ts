@@ -162,45 +162,59 @@ export const isProfileFollowing = async (sourceId: string, targetId: string): Pr
 
 export const followUser = async (sourceId: string, targetId: string) => {
   try {
-    await supabase.from("followingRel").insert([{ sourceId: sourceId, targetId: targetId }]);
-    await supabase.rpc('increment_following', { user_id: sourceId });
-    await supabase.rpc('increment_followers', { user_id: targetId });
-  } catch (error) {
-    throw new Error("Failed to insert follow relationship");
-  }
-
-  // Check if both users follow eachother
-  const isMutualFollow = await isProfileFollowed(targetId, sourceId);
-
-  if (isMutualFollow) {
-    try {
-      await supabase.rpc('increment_friends', { user_id: sourceId });
-      await supabase.rpc('increment_friends', { user_id: targetId });
-    } catch {
-      throw new Error("Failed to insert friend relationship");
+    // Input validation
+    if (!sourceId || !targetId) {
+      throw new Error("Source ID and Target ID are required");
     }
+    
+    // Call the stored procedure
+    const { data, error } = await supabase.rpc('follow_user', {
+      source_id: sourceId,
+      target_id: targetId
+    });
+    
+    // Handle any errors from the RPC call
+    if (error) {
+      console.error("Error following user:", error);
+      throw error;
+    }
+    
+    return { success: true, data };
+  } catch (err) {
+    console.error("Failed to follow user:", err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : "Unknown error occurred" 
+    };
   }
 }
 
 export const unfollowUser = async (sourceId: string, targetId: string) => {
   try {
-    await supabase.from("followingRel").delete().eq("sourceId", sourceId).eq("targetId", targetId);
-    await supabase.rpc('decrement_following', { user_id: sourceId });
-    await supabase.rpc('decrement_followers', { user_id: targetId });
-  } catch (error) {
-    throw new Error("Failed to delete follow relationship");
-  }
-
-  // Check if both users follow eachother
-  const isMutualFollow = await isProfileFollowed(targetId, sourceId);
-
-  if (isMutualFollow) {
-    try {
-      await supabase.rpc('decrement_friends', { user_id: sourceId });
-      await supabase.rpc('decrement_friends', { user_id: targetId });
-    } catch {
-      throw new Error("Failed to delete friend relationship");
+    // Input validation
+    if (!sourceId || !targetId) {
+      throw new Error("Source ID and Target ID are required");
     }
+    
+    // Call the stored procedure
+    const { data, error } = await supabase.rpc('unfollow_user', {
+      source_id: sourceId,
+      target_id: targetId
+    });
+    
+    // Handle any errors from the RPC call
+    if (error) {
+      console.error("Error unfollowing user:", error);
+      throw error;
+    }
+    
+    return { success: true, data };
+  } catch (err) {
+    console.error("Failed to unfollow user:", err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : "Unknown error occurred" 
+    };
   }
 }
 

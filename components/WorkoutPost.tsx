@@ -59,6 +59,7 @@ type WorkoutPostProps = {
   postId?: string;
   taggedFriends?: TaggedFriend[];
   weighIn?: number;
+  templateId?: string;
   onUpdatePost?: (
     postId: string,
     title: string,
@@ -84,6 +85,7 @@ export const WorkoutPost = ({
   userId,
   taggedFriends = [],
   weighIn,
+  templateId,
   onUpdatePost,
 }: WorkoutPostProps) => {
   const [expanded, setExpanded] = useState(false);
@@ -166,8 +168,6 @@ export const WorkoutPost = ({
       setIsSubmitting(false);
     }
   };
-
-  console.log(imageUrls);
 
   return (
     <>

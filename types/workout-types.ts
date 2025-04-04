@@ -19,3 +19,14 @@ export type Workout = {
   endTime: number | null,
   exercises: ExerciseData[]
 }
+
+export type WorkoutData = {
+  calories?: string;
+  duration?: string;
+  exercises: Array<{
+      name: string;
+      reps?: number;
+      sets?: number;
+      weight?: string;
+  }>;
+}
