@@ -703,7 +703,7 @@ export default function ProfileScreen() {
                         <Text className="mt-2">{profile.bio}</Text>
                       )}
                     </Box>
-                  ) : profile && (
+                  ) : profile && userId !== id && (
                     <Badge size="md" variant="solid" action="muted" className="bg-none text-none rounded-2xl">
                       <BadgeIcon as={AlertCircleIcon} className="text-[#4d7599]"></BadgeIcon>
                       {hasNoAccess() == "FRIENDS" ? (

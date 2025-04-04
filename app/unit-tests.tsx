@@ -12,8 +12,9 @@ import { Text } from "@/components/ui/text"
 import { Spinner } from "@/components/ui/spinner"
 
 // Remember to import your tests from services
-import { followerTests, LoginTestParams, loginTests, RegisterTestParams, registrationTests, socialInformationTests, testCounters } from '@/services/unitTestServices';
+import { followerTests, LoginTestParams, loginTests, PasswordResetTestParams, passwordResetTests, RegisterTestParams, registrationTests, socialInformationTests, testCounters } from '@/services/unitTestServices';
 import { useSession } from '@/components/SessionContext';
+import { ProfileActivities } from '@/components/ProfileActivities';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function SettingsScreen() {
   const [testOutput, setTestOutput] = useState("");
   const [testPending, setTestPending] = useState(false);
   //const [ randNum, setRandNum ] = useState(Math.floor(Math.random() * (999_999_999 + 1)));
-  const { signInUser, createAccount } = useSession();
+  const { signInUser, createAccount, updatePassword } = useSession();
 
   // FYI to add a test copy this entry, change the id, implement a function in unitTestServices.ts
   // totalTests is the amount of times the test will run the function (params needs to be the same length)
@@ -103,7 +104,19 @@ export default function SettingsScreen() {
       params: [],
       totalTests: 1
     },
-    
+    {
+      id: "8",
+      name: "Password Reset tests",
+      function: passwordResetTests,
+      params: [
+        {signInUser, correctPassword: "aaa123", updatePassword, testCaseName: "Non-matching passwords", testEmail: "passwordtester@test.com", testOldPassword: "aaa123", testNewPassword: "aaa123", testVerifyPassword: "aaa1234", expectedError: "Password and confirmed password\nmust match"},
+        {signInUser, correctPassword: "aaa123", updatePassword, testCaseName: "Old password incorrect", testEmail: "passwordtester@test.com", testOldPassword: "aaa1234124", testNewPassword: "aaa1234", testVerifyPassword: "aaa1234", expectedError: "Old Password is not correct"},
+        {signInUser, correctPassword: "aaa123", updatePassword, testCaseName: "Same new and old password", testEmail: "passwordtester@test.com", testOldPassword: "aaa123", testNewPassword: "aaa123", testVerifyPassword: "aaa123", expectedError: "New password should be different from the old password."},
+        {signInUser, correctPassword: "aaa123", updatePassword, testCaseName: "Same new and old password", testEmail: "passwordtester@test.com", testOldPassword: "aaa123", testNewPassword: "aaa1", testVerifyPassword: "aaa1", expectedError: "New Password must be at least 6 characters\n and include a letter and number"},
+        {signInUser, correctPassword: "aaa123", updatePassword, testCaseName: "Successful password reset", testEmail: "passwordtester@test.com", testOldPassword: "aaa123", testNewPassword: "aaa123456A", testVerifyPassword: "aaa123456A", expectedError: null},
+      ] as PasswordResetTestParams[],
+      totalTests: 5
+    },
   ]
 
   const runTest = async (test: any) => {

@@ -11,6 +11,7 @@ import { SearchItem, SearchTag, TaggedSearchItem,
     compareToQuery, compareToTaggedQuery
 } from "@/types/searcher-types";
 import { Profile } from "@/types/profile-types";
+import { Post } from "@/app/(tabs)/feed";
 
 const burnerProfileIds = ["36a95bc3-ccfc-4b6c-a1f4-b37ee68ba40a", "11e43cae-f818-42a9-97af-52125d09b85e"];
 const burnerProfileUserIds = ["e849d723-76bb-4b95-a028-9f7a382299da", "e159c552-2c1c-40a4-9505-49655e09593b"];
@@ -131,6 +132,58 @@ export const registrationTests = async (params: RegisterTestParams) => {
     } else {
       output += " | " + params.testCaseName + ": " + error_message  
     }
+    return output
+}
+
+export type PasswordResetTestParams = {
+  signInUser: (userEmail: string, userPassword: string) => Promise<boolean>,
+  correctPassword: string
+  updatePassword: (oldPassword: string, updatePassword: string, verifyPassword: string) => Promise<boolean>,
+  testCaseName: string, 
+  testEmail: string, 
+  testOldPassword: string,
+  testNewPassword: string,
+  testVerifyPassword: string, 
+  expectedError: string
+}
+
+export const passwordResetTests = async (params: PasswordResetTestParams) => {
+  let valid = true;
+  let output = ""
+  let error_message = ""
+  
+  const cur_session_refresh_token = (await supabase.auth.getSession()).data.session?.refresh_token!
+  await params.signInUser(params.testEmail, params.correctPassword);
+  await params.updatePassword(params.testOldPassword, params.testNewPassword, params.testVerifyPassword)
+    .then( async () => {
+      if (params.expectedError == null) {
+        output += "SUCCESS"
+      } else {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Did not throw expected error " + params.expectedError;
+      }
+      await params.updatePassword(params.testNewPassword, params.correctPassword, params.correctPassword); // Resetting unit testers password
+    }).catch((error: Error) => {
+      if (params.expectedError == null) {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Error was thrown when success was expected " + error.message;
+      } else if (params.expectedError !== error.message) {
+        valid = false;
+        output += "FAILURE"
+        error_message = "Unexpected error was thrown '" + error.message + "' expected was '" + params.expectedError + "'";
+      } else {
+        output += "SUCCESS"
+      }
+    })
+
+    if (valid == true) {
+      output += " | " + params.testCaseName
+    } else {
+      output += " | " + params.testCaseName + ": " + error_message  
+    }
+    await supabase.auth.refreshSession({ refresh_token: cur_session_refresh_token })
     return output
 }
 

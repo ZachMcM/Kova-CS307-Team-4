@@ -38,12 +38,6 @@ type FavoriteExercise = {
     unit: string;
 }
 
-type PersonalBest = {
-    exerciseName: string;
-    weight: number;
-    unit: string;
-}
-
 export const ProfileActivities = ({
     posts,
     isLoading,
@@ -303,7 +297,9 @@ export const ProfileActivities = ({
           })
         }
       }
-
+      if (data.length === 0) {
+        data = Array(1).fill(0);
+      }
       return {
         labels: labels,
         datasets: [{
@@ -399,6 +395,9 @@ export const ProfileActivities = ({
         }
       }
 
+      if (data.length === 0) {
+        data = Array(1).fill(0);
+      }
       return {
         labels: labels,
         datasets: [{
@@ -483,7 +482,7 @@ export const ProfileActivities = ({
     }, [workouts])
 
     return (
-        <View>
+        <View className="mb-10">
             <VStack space="2xl">
               <VStack>
                 <Heading size="2xl">Profile Summary</Heading>
