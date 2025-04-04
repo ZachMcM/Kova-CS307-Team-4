@@ -2,6 +2,7 @@ import Container from "@/components/Container";
 import { LiveWorkoutProvider } from "@/components/forms/live-workout/LiveWorkoutContext";
 import LiveWorkoutForm from "@/components/forms/live-workout/LiveWorkoutForm";
 import { getWorkout } from "@/services/asyncStorageServices";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 import { Redirect } from "expo-router";
 
@@ -13,7 +14,7 @@ export default function LiveWorkout() {
     },
     queryKey: ["live-workout"],
   });
-
+  
   return (
     <Container>
       {/* TODO determine what loading state should look like */}

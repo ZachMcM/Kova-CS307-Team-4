@@ -1,7 +1,6 @@
 import Container from "@/components/Container";
 import TemplateForm from "@/components/forms/workout-template/TemplateForm";
 import { TemplateFormProvider } from "@/components/forms/workout-template/TemplateFormContext";
-import ExerciseSearchView from "@/components/search-views/ExerciseSearchView";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";

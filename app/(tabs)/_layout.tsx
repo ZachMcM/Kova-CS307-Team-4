@@ -13,15 +13,13 @@ import { getWorkout } from "@/services/asyncStorageServices";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useQuery } from "@tanstack/react-query";
 
-import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
 import { useSession } from "@/components/SessionContext";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
-  const { session } = useSession()
+  const { session } = useSession();
 
   // TODO @IanBruch do a very similar thing but with session, the session ternary should wrap the live workout ternary
   const { data: workout, isPending } = useQuery({
@@ -34,7 +32,7 @@ export default function TabLayout() {
 
   return isPending ? (
     // TODO need to figure out what loading state to show
-    <Spinner/>
+    <Spinner />
   ) : !workout ? (
     <Tabs
       screenOptions={{
@@ -57,8 +55,38 @@ export default function TabLayout() {
       <Tabs.Screen
         name="groups"
         options={{
-          title: 'Groups',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.3.fill" color={color} />,
+          title: "Groups",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.3.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="group/[id]"
+        options={{
+          title: "Group",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="group/members/[id]"
+        options={{
+          title: "Group Members",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="create-group"
+        options={{
+          title: "Create Group",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="event/[id]"
+        options={{
+          title: "Event",
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -73,8 +101,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="post"
         options={{
-          title: 'Post',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus" color={color} />,
+          title: "Post",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="plus" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -116,15 +146,21 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="templates/[id]"
+        name="relations/[id]"
         options={{
           href: null,
         }}
       />
       <Tabs.Screen
-        name="relations/[id]"
+        name="new-event/[id]"
         options={{
           href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="templates/[id]"
+        options={{
+          href: null
         }}
       />
     </Tabs>

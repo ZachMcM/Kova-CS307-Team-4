@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      eventWorkout: {
+        Row: {
+          created_at: string
+          groupEventId: string
+          id: string
+          profileId: string
+          workoutData: Json | null
+        }
+        Insert: {
+          created_at?: string
+          groupEventId?: string
+          id?: string
+          profileId: string
+          workoutData?: Json | null
+        }
+        Update: {
+          created_at?: string
+          groupEventId?: string
+          id?: string
+          profileId?: string
+          workoutData?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventWorkout_groupEventId_fkey"
+            columns: ["groupEventId"]
+            isOneToOne: false
+            referencedRelation: "groupEvent"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventWorkout_profileId_fkey"
+            columns: ["profileId"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise: {
         Row: {
           created_at: string
@@ -27,42 +66,292 @@ export type Database = {
         }
         Relationships: []
       }
+      followingRel: {
+        Row: {
+          id: string
+          sourceId: string
+          targetId: string
+        }
+        Insert: {
+          id?: string
+          sourceId: string
+          targetId: string
+        }
+        Update: {
+          id?: string
+          sourceId?: string
+          targetId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followingRel_sourceId_fkey"
+            columns: ["sourceId"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["userId"]
+          },
+          {
+            foreignKeyName: "followingRel_targetId_fkey"
+            columns: ["targetId"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["userId"]
+          },
+        ]
+      }
+      group: {
+        Row: {
+          banner: string | null
+          created_at: string
+          description: string | null
+          goal: string | null
+          icon: string | null
+          id: string
+          title: string | null
+        }
+        Insert: {
+          banner?: string | null
+          created_at?: string
+          description?: string | null
+          goal?: string | null
+          icon?: string | null
+          id?: string
+          title?: string | null
+        }
+        Update: {
+          banner?: string | null
+          created_at?: string
+          description?: string | null
+          goal?: string | null
+          icon?: string | null
+          id?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
+      groupEvent: {
+        Row: {
+          end_date: string | null
+          exercise_points: Json | null
+          goal: number | null
+          groupId: string
+          id: string
+          rep_multiplier: number | null
+          start_date: string
+          title: string | null
+          type: string | null
+          weight_multiplier: number | null
+        }
+        Insert: {
+          end_date?: string | null
+          exercise_points?: Json | null
+          goal?: number | null
+          groupId: string
+          id?: string
+          rep_multiplier?: number | null
+          start_date?: string
+          title?: string | null
+          type?: string | null
+          weight_multiplier?: number | null
+        }
+        Update: {
+          end_date?: string | null
+          exercise_points?: Json | null
+          goal?: number | null
+          groupId?: string
+          id?: string
+          rep_multiplier?: number | null
+          start_date?: string
+          title?: string | null
+          type?: string | null
+          weight_multiplier?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groupEvent_groupId_fkey"
+            columns: ["groupId"]
+            isOneToOne: false
+            referencedRelation: "group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groupRel: {
+        Row: {
+          created_at: string
+          groupId: string
+          id: string
+          profileId: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string
+          groupId: string
+          id?: string
+          profileId: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string
+          groupId?: string
+          id?: string
+          profileId?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groupRel_groupId_fkey"
+            columns: ["groupId"]
+            isOneToOne: false
+            referencedRelation: "group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "groupRel_profileId_fkey"
+            columns: ["profileId"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      likeRel: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likeRel_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "post"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likeRel_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["userId"]
+          },
+        ]
+      }
+      post: {
+        Row: {
+          createdAt: string | null
+          description: string | null
+          id: string
+          imageUrl: string | null
+          isPublic: boolean | null
+          location: string | null
+          profileId: string
+          taggedFriends: string[] | null
+          title: string
+          updatedAt: string | null
+          workoutData: Json | null
+        }
+        Insert: {
+          createdAt?: string | null
+          description?: string | null
+          id?: string
+          imageUrl?: string | null
+          isPublic?: boolean | null
+          location?: string | null
+          profileId: string
+          taggedFriends?: string[] | null
+          title: string
+          updatedAt?: string | null
+          workoutData?: Json | null
+        }
+        Update: {
+          createdAt?: string | null
+          description?: string | null
+          id?: string
+          imageUrl?: string | null
+          isPublic?: boolean | null
+          location?: string | null
+          profileId?: string
+          taggedFriends?: string[] | null
+          title?: string
+          updatedAt?: string | null
+          workoutData?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_profileid_fkey"
+            columns: ["profileId"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile: {
         Row: {
+          achievement: string | null
           age: number | null
           avatar: string | null
           bio: string | null
           created_at: string
+          followers: number
+          following: number
+          friends: number
           gender: string | null
           goal: string | null
           id: string
-          private: boolean | null
+          location: string | null
+          name: string
+          private: Database["public"]["Enums"]["PRIVACY_TYPE"]
           userId: string
-          username: string | null
+          username: string
         }
         Insert: {
+          achievement?: string | null
           age?: number | null
           avatar?: string | null
           bio?: string | null
           created_at?: string
+          followers?: number
+          following?: number
+          friends?: number
           gender?: string | null
           goal?: string | null
           id?: string
-          private?: boolean | null
+          location?: string | null
+          name: string
+          private?: Database["public"]["Enums"]["PRIVACY_TYPE"]
           userId: string
-          username?: string | null
+          username: string
         }
         Update: {
+          achievement?: string | null
           age?: number | null
           avatar?: string | null
           bio?: string | null
           created_at?: string
+          followers?: number
+          following?: number
+          friends?: number
           gender?: string | null
           goal?: string | null
           id?: string
-          private?: boolean | null
+          location?: string | null
+          name?: string
+          private?: Database["public"]["Enums"]["PRIVACY_TYPE"]
           userId?: string
-          username?: string | null
+          username?: string
         }
         Relationships: []
       }
@@ -113,9 +402,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          exercise_id?: string
+          exercise_id: string
           id?: string
-          tag_id?: string
+          tag_id: string
         }
         Update: {
           created_at?: string
@@ -203,15 +492,71 @@ export type Database = {
           },
         ]
       }
+      weightEntries: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      decrement_followers: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
+      decrement_following: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
+      decrement_friends: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
+      increment_followers: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
+      increment_following: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
+      increment_friends: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
+      verify_user_password: {
+        Args: {
+          password: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      PRIVACY_TYPE: "PRIVATE" | "PUBLIC" | "FRIENDS"
     }
     CompositeTypes: {
       [_ in never]: never
