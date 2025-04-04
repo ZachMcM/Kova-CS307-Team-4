@@ -5,6 +5,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import {
   AddIcon,
+  ArrowRightIcon,
   ChevronLeftIcon,
   DownloadIcon,
   EditIcon,
@@ -418,16 +419,28 @@ export default function WeightTrackingScreen() {
             <Box className="mt-4">
               <HStack className="justify-between items-center mb-4">
                 <Heading size="md">Weight Progress</Heading>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  action="secondary"
-                  className="border-[#6FA8DC]"
-                  onPress={exportToCSV}
-                >
-                  <ButtonText className="text-[#6FA8DC]">Export</ButtonText>
-                  <ButtonIcon as={DownloadIcon} className="text-[#6FA8DC]" />
-                </Button>
+                <HStack space="sm">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    action="secondary"
+                    className="border-[#6FA8DC]"
+                    onPress={() => refetch()}
+                  >
+                    <ButtonText className="text-[#6FA8DC]">Refresh</ButtonText>
+                    <ButtonIcon as={ArrowRightIcon} className="text-[#6FA8DC]" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    action="secondary"
+                    className="border-[#6FA8DC]"
+                    onPress={exportToCSV}
+                  >
+                    <ButtonText className="text-[#6FA8DC]">Export</ButtonText>
+                    <ButtonIcon as={DownloadIcon} className="text-[#6FA8DC]" />
+                  </Button>
+                </HStack>
               </HStack>
 
               <Box className="bg-white p-4 rounded-lg border border-gray-300">
