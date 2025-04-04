@@ -195,6 +195,9 @@ function EditTile({
 
   const form = useForm({
     resolver: zodResolver(schema),
+    defaultValues: {
+      title: event.title || ""
+    }
   });
 
   function onSubmit(values: FieldValues) {
