@@ -140,7 +140,7 @@ export default function WeightTrackingScreen() {
 
       if (editingEntry) {
         // Update existing entry
-        await updateWeightEntry(editingEntry.id, {
+        updateWeightEntry(editingEntry.id, {
           weight: weightValue,
           unit,
           date: date.toISOString(),
@@ -148,7 +148,7 @@ export default function WeightTrackingScreen() {
         showSuccessToast(toast, "Weight entry updated");
       } else {
         // Add new entry
-        await addWeightEntry({
+        addWeightEntry({
           user_id: userId,
           weight: weightValue,
           unit,
@@ -177,7 +177,7 @@ export default function WeightTrackingScreen() {
   // Handle delete
   const handleDelete = async (id: string) => {
     try {
-      await deleteWeightEntry(id);
+      deleteWeightEntry(id);
       showSuccessToast(toast, "Weight entry deleted");
       refetch();
     } catch (error) {
