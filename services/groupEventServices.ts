@@ -8,7 +8,7 @@ import {
   ExtendedEventWithGroup,
 } from "@/types/extended-types";
 import { ExerciseData, Workout } from "@/types/workout-types";
-import { getGroupsOfUser } from "./groupServices";
+import { getUserGroups } from "./groupServices";
 
 export const newEvent = async (
   groupId: string,
@@ -67,7 +67,7 @@ export const getEvent = async (id: string): Promise<ExtendedEventWithGroup> => {
 export const getUserEvents = async (
   profileId: string
 ): Promise<EventWithGroup[]> => {
-  const groups = await getGroupsOfUser(profileId);
+  const groups = await getUserGroups(profileId);
 
   const allEvents: EventWithGroup[] = [];
 

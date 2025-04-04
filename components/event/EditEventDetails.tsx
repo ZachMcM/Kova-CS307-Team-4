@@ -28,7 +28,7 @@ export default function EditEventDetails({
 }) {
   const schema = z
     .object({
-      end_date: z.date({ message: "Must be a valid date" }),
+      end_date: z.date({ message: "Must be a valid date later than the current end date." }),
       goal: z.coerce
         .number({ invalid_type_error: "Must be a valid number" })
         .min(1, { message: "Goal cannot be less than 1" })
@@ -117,8 +117,8 @@ export default function EditEventDetails({
                   onChange(date);
                 }}
                 minimumDate={
-                  new Date(event.start_date) > new Date()
-                    ? new Date(event.start_date)
+                  new Date(event.end_date!) > new Date()
+                    ? new Date(event.end_date!)
                     : new Date()
                 }
               />

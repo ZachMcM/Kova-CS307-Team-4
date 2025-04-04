@@ -137,7 +137,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.fill" color={color} />
           ),
-          href: session?.user.id ? `/profiles/${session?.user.id}` : undefined,
+           href: session?.user.id ? `/profiles/${session?.user.id}` : undefined,
         }}
       />
       <Tabs.Screen
@@ -168,12 +168,6 @@ export default function TabLayout() {
         name="new-event/[id]"
         options={{
           href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="templates/[id]"
-        options={{
-          href: null
         }}
       />
     </Tabs>

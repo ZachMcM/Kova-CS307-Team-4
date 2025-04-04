@@ -109,6 +109,8 @@ export default function CreateGroup() {
                     });
                     queryClient.invalidateQueries({queryKey: ["group"],})
                     queryClient.invalidateQueries({queryKey: ["groupRel"],})
+                    queryClient.invalidateQueries({queryKey: ["group profile"]})
+                    queryClient.invalidateQueries({queryKey: ["groupRel profile"]})
                     showSuccessToast(toast, "Welcome to Kova!")
                 }).catch(error => {
                     console.log(error);

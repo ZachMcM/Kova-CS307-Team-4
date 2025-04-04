@@ -31,6 +31,8 @@ import { Post } from "../feed";
 import { useNavigation } from "@react-navigation/native";
 import { getWeightEntries } from "@/services/weightServices";
 import Container from "@/components/Container";
+import { getAllGroups, getUserGroups } from "@/services/groupServices";
+import GroupCard from "@/components/GroupCard";
 
 export default function ProfileScreen() {
 
@@ -228,6 +230,25 @@ export default function ProfileScreen() {
       showErrorToast(toast, "Failed to update profile");
     }
   };
+
+  const { data: groups, isPending: isGroupPending } = useQuery({
+    queryKey: ["group profile"],
+    queryFn: async () => {
+      const groups = await getAllGroups();
+      console.log(JSON.stringify(groups))
+      return groups;
+    },
+  });
+
+  const { data: userGroups, isPending: isUserPending } = useQuery({
+    queryKey: ["groupRel profile"],
+    queryFn: async () => {
+      console.log("Performing user query")
+      const userGroups = await getUserGroups(session!.user.user_metadata.profileId)
+      console.log(userGroups)
+      return userGroups
+    }
+  })
 
   const saveValuesAndEditProfile = () => {
     if (profile) {
@@ -751,6 +772,20 @@ export default function ProfileScreen() {
               </VStack>
             )}
         </Box>
+        {
+          groups && userGroups && id === session?.user.id && (
+            <>
+              <Heading>Your Groups</Heading>
+              <VStack space="md">
+                {(groups && groups!.length >= 1) ? (
+                  groups?.filter((group) => userGroups?.includes(group.groupId))
+                    .map((group) => (
+                    <GroupCard key={group.groupId} group={group} />
+                  ))) : <></>}
+              </VStack>
+            </>
+          )
+        }
         { profile && id === session?.user.id && (
           <ProfileActivities posts={posts as Post[]} isLoading={postsIsLoading} updatePostFunc={updateOwnPost}></ProfileActivities>
         )}

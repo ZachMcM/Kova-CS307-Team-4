@@ -22,6 +22,7 @@ import {
 } from "@/types/extended-types";
 import { Alert, AlertIcon, AlertText } from "../ui/alert";
 import { InfoIcon } from "../ui/icon";
+import { getUserIdFromProfile } from "@/services/profileServices";
 
 export default function Leaderboard({ event }: { event: EventWithGroup }) {
   const { data: leaderboard, isPending } = useQuery({
@@ -94,11 +95,15 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
                     <Heading size="lg">{i + 1}</Heading>
                   </Box>
                   <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: "/(tabs)/profiles/[id]",
-                        params: { id: profile.id },
-                      })
+                    onPress={() => {
+                        console.log("Changing id to " + profile.id)
+                        getUserIdFromProfile(profile.id).then((userId) => {
+                          router.push({
+                            pathname: "/(tabs)/profiles/[id]",
+                            params: { id: userId},
+                          })
+                        })
+                      }
                     }
                   >
                     <HStack space="md" className="items-center">

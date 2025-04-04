@@ -158,6 +158,19 @@ export async function isTitleUnique(title: string) : Promise<boolean> {
   return data.length == 0
 }
 
+export async function isTitleUniqueToGroup(title: string, groupId: string) : Promise<boolean> {
+  const {data, error} = await supabase
+    .from("group")
+    .select("id")
+    .eq("title", title)
+    .neq("id", groupId)
+  if (error) {
+    throw new Error(error.message)
+  }
+  console.log(JSON.stringify(data) + ", " + groupId)
+  return data.length == 0
+}
+
 export async function getUserGroups(profileId: string) : Promise<string[]> {
   const {data, error} = await supabase
     .from("groupRel")

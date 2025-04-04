@@ -12,7 +12,7 @@ import { useState } from "react";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";
 import { useSession } from "@/components/SessionContext";
-import { createGroup, getGroup, isTitleUnique, updateGroup } from "@/services/groupServices"
+import { getGroup, isTitleUniqueToGroup, updateGroup } from "@/services/groupServices"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function EditGroup() {
@@ -112,13 +112,15 @@ export default function EditGroup() {
                 showErrorToast(toast, "Error: Goal cannot be empty.");
                 return
               }
-              isTitleUnique(title).then((isUnique) => {
+              isTitleUniqueToGroup(title, groupId).then((isUnique) => {
                 if (isUnique) {
                   updateGroup(groupId, title, description, goal).then(() => {
                     showSuccessToast(toast, "Updated your group!")
                     queryClient.invalidateQueries({queryKey: ["group", { groupId }],})
                     queryClient.invalidateQueries({queryKey: ["group"],})
                     queryClient.invalidateQueries({queryKey: ["group edit", { groupId }]})
+                    queryClient.invalidateQueries({queryKey: ["group profile"]})
+                    queryClient.invalidateQueries({queryKey: ["groupRel profile"]})
                     router.push({
                       pathname: "/group/[id]",
                       params: {id: groupId}})

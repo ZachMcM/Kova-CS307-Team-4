@@ -146,6 +146,8 @@ export default function Group() {
                         queryClient.invalidateQueries({queryKey: ["groupRel user", { groupId }]})
                         queryClient.invalidateQueries({queryKey: ["group"],})
                         queryClient.invalidateQueries({queryKey: ["groupRel"]})
+                        queryClient.invalidateQueries({queryKey: ["group profile"]})
+                        queryClient.invalidateQueries({queryKey: ["groupRel profile"]})
                         showSuccessToast(toast, "Joined group!")
                       });
                     }
@@ -164,6 +166,8 @@ export default function Group() {
                         queryClient.invalidateQueries({queryKey: ["group"],})
                         queryClient.invalidateQueries({queryKey: ["groupRel user", { groupId }]})
                         queryClient.invalidateQueries({queryKey: ["groupRel"]})
+                        queryClient.invalidateQueries({queryKey: ["group profile"]})
+                        queryClient.invalidateQueries({queryKey: ["groupRel profile"]})
                         showSuccessToast(toast, "Left group!")
                       });
                     }

@@ -30,6 +30,19 @@ export const getProfiles = async (ids: string[]): Promise<Map<string, Profile>> 
   return profiles;
 }
 
+export const getUserIdFromProfile = async (profileId: string): Promise<string> => {
+  const { data: profile, error } = await supabase
+    .from("profile")
+    .select("userId")
+    .eq("id", profileId)
+    .limit(1).single();
+
+  if (error) { 
+    throw new Error(error.message)
+  };
+  return profile.userId
+}
+
 export const getProfile = async (id: string): Promise<Profile> => {
   const { data: profile, error } = await supabase
     .from("profile")
