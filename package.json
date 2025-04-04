@@ -122,7 +122,8 @@
     "react-toastify": "^11.0.3",
     "tailwindcss": "^3.4.17",
     "tanstack": "^1.0.0",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "expo-notifications": "~0.29.14"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

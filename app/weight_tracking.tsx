@@ -6,6 +6,7 @@ import { HStack } from "@/components/ui/hstack";
 import {
   AddIcon,
   ArrowRightIcon,
+  BellIcon,
   ChevronLeftIcon,
   DownloadIcon,
   EditIcon,
@@ -33,6 +34,12 @@ import {
   getWeightEntries,
   updateWeightEntry,
 } from "@/services/weightServices";
+import {
+  cancelNotification,
+  getNotificationSettings,
+  requestNotificationPermissions,
+  scheduleDailyNotification,
+} from "@/services/notificationServices";
 import { WeightEntry } from "@/types/weight-types";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -72,6 +79,14 @@ export default function WeightTrackingScreen() {
     highestWeight: 0,
     lowestWeight: 0,
   });
+
+  // Notification settings state
+  const [notificationSettings, setNotificationSettings] = useState({
+    enabled: false,
+    time: '',
+  });
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [notificationTime, setNotificationTime] = useState(new Date());
 
   // Fetch user ID
   useEffect(() => {
@@ -300,6 +315,61 @@ export default function WeightTrackingScreen() {
     }
   }, [weightEntries]);
 
+  // Load notification settings
+  useEffect(() => {
+    const loadNotificationSettings = async () => {
+      const settings = await getNotificationSettings();
+      setNotificationSettings(settings);
+      if (settings.time) {
+        const [hours, minutes] = settings.time.split(':').map(Number);
+        const date = new Date();
+        date.setHours(hours, minutes);
+        setNotificationTime(date);
+      }
+    };
+    loadNotificationSettings();
+  }, []);
+
+  // Handle notification time change
+  const onTimeChange = async (event: any, selectedTime?: Date) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      setNotificationTime(selectedTime);
+      const timeString = `${selectedTime.getHours().toString().padStart(2, '0')}:${selectedTime.getMinutes().toString().padStart(2, '0')}`;
+      
+      try {
+        const hasPermission = await requestNotificationPermissions();
+        if (!hasPermission) {
+          showErrorToast(toast, "Please enable notifications in your device settings");
+          return;
+        }
+
+        const notificationId = await scheduleDailyNotification(timeString);
+        setNotificationSettings({ enabled: true, time: timeString });
+        showSuccessToast(toast, "Daily reminder set successfully");
+      } catch (error) {
+        console.error(error);
+        showErrorToast(toast, "Failed to set reminder");
+      }
+    }
+  };
+
+  // Handle notification toggle
+  const toggleNotification = async () => {
+    if (notificationSettings.enabled) {
+      try {
+        await cancelNotification(notificationSettings.time);
+        setNotificationSettings({ enabled: false, time: '' });
+        showSuccessToast(toast, "Reminder cancelled");
+      } catch (error) {
+        console.error(error);
+        showErrorToast(toast, "Failed to cancel reminder");
+      }
+    } else {
+      setShowTimePicker(true);
+    }
+  };
+
   return (
     <StaticContainer className="flex">
       <ScrollView className="flex px-6 py-16" keyboardShouldPersistTaps="handled">
@@ -412,6 +482,41 @@ export default function WeightTrackingScreen() {
                   </Button>
                 )}
               </HStack>
+            </VStack>
+          </Box>
+
+          {/* Add notification settings section */}
+          <Box className="border border-gray-300 rounded-lg p-4 mt-2">
+            <VStack space="md">
+              <Heading size="md">Daily Reminder</Heading>
+              <HStack space="md" className="items-center">
+                <Text size="md">Set a daily reminder to track your weight</Text>
+                <Button
+                  size="sm"
+                  variant={notificationSettings.enabled ? "outline" : "solid"}
+                  action={notificationSettings.enabled ? "secondary" : "primary"}
+                  className={notificationSettings.enabled ? "border-[#6FA8DC]" : "bg-[#6FA8DC]"}
+                  onPress={toggleNotification}
+                >
+                  <ButtonIcon as={BellIcon} className={notificationSettings.enabled ? "text-[#6FA8DC]" : "text-white"} />
+                  <ButtonText className={notificationSettings.enabled ? "text-[#6FA8DC]" : "text-white"}>
+                    {notificationSettings.enabled ? "Disable" : "Enable"}
+                  </ButtonText>
+                </Button>
+              </HStack>
+              {notificationSettings.enabled && (
+                <Text size="sm" className="text-gray-500">
+                  Reminder set for {notificationSettings.time}
+                </Text>
+              )}
+              {showTimePicker && (
+                <DateTimePicker
+                  value={notificationTime}
+                  mode="time"
+                  display="default"
+                  onChange={onTimeChange}
+                />
+              )}
             </VStack>
           </Box>
 
