@@ -7,6 +7,13 @@ import { useToast } from "@/components/ui/toast";
 import { getExercises } from "@/services/exerciseServices";
 import { newTemplate, updateTemplate } from "@/services/templateServices";
 import { showErrorToast } from "@/services/toastServices";
+import { ExtendedExercise } from "@/types/extended-types";
+import {
+  compareToTaggedQuery,
+  createTagCounter,
+  createWordCounter,
+  exercisesToSearch,
+} from "@/types/searcher-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -25,15 +32,12 @@ import { VStack } from "../../ui/vstack";
 import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
-import ExerciseSearchView from "@/components/search-views/ExerciseSearchView";
-import { ExtendedExercise } from "@/types/extended-types";
-import { compareToTaggedQuery, createTagCounter, createWordCounter, exercisesToSearch } from "@/types/searcher-types";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
-  const { control, handleSubmit, watch, formState, reset } = useTemplateForm();
+  const { control, handleSubmit, watch, formState } = useTemplateForm();
 
   const templateId = watch("id");
 
@@ -84,15 +88,6 @@ export default function TemplateForm() {
     name: "data",
   });
 
-  function isExerciseAdded(id: string) {
-    for (const exercise of exercises) {
-      if (exercise.info.id == id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   async function onSubmit(values: FieldValues) {
     saveTemplate(values as TemplateFormValues);
   }
@@ -111,83 +106,79 @@ export default function TemplateForm() {
       searchIdToIndex.set(searchItems[i].id, i);
     }
   }
-  
+
   return !exercisesLoading ? (
     allExercises && (
-      <VStack space="4xl">
-        <VStack space="xl">
-          <Controller
-            control={control}
-            name="name"
-            rules={{ required: true }}
-            render={({ field, fieldState }) => (
-              <FormControl isInvalid={fieldState.invalid} size="md">
-                <FormControlLabel>
-                  <FormControlLabelText>Name</FormControlLabelText>
-                </FormControlLabel>
-                <Input>
-                  <InputField
-                    placeholder="Enter a template name"
-                    value={field.value}
-                    onChangeText={field.onChange}
-                    onBlur={field.onBlur}
-                  />
-                </Input>
-                <FormControlError>
-                  <FormControlErrorText>
-                    {fieldState.error?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
-            )}
+      <VStack space="2xl">
+        <Controller
+          control={control}
+          name="name"
+          rules={{ required: true }}
+          render={({ field, fieldState }) => (
+            <FormControl isInvalid={fieldState.invalid} size="md">
+              <FormControlLabel>
+                <FormControlLabelText>Name</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  placeholder="Enter a template name"
+                  value={field.value}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              </Input>
+              <FormControlError>
+                <FormControlErrorText>
+                  {fieldState.error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
+        <Input size="md">
+          <InputField
+            placeholder="Search exercises"
+            onChangeText={setExerciseQuery}
+            value={exerciseQuery}
           />
-          {/* TODO replace with actual search bar @AreebE */}
-          <Input size="md">
-            <InputField
-              placeholder="Search exercises"
-              onChangeText={setExerciseQuery}
-              value={exerciseQuery}
-            />
-            <InputSlot className="p-3">
-              <InputIcon as={SearchIcon} />
-            </InputSlot>
-          </Input>
-
-          {exerciseQuery.length != 0 &&
-            allExercises
-              .sort((a: ExtendedExercise, b: ExtendedExercise) => {
-                let aSearch = searchItems![searchIdToIndex!.get(a.id)!];
-                let bSearch = searchItems![searchIdToIndex!.get(b.id)!];
-                let diff = compareToTaggedQuery(exerciseQuery, bSearch,
-                  wordCounter!, tagCounter!, []) 
-                    - compareToTaggedQuery(exerciseQuery, aSearch,
-                      wordCounter!, tagCounter!, []);
-                return diff;
-              })
-              .map((exercise) => (
-                <Pressable
-                  key={exercise.id}
-                  onPress={() => {
-                    setExerciseQuery("");
-                    addExercise({
-                      info: {
-                        name: exercise.name!,
-                        id: exercise.id,
+          <InputSlot className="p-3">
+            <InputIcon as={SearchIcon} />
+          </InputSlot>
+        </Input>
+        {exerciseQuery.length != 0 &&
+          allExercises
+            .filter(
+              (exercise) =>
+                exercise.name
+                  ?.toLowerCase()
+                  .includes(exerciseQuery.toLowerCase()) ||
+                exercise.tags.filter((tag) =>
+                  tag.name?.toLowerCase().includes(exerciseQuery.toLowerCase())
+                ).length > 0
+            )
+            .map((exercise) => (
+              <Pressable
+                key={exercise.id}
+                onPress={() => {
+                  setExerciseQuery("");
+                  addExercise({
+                    info: {
+                      name: exercise.name!,
+                      id: exercise.id,
+                    },
+                    sets: [
+                      {
+                        reps: 0,
+                        weight: 0,
                       },
-                      sets: [
-                        {
-                          reps: 0,
-                          weight: 0,
-                        },
-                      ],
-                    });
-                  }}
-                  className="flex flex-1"
-                >
-                  <ExerciseCard exercise={exercise} />
-                </Pressable>
-              ))}
-        </VStack>
+                    ],
+                  });
+                }}
+                className="flex flex-1"
+              >
+                <ExerciseCard exercise={exercise} />
+              </Pressable>
+            ))}
         <VStack space="4xl">
           {exercises.map((exercise, i) => (
             <VStack space="md" key={exercise.info.id}>
@@ -205,7 +196,7 @@ export default function TemplateForm() {
         </VStack>
         <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
           <ButtonText>Save Template</ButtonText>
-          {isPending && <ButtonSpinner color={"FFF"} />}
+          {isPending && <ButtonSpinner color="#FFF" />}
         </Button>
         <Controller
           control={control}

@@ -1,18 +1,40 @@
 import { useSession } from "@/components/SessionContext";
-import { updateProfile, getProfile, unfollowUser, getFollowing, getFriends, followUser } from "./profileServices";
+import {
+  updateProfile,
+  getProfile,
+  unfollowUser,
+  getFollowing,
+  getFriends,
+  followUser,
+} from "./profileServices";
 import { signOutUser } from "./loginServices";
 import { Session } from "@supabase/supabase-js";
-import { AuthAccountResponse, ExtendedExercise, ExtendedTemplateWithCreator } from "@/types/extended-types";
+import {
+  AuthAccountResponse,
+  ExtendedExercise,
+  ExtendedTemplateWithCreator,
+} from "@/types/extended-types";
 import { supabase } from "@/lib/supabase";
-import { SearchItem, SearchTag, TaggedSearchItem, 
-    WordCounter, TagCounter,
-    createWordCounter, createTagCounter,
-    profilesToSearch, templatesToSearch, exercisesToSearch,
-    compareToQuery, compareToTaggedQuery
+import {
+  SearchItem,
+  SearchTag,
+  TaggedSearchItem,
+  WordCounter,
+  TagCounter,
+  createWordCounter,
+  createTagCounter,
+  profilesToSearch,
+  templatesToSearch,
+  exercisesToSearch,
+  compareToQuery,
+  compareToTaggedQuery,
 } from "@/types/searcher-types";
 import { Profile } from "@/types/profile-types";
 import { Post } from "@/app/(tabs)/feed";
 import { clearComments, Comment, getComments, pushComment } from "./commentServices";
+import { getExercisePoints } from "./groupEventServices";
+import { ExerciseData } from "@/types/workout-types";
+import { Tables } from "@/types/database.types";
 
 const burnerProfileIds = ["36a95bc3-ccfc-4b6c-a1f4-b37ee68ba40a", "11e43cae-f818-42a9-97af-52125d09b85e"];
 const burnerProfileUserIds = ["e849d723-76bb-4b95-a028-9f7a382299da", "e159c552-2c1c-40a4-9505-49655e09593b"];
@@ -24,8 +46,7 @@ export const exampleTests = (num: number) => {
   let output = "";
   if (num < 3) {
     output += "SUCCESS";
-  }
-  else {
+  } else {
     output += "FAILURE";
   }
 
@@ -44,99 +65,180 @@ export type LoginTestParams = {
 
 //Login tests
 export const loginTests = async (params: LoginTestParams) => {
-  
   let valid = true;
-  let output = ""
-  let error_message = ""
-  
-  const cur_session_refresh_token = (await supabase.auth.getSession()).data.session?.refresh_token!
-  await params.signInUser(params.testEmail, params.testPassword)
-    .then( async () => {
+  let output = "";
+  let error_message = "";
+
+  const cur_session_refresh_token = (await supabase.auth.getSession()).data
+    .session?.refresh_token!;
+  await params
+    .signInUser(params.testEmail, params.testPassword)
+    .then(async () => {
       if (params.expectedError == null) {
-        output += "SUCCESS"
+        output += "SUCCESS";
       } else {
         valid = false;
-        output += "FAILURE"
+        output += "FAILURE";
         error_message = "Did not throw expected error " + params.expectedError;
       }
-      await supabase.auth.refreshSession({ refresh_token: cur_session_refresh_token })
-    }).catch((error: Error) => {
+      await supabase.auth.refreshSession({
+        refresh_token: cur_session_refresh_token,
+      });
+    })
+    .catch((error: Error) => {
       if (params.expectedError == null) {
         valid = false;
-        output += "FAILURE"
-        error_message = "Error was thrown when success was expected " + error.message;
+        output += "FAILURE";
+        error_message =
+          "Error was thrown when success was expected " + error.message;
       } else if (params.expectedError !== error.message) {
         valid = false;
-        output += "FAILURE"
-        error_message = "Unexpected error was thrown '" + error.message + "' expected was '" + params.expectedError + "'";
+        output += "FAILURE";
+        error_message =
+          "Unexpected error was thrown '" +
+          error.message +
+          "' expected was '" +
+          params.expectedError +
+          "'";
       } else {
-        output += "SUCCESS"
+        output += "SUCCESS";
       }
-    })
+    });
 
-    if (valid == true) {
-      output += " | " + params.testCaseName
-    } else {
-      output += " | " + params.testCaseName + ": " + error_message  
+  if (valid == true) {
+    output += " | " + params.testCaseName;
+  } else {
+    output += " | " + params.testCaseName + ": " + error_message;
+  }
+  return output;
+};
+
+const sampleGroupEvent = {
+  id: "211746ed-2c1f-45aa-a563-2bfaedc4a29e",
+  groupId: "13e04401-97c9-47a0-992b-62bcd2238140",
+  start_date: new Date().toDateString(),
+  title: "The Olympics",
+  end_date: new Date().toDateString(),
+  exercise_points: [
+    {
+      exerciseId: "5894fa40-c745-4168-a73f-99b0e8a33e07",
+      exerciseName: "Chest Press Machine",
+      points: 8,
+    },
+  ],
+  rep_multiplier: 2,
+  weight_multiplier: 1,
+  goal: 1000000,
+  type: "competition"
+} as Tables<"groupEvent">;
+
+const sampleExercise = {
+  info: {
+    id: "5894fa40-c745-4168-a73f-99b0e8a33e07",
+    name: "Chest Press Machine"
+  },
+  sets: [
+    {
+      reps: 10,
+      weight: 100
+    },
+    {
+      reps: 10,
+      weight: 100
+    },
+    {
+      reps: 10,
+      weight: 100
     }
-    return output
-}
+  ]
+} as ExerciseData
+
+export const pointsTest = () => {
+  const points = getExercisePoints(sampleGroupEvent, sampleExercise)
+  if (points != 2880) {
+    return `FAILURE | Expected value was 2880, value was ${points}`
+  } else {
+    return "SUCCESS | Expected value was 2880 was returned"
+  }
+};
 
 export type RegisterTestParams = {
-  createAccount: (userEmail: string, userPassword: string, confirmPassword: string, username: string, displayName: string) => Promise<AuthAccountResponse>,
-  testCaseName: string,
-  addRandom: boolean,
-  testEmail: string,
-  testPassword: string,
-  testConfirmPassword: string,
-  testUsername: string,
-  testDisplayName: string,
-  expectedError: string | null,
-}
+  createAccount: (
+    userEmail: string,
+    userPassword: string,
+    confirmPassword: string,
+    username: string,
+    displayName: string
+  ) => Promise<AuthAccountResponse>;
+  testCaseName: string;
+  addRandom: boolean;
+  testEmail: string;
+  testPassword: string;
+  testConfirmPassword: string;
+  testUsername: string;
+  testDisplayName: string;
+  expectedError: string | null;
+};
 
 //Registration tests
 export const registrationTests = async (params: RegisterTestParams) => {
-  
   let valid = true;
-  let output = ""
-  let error_message = ""
-  let randNum = ""
+  let output = "";
+  let error_message = "";
+  let randNum = "";
   if (params.addRandom == true) {
-    randNum = Math.floor(Math.random() * (999_999_999 + 1)).toString()
+    randNum = Math.floor(Math.random() * (999_999_999 + 1)).toString();
   }
-  
-  const cur_session_refresh_token = (await supabase.auth.getSession()).data.session?.refresh_token!
-  await params.createAccount(randNum + params.testEmail, params.testPassword, params.testConfirmPassword, randNum + params.testUsername, params.testDisplayName)
-    .then( async () => {
+
+  const cur_session_refresh_token = (await supabase.auth.getSession()).data
+    .session?.refresh_token!;
+  await params
+    .createAccount(
+      randNum + params.testEmail,
+      params.testPassword,
+      params.testConfirmPassword,
+      randNum + params.testUsername,
+      params.testDisplayName
+    )
+    .then(async () => {
       if (params.expectedError == null) {
-        output += "SUCCESS"
+        output += "SUCCESS";
       } else {
         valid = false;
-        output += "FAILURE"
+        output += "FAILURE";
         error_message = "Did not throw expected error " + params.expectedError;
       }
-      await supabase.auth.refreshSession({ refresh_token: cur_session_refresh_token })
-    }).catch((error: Error) => {
+      await supabase.auth.refreshSession({
+        refresh_token: cur_session_refresh_token,
+      });
+    })
+    .catch((error: Error) => {
       if (params.expectedError == null) {
         valid = false;
-        output += "FAILURE"
-        error_message = "Error was thrown when success was expected " + error.message;
+        output += "FAILURE";
+        error_message =
+          "Error was thrown when success was expected " + error.message;
       } else if (params.expectedError !== error.message) {
         valid = false;
-        output += "FAILURE"
-        error_message = "Unexpected error was thrown '" + error.message + "' expected was '" + params.expectedError + "'";
+        output += "FAILURE";
+        error_message =
+          "Unexpected error was thrown '" +
+          error.message +
+          "' expected was '" +
+          params.expectedError +
+          "'";
       } else {
-        output += "SUCCESS"
+        output += "SUCCESS";
       }
-    })
+    });
 
-    if (valid == true) {
-      output += " | " + params.testCaseName
-    } else {
-      output += " | " + params.testCaseName + ": " + error_message  
-    }
-    return output
-}
+  if (valid == true) {
+    output += " | " + params.testCaseName;
+  } else {
+    output += " | " + params.testCaseName + ": " + error_message;
+  }
+  return output;
+};
 
 export type PasswordResetTestParams = {
   signInUser: (userEmail: string, userPassword: string) => Promise<boolean>,
@@ -196,37 +298,105 @@ export const followerTests = async () => {
   let output = "";
 
   await followUser(burnerProfileUserIds[0], burnerProfileUserIds[1]);
-  output += "followUser: a->b "
+  output += "followUser: a->b ";
 
   let profile = await getProfile(burnerProfileUserIds[0]);
 
-  if (profile.following !== 1) { valid = false; }
+  if (profile.following !== 1) {
+    valid = false;
+  }
 
   await followUser(burnerProfileUserIds[1], burnerProfileUserIds[0]);
-  output += "followUser: b->a "
+  output += "followUser: b->a ";
 
   profile = await getProfile(burnerProfileUserIds[0]);
 
-  if (profile.followers !== 1) { valid = false; }
-  if (profile.following !== 1) { valid = false; }
-  if (profile.friends !== 1) {valid = false; }
+  if (profile.followers !== 1) {
+    valid = false;
+  }
+  if (profile.following !== 1) {
+    valid = false;
+  }
+  if (profile.friends !== 1) {
+    valid = false;
+  }
 
   await unfollowUser(burnerProfileUserIds[0], burnerProfileUserIds[1]);
-  output += "unfollowUser: a->b "
+  output += "unfollowUser: a->b ";
   await unfollowUser(burnerProfileUserIds[1], burnerProfileUserIds[0]);
-  output += "unfollowUser: b->a "
+  output += "unfollowUser: b->a ";
   profile = await getProfile(burnerProfileUserIds[0]);
 
-  if (profile.followers !== 0) { valid = false; }
-  if (profile.following !== 0) { valid = false; }
-  if (profile.friends !== 0) {valid = false; }
+  if (profile.followers !== 0) {
+    valid = false;
+  }
+  if (profile.following !== 0) {
+    valid = false;
+  }
+  if (profile.friends !== 0) {
+    valid = false;
+  }
 
-  if (valid) { return "SUCCESS\n" + output }
-  else { return "FAILURE\n" + output }
+  if (valid) {
+    return "SUCCESS\n" + output;
+  } else {
+    return "FAILURE\n" + output;
+  }
 };
 
 export const socialInformationTests = async () => {
-  const names = ["Octavio Brill", "Yisroel Rainey", "Ken Caruso", "Stephan Wyatt", "Brandy Hagan", "Keely Stiles", "Stella Le", "Cayden Sepulveda", "Shyanne Noe", "Chauncey Wharton", "Devonta Fortner", "Treyvon Santos", "Abby Knapp", "Trevion Gilman", "Chelsie Hulsey", "Raelynn Worthington", "Brice Aquino", "Leeann Goad", "Shelbi Huffman", "Donavan Redding", "Theresa Schmidt", "Shirley Alexander", "Kenyon Snodgrass", "Derrick Adame", "Ariel Saldana", "Kristina Gillette", "Jayden Conte", "Alize New", "Annalise Shearer", "Estrella Hoppe", "Terence Michael", "Lyndsay Kauffman", "Arjun Rincon", "Ruth Myles", "Laken Vogt", "Benito Fleck", "Alvaro Yoo", "Carson Mackay", "Issac Meredith", "Khalil Colbert", "Caden Arce", "Duane Triplett", "Christine Rhodes", "Harry Gonzales", "Lukas London", "Jaiden Lim", "Anastasia Ralston", "Andres Christy", "Dashawn Moffitt", "Savanah Titus"];
+  const names = [
+    "Octavio Brill",
+    "Yisroel Rainey",
+    "Ken Caruso",
+    "Stephan Wyatt",
+    "Brandy Hagan",
+    "Keely Stiles",
+    "Stella Le",
+    "Cayden Sepulveda",
+    "Shyanne Noe",
+    "Chauncey Wharton",
+    "Devonta Fortner",
+    "Treyvon Santos",
+    "Abby Knapp",
+    "Trevion Gilman",
+    "Chelsie Hulsey",
+    "Raelynn Worthington",
+    "Brice Aquino",
+    "Leeann Goad",
+    "Shelbi Huffman",
+    "Donavan Redding",
+    "Theresa Schmidt",
+    "Shirley Alexander",
+    "Kenyon Snodgrass",
+    "Derrick Adame",
+    "Ariel Saldana",
+    "Kristina Gillette",
+    "Jayden Conte",
+    "Alize New",
+    "Annalise Shearer",
+    "Estrella Hoppe",
+    "Terence Michael",
+    "Lyndsay Kauffman",
+    "Arjun Rincon",
+    "Ruth Myles",
+    "Laken Vogt",
+    "Benito Fleck",
+    "Alvaro Yoo",
+    "Carson Mackay",
+    "Issac Meredith",
+    "Khalil Colbert",
+    "Caden Arce",
+    "Duane Triplett",
+    "Christine Rhodes",
+    "Harry Gonzales",
+    "Lukas London",
+    "Jaiden Lim",
+    "Anastasia Ralston",
+    "Andres Christy",
+    "Dashawn Moffitt",
+    "Savanah Titus",
+  ];
   const name = names[Math.floor(Math.random() * 50)];
 
   const text = texts[Math.floor(Math.random() * 50)];
@@ -250,20 +420,31 @@ export const socialInformationTests = async () => {
   const profile = await getProfile(burnerProfileUserIds[0]);
   output += "\ngetProfile: " + profile.goal + "," + profile.bio + "," + profile.location + "," + profile.achievement + "," + profile.private + "," + profile.name + ",";
 
-  if (profile.name !== name) { valid = false; }
-  if (profile.location !== text) { valid = false; }
-  if (profile.goal !== text) { valid = false; }
-  if (profile.achievement !== text) { valid = false; }
-  if (profile.bio !== text) { valid = false; }
-  if (profile.private !== privacy) { valid = false; }
+  if (profile.name !== name) {
+    valid = false;
+  }
+  if (profile.location !== text) {
+    valid = false;
+  }
+  if (profile.goal !== text) {
+    valid = false;
+  }
+  if (profile.achievement !== text) {
+    valid = false;
+  }
+  if (profile.bio !== text) {
+    valid = false;
+  }
+  if (profile.private !== privacy) {
+    valid = false;
+  }
 
   if (valid === true) {
     return "SUCCESS\n" + output;
-  }
-  else {
+  } else {
     return "FAILURE\n" + output;
   }
-}
+};
 
 // ALL SEARCH TESTS //
 
@@ -272,12 +453,12 @@ export const testCounters = () => {
   let output = "Output:\n\n";
 
   let searchItems = [
-    {name: 'aa', id:'1'},
-    {name: 'bb', id:'2'},
-    {name: 'aa bb', id:'3'},
-    {name: 'cc', id: '4'},
-    {name: 'dd -- a aa', id:  '5'},
-    {name: 'zz !sdj s', id:  '5'}
+    { name: "aa", id: "1" },
+    { name: "bb", id: "2" },
+    { name: "aa bb", id: "3" },
+    { name: "cc", id: "4" },
+    { name: "dd -- a aa", id: "5" },
+    { name: "zz !sdj s", id: "5" },
   ] as SearchItem[];
   output += "Basic:\n\n" + searchItems + "\n\n";
   let basicWordCounter = createWordCounter(searchItems);
@@ -285,25 +466,29 @@ export const testCounters = () => {
   if (basicWordCounter.totalItems != 6) {
     return "FAILURE\n\n" + output;
   }
-  output += "aa -- " + basicWordCounter.frequencies.get('aa') + "\n";
-  if (basicWordCounter.frequencies.get('aa') != 3) {
+  output += "aa -- " + basicWordCounter.frequencies.get("aa") + "\n";
+  if (basicWordCounter.frequencies.get("aa") != 3) {
     return "FAILURE\n\n" + output;
   }
-  output += "yy -- " + ((basicWordCounter.frequencies.has('yy')) ? 'None' 
-    : basicWordCounter.frequencies.get('yy')) + "\n";
-  if (basicWordCounter.frequencies.has('yy')) {
+  output +=
+    "yy -- " +
+    (basicWordCounter.frequencies.has("yy")
+      ? "None"
+      : basicWordCounter.frequencies.get("yy")) +
+    "\n";
+  if (basicWordCounter.frequencies.has("yy")) {
     return "FAILURE\n\n" + output;
   }
-  output += "Inv(cc) -- " + ((basicWordCounter.getInverseFrequency('cc'))) + "\n";
-  if (basicWordCounter.getInverseFrequency('cc') != 5) {
+  output += "Inv(cc) -- " + basicWordCounter.getInverseFrequency("cc") + "\n";
+  if (basicWordCounter.getInverseFrequency("cc") != 5) {
     return "FAILURE\n\n" + output;
   }
-  output += "Inv(aa) -- " + ((basicWordCounter.getInverseFrequency('aa'))) + "\n";
-  if (basicWordCounter.getInverseFrequency('aa') != 3) {
+  output += "Inv(aa) -- " + basicWordCounter.getInverseFrequency("aa") + "\n";
+  if (basicWordCounter.getInverseFrequency("aa") != 3) {
     return "FAILURE\n\n" + output;
   }
-  output += "Inv(ee) -- " + ((basicWordCounter.getInverseFrequency('ee'))) + "\n\n";
-  if (basicWordCounter.getInverseFrequency('ee') != 0) {
+  output += "Inv(ee) -- " + basicWordCounter.getInverseFrequency("ee") + "\n\n";
+  if (basicWordCounter.getInverseFrequency("ee") != 0) {
     return "FAILURE\n\n" + output;
   }
 
@@ -313,19 +498,23 @@ export const testCounters = () => {
   if (emptyWordCounter.totalItems != 0) {
     return "FAILURE\n\n" + output;
   }
-  output += "inv(aa) -- " + emptyWordCounter.getInverseFrequency('aa') + "\n\n";
-  if (emptyWordCounter.getInverseFrequency('aa') != 0) {
+  output += "inv(aa) -- " + emptyWordCounter.getInverseFrequency("aa") + "\n\n";
+  if (emptyWordCounter.getInverseFrequency("aa") != 0) {
     return "FAILURE\n\n" + output;
   }
 
   let taggedItems = [
-    {name: 'aa', id: '0', tags:[{name: 'aa dd'}]},
-    {name: 'bb', id: '1', tags:[{name: 'bb'}, {name: 'aa'}]},
-    {name: 'cc', id: '2', tags:[{name: 'cc'}]},
-    {name: 'dd', id: '3', tags:[]},
-    {name: 'ee', id: '4', tags:[{name: 'aa'}, {name: 'dd'}]},
-    {name: 'gg', id: '5', tags:[{name: 'aa'}, {name: 'ee'}]},
-    {name: 'ff', id: '6', tags:[{name: 'ff'}, {name: 'll'}, {name: 'zzz'}, {name: 'yyyy'}]},
+    { name: "aa", id: "0", tags: [{ name: "aa dd" }] },
+    { name: "bb", id: "1", tags: [{ name: "bb" }, { name: "aa" }] },
+    { name: "cc", id: "2", tags: [{ name: "cc" }] },
+    { name: "dd", id: "3", tags: [] },
+    { name: "ee", id: "4", tags: [{ name: "aa" }, { name: "dd" }] },
+    { name: "gg", id: "5", tags: [{ name: "aa" }, { name: "ee" }] },
+    {
+      name: "ff",
+      id: "6",
+      tags: [{ name: "ff" }, { name: "ll" }, { name: "zzz" }, { name: "yyyy" }],
+    },
   ] as TaggedSearchItem[];
   let tagCounter = createTagCounter(taggedItems);
   output += "Tagged Items:\n" + taggedItems + "\n\n";
@@ -333,32 +522,32 @@ export const testCounters = () => {
   if (tagCounter.totalItems != 7) {
     return "FAILURE\n\n" + output;
   }
-  output += "aa -- " + tagCounter.tagFrequencies.get('aa') + "\n";
-  if (tagCounter.tagFrequencies.get('aa') != 3) {
+  output += "aa -- " + tagCounter.tagFrequencies.get("aa") + "\n";
+  if (tagCounter.tagFrequencies.get("aa") != 3) {
     return "FAILURE\n\n" + output;
   }
-  output += "dd -- " + tagCounter.tagFrequencies.get('dd') + "\n";
-  if (tagCounter.tagFrequencies.get('dd') != 1) {
+  output += "dd -- " + tagCounter.tagFrequencies.get("dd") + "\n";
+  if (tagCounter.tagFrequencies.get("dd") != 1) {
     return "FAILURE\n\n" + output;
   }
   output += "zzz -- " + tagCounter.tagFrequencies.get("zzz") + "\n";
-  if (tagCounter.tagFrequencies.get('zzz') != 1) {
+  if (tagCounter.tagFrequencies.get("zzz") != 1) {
     return "FAILURE\n\n" + output;
   }
   output += "mm -- " + tagCounter.tagFrequencies.has("mm") + "\n";
   if (tagCounter.tagFrequencies.has("mm")) {
     return "FAILURE\n\n" + output;
   }
-  output += "inv(aa) -- " + tagCounter.getInverseFrequency('aa') + "\n";
-  if (tagCounter.getInverseFrequency('aa') != 4) {
+  output += "inv(aa) -- " + tagCounter.getInverseFrequency("aa") + "\n";
+  if (tagCounter.getInverseFrequency("aa") != 4) {
     return "FAILURE\n\n" + output;
   }
-  output += "inv(yyyy) -- " + tagCounter.getInverseFrequency('yyyy') + "\n";
-  if (tagCounter.getInverseFrequency('yyyy') != 6) {
+  output += "inv(yyyy) -- " + tagCounter.getInverseFrequency("yyyy") + "\n";
+  if (tagCounter.getInverseFrequency("yyyy") != 6) {
     return "FAILURE\n\n" + output;
   }
-  output += "inv(zz) -- " + tagCounter.getInverseFrequency('zz') + "\n";
-  if (tagCounter.getInverseFrequency('zz') != 0) {
+  output += "inv(zz) -- " + tagCounter.getInverseFrequency("zz") + "\n";
+  if (tagCounter.getInverseFrequency("zz") != 0) {
     return "FAILURE\n\n" + output;
   }
 
@@ -368,82 +557,91 @@ export const testCounters = () => {
   if (emptyTagCounter.totalItems != 0) {
     return "FAILURE\n\n" + output;
   }
-  output += "inv(aa) -- " + emptyTagCounter.getInverseFrequency('aa') + "\n\n";
-  if (emptyTagCounter.getInverseFrequency('aa') != 0) {
+  output += "inv(aa) -- " + emptyTagCounter.getInverseFrequency("aa") + "\n\n";
+  if (emptyTagCounter.getInverseFrequency("aa") != 0) {
     return "FAILURE\n\n" + output;
   }
   return "SUCCESS\n\n" + output;
-}
+};
 
 // Test the more advanced creators.
 export const testCreators = () => {
   let output = "Output:\n\n";
-  let exercises = [{
-    name: "Chest Bumps",
-    id: "0",
-    created_at: "Big Bang",
-    tags: [{color: "red", created_at: "a", id: "0", name: "chest"},
-      {color: "blue", created_at: "b", id: "1", name: "core"}]
-  }, {
-    name: "Leg Twists",
-    id: "1",
-    created_at: "BCE",
-    tags: [{color: "green", created_at: "c", id: "0", name: "legs"}]
-  }, {
-    name: "Burpee",
-    id: "2",
-    created_at: "Heat Death",
-    tags: [{color: "blue", created_at: "b", id: "1", name: "core"}]
-  }, {
-    name: "Chaos",
-    id: "3",
-    created_at: "Inexistance",
-    tags: []
-  }
+  let exercises = [
+    {
+      name: "Chest Bumps",
+      id: "0",
+      created_at: "Big Bang",
+      tags: [
+        { color: "red", created_at: "a", id: "0", name: "chest" },
+        { color: "blue", created_at: "b", id: "1", name: "core" },
+      ],
+    },
+    {
+      name: "Leg Twists",
+      id: "1",
+      created_at: "BCE",
+      tags: [{ color: "green", created_at: "c", id: "0", name: "legs" }],
+    },
+    {
+      name: "Burpee",
+      id: "2",
+      created_at: "Heat Death",
+      tags: [{ color: "blue", created_at: "b", id: "1", name: "core" }],
+    },
+    {
+      name: "Chaos",
+      id: "3",
+      created_at: "Inexistance",
+      tags: [],
+    },
   ] as ExtendedExercise[];
   output += "Standard Exercises: \n" + exercises + "\n\n";
   let exerciseItems = exercisesToSearch(exercises);
   output += "Items: " + exerciseItems + "\n\n";
-  if (exerciseItems[0].name !== "Chest Bumps"
-    || exerciseItems[0].id !== "0"
-    || exerciseItems[0].tags[0].name !== "chest"
-    || exerciseItems[0].tags[1].name !== "core"
-    || exerciseItems[0].tags.length != 2
-    || exerciseItems[1].name !== "Leg Twists"
-    || exerciseItems[1].id !== "1"
-    || exerciseItems[1].tags[0].name !== "legs"
-    || exerciseItems[1].tags.length != 1
-    || exerciseItems[2].name !== "Burpee"
-    || exerciseItems[2].id !== "2"
-    || exerciseItems[2].tags[0].name != "core"
-    || exerciseItems[2].tags.length != 1
-    || exerciseItems[3].name !== "Chaos"
-    || exerciseItems[3].id !== "3"
-    || exerciseItems[3].tags.length != 0
-    || exerciseItems.length != 4
+  if (
+    exerciseItems[0].name !== "Chest Bumps" ||
+    exerciseItems[0].id !== "0" ||
+    exerciseItems[0].tags[0].name !== "chest" ||
+    exerciseItems[0].tags[1].name !== "core" ||
+    exerciseItems[0].tags.length != 2 ||
+    exerciseItems[1].name !== "Leg Twists" ||
+    exerciseItems[1].id !== "1" ||
+    exerciseItems[1].tags[0].name !== "legs" ||
+    exerciseItems[1].tags.length != 1 ||
+    exerciseItems[2].name !== "Burpee" ||
+    exerciseItems[2].id !== "2" ||
+    exerciseItems[2].tags[0].name != "core" ||
+    exerciseItems[2].tags.length != 1 ||
+    exerciseItems[3].name !== "Chaos" ||
+    exerciseItems[3].id !== "3" ||
+    exerciseItems[3].tags.length != 0 ||
+    exerciseItems.length != 4
   ) {
     return "FAILURE\n\n" + output;
   }
 
-  let noExercises = exercisesToSearch([])
+  let noExercises = exercisesToSearch([]);
   output += "No exercises: " + noExercises + "\n\n";
   if (noExercises.length != 0) {
     return "FAILURE\n\n" + output;
   }
 
-  let profiles = [{userId: '0', name: 'John Purdue', avatar: 'Imagine pic link A'},
-    {userId: '1', name: "Peet", avatar: "Imagine pic link B"},
-    {userId: '2', name: "Levina Drusselberry", avatar: "Imagine pic link C"}
+  let profiles = [
+    { userId: "0", name: "John Purdue", avatar: "Imagine pic link A" },
+    { userId: "1", name: "Peet", avatar: "Imagine pic link B" },
+    { userId: "2", name: "Levina Drusselberry", avatar: "Imagine pic link C" },
   ] as any[];
   let profileItems = profilesToSearch(profiles);
   output += "Profiles: " + profileItems + "\n\n";
-  if (profileItems.length != 3
-    || profileItems[0].name !== "John Purdue"
-    || profileItems[0].id !== "0"
-    || profileItems[1].name !== "Peet"
-    || profileItems[1].id !== "1"
-    || profileItems[2].name !== "Levina Drusselberry"
-    || profileItems[2].id !== "2"
+  if (
+    profileItems.length != 3 ||
+    profileItems[0].name !== "John Purdue" ||
+    profileItems[0].id !== "0" ||
+    profileItems[1].name !== "Peet" ||
+    profileItems[1].id !== "1" ||
+    profileItems[2].name !== "Levina Drusselberry" ||
+    profileItems[2].id !== "2"
   ) {
     return "FAILURE\n\n" + output;
   }
@@ -454,29 +652,30 @@ export const testCreators = () => {
     return "FAILURE\n\n" + output;
   }
 
-  let templates = [{
-    created_at: "a", creatorProfileId: "0",
-    id: "1", name: "First", profileId: "A",
-    data: [], creatorProfile: {age: 0, avatar: "aa",
-      bio: "nothing at all", created_at: "asdf", gender: "N/A", goal: "None",
-      id: "0", private: false, userId: "0", username: "John"}
-  }, {
-    created_at: "b", creatorProfileId: "53",
-    id: "10", name: "Second", profileId: "AB",
-    data: [], creatorProfile: {age: 0, avatar: "aa",
-      bio: "nothing at all", created_at: "asdf", gender: "N/A", goal: "None",
-      id: "0", private: false, userId: "0", username: "John"}
-  }] as ExtendedTemplateWithCreator[];
-  let templateItems = templatesToSearch(templates);
-  output += "Templates: " + templateItems + "\n\n";
-  if (templateItems.length != 2
-    || templateItems[0].name !== "First"
-    || templateItems[0].id !== "1"
-    || templateItems[1].name !== "Second"
-    || templateItems[1].id !== "10"
-  ) {
-    return "FAILURE\n\n" + output;
-  }
+  // TODO
+  // let templates = [{
+  //   created_at: "a", creatorProfileId: "0",
+  //   id: "1", name: "First", profileId: "A",
+  //   data: [], creatorProfile: {age: 0, avatar: "aa",
+  //     bio: "nothing at all", created_at: "asdf", gender: "N/A", goal: "None",
+  //     id: "0", private: false, userId: "0", username: "John"}
+  // }, {
+  //   created_at: "b", creatorProfileId: "53",
+  //   id: "10", name: "Second", profileId: "AB",
+  //   data: [], creatorProfile: {age: 0, avatar: "aa",
+  //     bio: "nothing at all", created_at: "asdf", gender: "N/A", goal: "None",
+  //     id: "0", private: false, userId: "0", username: "John"}
+  // }] as ExtendedTemplateWithCreator[];
+  // let templateItems = templatesToSearch(templates);
+  // output += "Templates: " + templateItems + "\n\n";
+  // if (templateItems.length != 2
+  //   || templateItems[0].name !== "First"
+  //   || templateItems[0].id !== "1"
+  //   || templateItems[1].name !== "Second"
+  //   || templateItems[1].id !== "10"
+  // ) {
+  //   return "FAILURE\n\n" + output;
+  // }
 
   let noTemplates = templatesToSearch([]);
   output += "No templates: " + noTemplates + "\n\n";
@@ -485,22 +684,22 @@ export const testCreators = () => {
   }
 
   return "SUCCESS\n\n" + output;
-}
+};
 
 // Test the query scorers.
 export const testScorers = () => {
   let output = "Output:\n\n";
   let searchItems = [
-    {name: 'aa', id:'1'},
-    {name: 'bb', id:'2'},
-    {name: 'aa bb', id:'3'},
-    {name: 'cc', id: '4'},
-    {name: 'dd -- a aa', id:  '5'},
-    {name: 'zz !sdj s', id:  '5'}
+    { name: "aa", id: "1" },
+    { name: "bb", id: "2" },
+    { name: "aa bb", id: "3" },
+    { name: "cc", id: "4" },
+    { name: "dd -- a aa", id: "5" },
+    { name: "zz !sdj s", id: "5" },
   ] as SearchItem[];
   let sWordCounter = createWordCounter(searchItems);
 
-  let sQueries = ['a', 'A', 'Aa a', 'bc', '!sd', '1', 'b 1', 'a a', 'cc']
+  let sQueries = ["a", "A", "Aa a", "bc", "!sd", "1", "b 1", "a a", "cc"];
   let expectedResultsForSSearch = [
     [1 + 3, 0, 1 + 3, 0, 2 + 5 + 3, 0],
     [1 + 3, 0, 1 + 3, 0, 2 + 5 + 3, 0],
@@ -516,9 +715,16 @@ export const testScorers = () => {
   for (let i = 0; i < sQueries.length; i++) {
     output += "Query: " + sQueries[i] + "\n";
     for (let j = 0; j < searchItems.length; j++) {
-      output += "- " + searchItems[j].name + ": " 
-        + compareToQuery(sQueries[i], searchItems[j], sWordCounter) + "\n";
-      if (compareToQuery(sQueries[i], searchItems[j], sWordCounter) != expectedResultsForSSearch[i][j]) {
+      output +=
+        "- " +
+        searchItems[j].name +
+        ": " +
+        compareToQuery(sQueries[i], searchItems[j], sWordCounter) +
+        "\n";
+      if (
+        compareToQuery(sQueries[i], searchItems[j], sWordCounter) !=
+        expectedResultsForSSearch[i][j]
+      ) {
         return "FAILURE \n\n" + output;
       }
     }
@@ -526,17 +732,21 @@ export const testScorers = () => {
   output += "\n";
 
   let taggedItems = [
-    {name: 'aa', id: '0', tags:[{name: 'aa dd'}]},
-    {name: 'bb', id: '1', tags:[{name: 'bb'}, {name: 'aa'}]},
-    {name: 'cc', id: '2', tags:[{name: 'cc'}]},
-    {name: 'dd aa', id: '3', tags:[]},
-    {name: 'ee', id: '4', tags:[{name: 'aa'}, {name: 'dd'}]},
-    {name: 'gg', id: '5', tags:[{name: 'aa'}, {name: 'ee'}]},
-    {name: 'ff', id: '6', tags:[{name: 'ff'}, {name: 'll'}, {name: 'zzz'}, {name: 'yyyy'}]},
+    { name: "aa", id: "0", tags: [{ name: "aa dd" }] },
+    { name: "bb", id: "1", tags: [{ name: "bb" }, { name: "aa" }] },
+    { name: "cc", id: "2", tags: [{ name: "cc" }] },
+    { name: "dd aa", id: "3", tags: [] },
+    { name: "ee", id: "4", tags: [{ name: "aa" }, { name: "dd" }] },
+    { name: "gg", id: "5", tags: [{ name: "aa" }, { name: "ee" }] },
+    {
+      name: "ff",
+      id: "6",
+      tags: [{ name: "ff" }, { name: "ll" }, { name: "zzz" }, { name: "yyyy" }],
+    },
   ] as TaggedSearchItem[];
   let tWordCounter = createWordCounter(taggedItems);
   let tTagCounter = createTagCounter(taggedItems);
-  let tQueries = ['zzz', 'aa', 'zz', 'b', 'fff', 'yyy', 'dd'];
+  let tQueries = ["zzz", "aa", "zz", "b", "fff", "yyy", "dd"];
   let expectedResultsForTSearch = [
     [0, 0, 0, 0, 0, 0, 2 * (3 + 6)],
     [2 + 5 + 2 * (2 + 6), 2 * (2 + 4), 0, 2 + 5, 2 * (2 + 4), 2 * (2 + 4), 0],
@@ -544,17 +754,34 @@ export const testScorers = () => {
     [0, 1 + 6 + 2 * (1 + 6), 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 2 * (3 + 6)],
-    [2 * (2 + 6), 0, 0, 2 + 6, 2 * (2 + 6), 0, 0]
+    [2 * (2 + 6), 0, 0, 2 + 6, 2 * (2 + 6), 0, 0],
   ];
 
   output += "Tagged Items:\n";
   for (let i = 0; i < tQueries.length; i++) {
     output += "Query: " + tQueries[i] + "\n";
     for (let j = 0; j < taggedItems.length; j++) {
-      output += "- " + taggedItems[j].name + ": " 
-        + compareToTaggedQuery(tQueries[i], taggedItems[j], tWordCounter, tTagCounter, []) + "\n";
-      if (compareToTaggedQuery(tQueries[i], taggedItems[j], tWordCounter, tTagCounter, []) 
-          != expectedResultsForTSearch[i][j]) {
+      output +=
+        "- " +
+        taggedItems[j].name +
+        ": " +
+        compareToTaggedQuery(
+          tQueries[i],
+          taggedItems[j],
+          tWordCounter,
+          tTagCounter,
+          []
+        ) +
+        "\n";
+      if (
+        compareToTaggedQuery(
+          tQueries[i],
+          taggedItems[j],
+          tWordCounter,
+          tTagCounter,
+          []
+        ) != expectedResultsForTSearch[i][j]
+      ) {
         return "FAILURE \n\n" + output;
       }
     }

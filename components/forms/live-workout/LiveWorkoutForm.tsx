@@ -1,3 +1,4 @@
+import { useSession } from "@/components/SessionContext";
 import { Box } from "@/components/ui/box";
 import {
   Button,
@@ -5,6 +6,7 @@ import {
   ButtonSpinner,
   ButtonText,
 } from "@/components/ui/button";
+import { Divider } from "@/components/ui/divider";
 import {
   FormControl,
   FormControlError,
@@ -24,6 +26,7 @@ import {
   ModalBody,
   ModalContent,
 } from "@/components/ui/modal";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
@@ -31,21 +34,28 @@ import { useElapsedTime } from "@/hooks/useStopwatch";
 import { calculateTime, formatCalculateTime } from "@/lib/calculateTime";
 import {
   clearWorkout,
+  getContributionsFromStorage,
+  saveContributionsToStorage,
   setWorkoutEndTime,
 } from "@/services/asyncStorageServices";
 import { showErrorToast } from "@/services/toastServices";
-import Feather from "@expo/vector-icons/Feather";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
 import LiveExerciseForm from "./LiveExerciseForm";
 import { LiveWorkoutValues, useLiveWorkout } from "./LiveWorkoutContext";
-import { useRouter } from "expo-router";
+import {
+  addEventWorkout,
+  getWorkoutContributions,
+} from "@/services/groupEventServices";
 
 export default function LiveWorkoutForm() {
   const { control, handleSubmit, watch, setValue, formState, getValues } =
     useLiveWorkout();
   const router = useRouter();
+
+  const { session } = useSession();
 
   const { fields: exercises } = useFieldArray({
     control,
@@ -86,12 +96,36 @@ export default function LiveWorkoutForm() {
 
   const queryClient = useQueryClient();
 
+  const { data: contributions, isPending: contributionsPending } = useQuery({
+    queryKey: ["contributions"],
+    queryFn: async () => {
+      const contributions = await getContributionsFromStorage();
+      return contributions;
+    },
+  });
+
   // mutation function for ending the workout in async storage
   const { mutate: finishWorkout, isPending: finishPending } = useMutation({
     mutationFn: async () => {
       setIsStopped(true);
       const endTime = Date.now();
       setValue("endTime", endTime);
+      const contributions = await getWorkoutContributions(
+        getValues("exercises"),
+        session?.user.user_metadata.profileId
+      );
+      saveContributionsToStorage(contributions);
+      queryClient.invalidateQueries({ queryKey: ["contributions"] });
+      // invalidate all competition workouts for curr profile
+      queryClient.invalidateQueries({
+        queryKey: ["my-event-workouts"],
+      });
+      // invalidate all competition leaderboards
+      for (const contribution of contributions) {
+        queryClient.invalidateQueries({
+          queryKey: ["event-leaderboard", { id: contribution.competition.id }],
+        });
+      }
       await setWorkoutEndTime(endTime);
     },
     onSuccess: () => {
@@ -111,33 +145,42 @@ export default function LiveWorkoutForm() {
       // TODO interact with post workout (need to omit done because it is not needed in final iteration)
       console.log("Successfully posted workout", JSON.stringify(values));
       await clearWorkout();
+      await addEventWorkout(
+        values,
+        session?.user.user_metadata.profileId
+      );
       return values;
     },
     onSuccess: (workoutData) => {
       // Prepare workout data for the post page
-      console.log("Workout completed successfully, preparing to navigate to post page");
+      console.log(
+        "Workout completed successfully, preparing to navigate to post page"
+      );
       queryClient.invalidateQueries({ queryKey: ["live-workout"] });
-      
+
       const workoutStats = getWorkoutStats();
       const duration = formatCalculateTime(calculateTime(startTime, endTime!));
-      
+
       const postData = {
         templateId: workoutData.templateId,
         duration,
         exercises: workoutData.exercises,
-        stats: workoutStats
+        stats: workoutStats,
       };
-      
-      console.log("Navigating to post screen with data:", JSON.stringify(postData));
-      
+
+      console.log(
+        "Navigating to post screen with data:",
+        JSON.stringify(postData)
+      );
+
       // Add a small delay to ensure any pending operations complete
       setTimeout(() => {
         // Use router.push with the correct path format
         router.push({
           pathname: "/(tabs)/post",
           params: {
-            workoutData: JSON.stringify(postData)
-          }
+            workoutData: JSON.stringify(postData),
+          },
         });
       }, 300);
     },
@@ -210,7 +253,7 @@ export default function LiveWorkoutForm() {
         <ModalBackdrop />
         <ModalContent>
           <ModalBody>
-            <VStack space="xl" className="items-center">
+            <VStack space="2xl" className="items-center">
               <Text size="4xl">🏆</Text>
               <VStack className="items-center">
                 <Heading size="2xl">Workout Complete</Heading>
@@ -237,6 +280,31 @@ export default function LiveWorkoutForm() {
                   <Heading size="md">Total Reps</Heading>
                   <Heading size="2xl">{getWorkoutStats().totalReps}</Heading>
                 </HStack>
+                <VStack space="md">
+                  <Heading size="lg" className="text-center">
+                    Competition Data
+                  </Heading>
+                  <Divider />
+
+                  {contributionsPending ? (
+                    <Spinner />
+                  ) : (
+                    contributions &&
+                    contributions.map((contribution) => (
+                      <HStack
+                        key={contribution.competition.id}
+                        className="justify-between items-center"
+                      >
+                        <Heading size="md">
+                          {contribution.competition.title}
+                        </Heading>
+                        <Heading size="lg">
+                          {contribution.points} Points
+                        </Heading>
+                      </HStack>
+                    ))
+                  )}
+                </VStack>
               </VStack>
               <Button
                 size="lg"
@@ -245,11 +313,14 @@ export default function LiveWorkoutForm() {
                 onPress={() => {
                   // Get the form values
                   const values = getValues();
-                  console.log("Post workout button clicked", JSON.stringify(values));
-                  
+                  console.log(
+                    "Post workout button clicked",
+                    JSON.stringify(values)
+                  );
+
                   // Close the modal
                   setModal(false);
-                  
+
                   // Submit the form data
                   handleSubmit(onSubmit)();
                 }}

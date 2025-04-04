@@ -1,8 +1,8 @@
 import { supabase } from "@/lib/supabase";
+import { WorkoutContribution } from "@/types/event-types";
 import { PostAsyncStorage, PostDatabase } from "@/types/post.types";
 import { Workout } from "@/types/workout-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { string } from "zod";
 
 // we start workout button is clicked we add the workout to local storage
 export async function startWorkout(workout: Workout) {
@@ -51,8 +51,34 @@ export async function setWorkoutEndTime(endTime: number) {
 
 // clears the workout once its finished
 
+// saves contribution data in async storage
+
+export async function saveContributionsToStorage(contributions: WorkoutContribution[]) {
+  try {
+    const stringVal = JSON.stringify(contributions)
+    await AsyncStorage.setItem("contributions", stringVal)
+  } catch (e) {
+    console.log(e)
+    throw new Error("Error saving contributions")
+  }
+}
+
+export async function getContributionsFromStorage(): Promise<WorkoutContribution[] | null> {
+  try {
+    const stringVal = await AsyncStorage.getItem("contributions")
+    if (stringVal == null) {
+      return null
+    }
+    return JSON.parse(stringVal)
+  } catch (e) {
+    console.log(e)
+    throw new Error("Error getting contributions")
+  }
+}
+
 export async function clearWorkout() {
   await AsyncStorage.setItem("live-workout", "")
+  await AsyncStorage.setItem("contributions", "")
 }
 
 const mockPosts = [

@@ -1,13 +1,5 @@
-import { ScrollView } from 'react-native';
-import { getWorkout } from "@/services/asyncStorageServices";
-import { useQuery } from "@tanstack/react-query";
-import { Redirect, useRouter } from "expo-router";
-import { Button, ButtonText } from '@/components/ui/button';
-import { VStack } from '@/components/ui/vstack';
-import Container from '@/components/Container';
-import { showErrorToast } from '@/services/toastServices';
-import { useToast } from '@/components/ui/toast';
-import { SessionProvider, useSession } from '@/components/SessionContext';
+import { useSession } from '@/components/SessionContext';
+import { Redirect } from "expo-router";
 
 
 export default function IndexScreen() {
