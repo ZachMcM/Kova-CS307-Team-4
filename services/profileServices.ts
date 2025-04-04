@@ -23,7 +23,9 @@ export const getProfile = async (id: string): Promise<Profile> => {
     .eq("userId", id)
     .limit(1).single();
 
-  if (error) throw new Error(error.message);
+  if (error) { 
+    throw new Error(error.message)
+  };
 
   //if (profile.private === "PRIVATE") {
   //  return {

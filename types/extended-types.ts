@@ -73,7 +73,7 @@ export type GroupPage = {
 export type GroupOverview = {
   groupId: string;
   icon: string;
-  description: string;
+  goal: string;
   title: string;
 }
 

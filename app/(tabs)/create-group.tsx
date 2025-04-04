@@ -12,15 +12,18 @@ import { useState } from "react";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";
 import { useSession } from "@/components/SessionContext";
-import { createGroup } from "@/services/groupServices"
+import { createGroup, isTitleUnique } from "@/services/groupServices"
+import { boolean } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function CreateGroup() {
   const { session } = useSession();
-  const userId = session?.user?.id;
+  const profileId = session?.user?.user_metadata.profileId;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
- 
+
+  const queryClient = useQueryClient()
   const toast = useToast();
   const router = useRouter();
 
@@ -85,15 +88,36 @@ export default function CreateGroup() {
         action="kova"
         className="mt-5 mb-5"
         onPress={() => {
-            createGroup(userId!, title, description, goal).then((ids) => { 
-                router.replace({
-                    pathname: "/(tabs)/group/[id]",
-                    params: { id: ids[0]}
-                });
-                showSuccessToast(toast, "Welcome to Kova!")
-            }).catch(error => {
-                console.log(error);
-                showErrorToast(toast, error.message);
+            if (title === "") {
+              showErrorToast(toast, "Error: Title cannot be empty.");
+              return
+            }
+            if (description === "") {
+              showErrorToast(toast, "Error: Description cannot be empty.");
+              return
+            }
+            if (goal === "") {
+              showErrorToast(toast, "Error: Goal cannot be empty.");
+              return
+            }
+            isTitleUnique(title).then((isUnique) => {
+              if (isUnique) {
+                createGroup(profileId, title, description, goal).then((ids) => { 
+                    router.replace({
+                        pathname: "/(tabs)/group/[id]",
+                        params: { id: ids[0]}
+                    });
+                    queryClient.invalidateQueries({queryKey: ["group"],})
+                    queryClient.invalidateQueries({queryKey: ["groupRel"],})
+                    showSuccessToast(toast, "Welcome to Kova!")
+                }).catch(error => {
+                    console.log(error);
+                    showErrorToast(toast, error.message);
+                })
+              }
+              else {
+                showErrorToast(toast, "Error: Title given is not unique.")
+              }
             })
         }}
         >

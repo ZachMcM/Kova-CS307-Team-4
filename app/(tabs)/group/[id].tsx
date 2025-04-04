@@ -9,30 +9,37 @@ import { HStack } from "@/components/ui/hstack";
 import { AddIcon, InfoIcon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
+import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { getGroup, getMembers, getRole, isMemberOfGroup, joinGroup, leaveGroup } from "@/services/groupServices";
+import { showSuccessToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router/build/hooks";
 
 export default function Group() {
   const { id: groupId } = useLocalSearchParams() as { id: string };
   const { session } = useSession();
-  const userId = session?.user.id
+  const toast = useToast()
+  const queryClient = useQueryClient()
+  const profileId = session?.user.user_metadata.profileId
+  console.log(groupId)
   const { data: group, isPending } = useQuery({
-    queryKey: ["group", { groupId }],
+    queryKey: ["group", {groupId}],
     queryFn: async () => {
-      const group = await getGroup(groupId as string);
+      const group = await getGroup(groupId);
+      console.log(JSON.stringify(group))
       return group;
     },
   });
 
   const { data: role, isPending: gettingRole } = useQuery({
-    queryKey: ["groupRel", { groupId }],
+    queryKey: ["groupRel", {groupId}],
     queryFn: async () => {
-      const partOfGroup = await isMemberOfGroup(groupId, userId!)
+      const partOfGroup = await isMemberOfGroup(groupId, profileId)
+      console.log("Part of group: " + partOfGroup)
       if (partOfGroup) {
-        return getRole(groupId, userId!)
+        return getRole(groupId, profileId)
       }
       else {
         return "none"
@@ -61,8 +68,26 @@ export default function Group() {
                 {group?.title}
               </Heading>
               <Text>{group?.description}</Text>
+              <Text>Goal: "{group?.goal}"</Text>
             </VStack>
           </HStack>
+          { !gettingRole && role === "owner" ?
+            <Button
+              variant="solid"
+              action="secondary"
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/group/edit/[id]",
+                  params: { id: groupId },
+                })
+              }
+              size="lg"
+            >
+              <ButtonText>Edit Group</ButtonText>
+            </Button>:
+            <></>
+
+          }
           <Button
             variant="solid"
             action="secondary"
@@ -90,13 +115,13 @@ export default function Group() {
             <GroupEvents
               events={
                 group?.events.filter((event) => event.type == "collaboration")!
-              }
+              } 
               type="collaborations"
             />
           </VStack>
           {
             (!gettingRole)?
-              (role == "owner") ? 
+              (role === "owner") ? 
                 (<Button
                   variant="solid"
                   action="secondary"
@@ -111,14 +136,17 @@ export default function Group() {
                   <ButtonText>New Event</ButtonText>
                   <ButtonIcon as={AddIcon} />
                 </Button>) :
-              (role == "none") ?
+              (role === "none") ?
                 (<Button
                   variant="solid"
                   action="secondary"
                   onPress={() => {
-                      joinGroup(groupId, userId!).then(() => {
-                        console.log("Joining")
-                        router.reload()
+                      joinGroup(groupId, profileId).then(() => {
+                        queryClient.invalidateQueries({queryKey: ["groupRel", { groupId }]})
+                        queryClient.invalidateQueries({queryKey: ["groupRel user", { groupId }]})
+                        queryClient.invalidateQueries({queryKey: ["group"],})
+                        queryClient.invalidateQueries({queryKey: ["groupRel"]})
+                        showSuccessToast(toast, "Joined group!")
                       });
                     }
                   }
@@ -126,13 +154,17 @@ export default function Group() {
                 >
                   <ButtonText>Join Group</ButtonText>
                 </Button>) :
-              (role == "member") ?
+              (role === "member") ?
                 (<Button
                   variant="solid"
                   action="secondary"
                   onPress={() => {
-                      leaveGroup(groupId, userId!).then(() => {
-                        router.reload()
+                      leaveGroup(groupId, profileId).then(() => {
+                        queryClient.invalidateQueries({queryKey: ["groupRel", { groupId }]})
+                        queryClient.invalidateQueries({queryKey: ["group"],})
+                        queryClient.invalidateQueries({queryKey: ["groupRel user", { groupId }]})
+                        queryClient.invalidateQueries({queryKey: ["groupRel"]})
+                        showSuccessToast(toast, "Left group!")
                       });
                     }
                   }
@@ -154,7 +186,7 @@ export function GroupEvents({
   events: Tables<"groupEvent">[];
   type: string;
 }) {
-  return events.length > 0 ? (
+  return events && events.length > 0 ? (
     events.map((event) => <EventCard event={event} key={event.id} />)
   ) : (
     <Alert action="muted" variant="solid">

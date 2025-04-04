@@ -54,21 +54,31 @@ export const getGroup = async (
   const { data: group, error } = await supabase
     .from("group")
     .select(
-      `
-      *,
-      events:groupEvent(*)
-      `
+      "*,events:groupEvent(*)"
     )
     .eq("id", id)
     .single();
 
   if (error) {
-    console.log(error);
+    console.log("Group Error:" + error.message);
     throw new Error(error.message);
   }
-
+  console.log(group)
   return group;
 };
+
+export async function updateGroup (
+  id: string, title: string, description: string, goal: string
+) : Promise<boolean> {
+  const {data, error} = await supabase
+    .from("group")
+    .update({title: title, description: description, goal: goal})
+    .eq("id", id)
+  if (error) {
+    throw new Error(error.message)
+  }
+  return true;
+}
 
 /*
 export const getGroupProfiles = async (
@@ -95,7 +105,7 @@ export const getGroupProfiles = async (
 };
 */
 
-export async function createGroup(userId: string, 
+export async function createGroup(profileId: string, 
     title: string,
     description: string,
     goal: string) : Promise<string[]> {
@@ -111,7 +121,7 @@ export async function createGroup(userId: string,
         throw Error(error.message)
     }
     const groupId = data[0].id
-    const profileId = (await getProfile(userId)).id
+    console.log(groupId + " -- groupId, " + profileId + " -- " + profileId)
     const {data: relData, error: relError} = await supabase
         .from("groupRel")
         .insert({groupId: groupId, profileId: profileId, role:"owner"});
@@ -124,7 +134,7 @@ export async function createGroup(userId: string,
 export async function getAllGroups(): Promise<GroupOverview[]> {
   const { data, error } = await supabase
     .from("group")
-    .select("id,title,icon,description");
+    .select("id,title,icon,goal");
   if (error) {
     throw new Error(error.message);
   }
@@ -132,31 +142,40 @@ export async function getAllGroups(): Promise<GroupOverview[]> {
     return {
       groupId: row.id,
       icon: row.icon,
-      description: row.description,
+      goal: row.goal,
       title: row.title,
     };
   });
   return groupOverviews as GroupOverview[];
 }
 
-export async function getGroupsOfUser(userId: string) : Promise<string[]> {
-    const profileId = (await getProfile(userId)).id
-    const {data, error} = await supabase
-        .from("groupRel")
-        .select("groupId")
-        .eq("profileId", profileId);
-    if (error) {
-        throw new Error(error.message);
-    }
-    const items = (data) ? data.map((row, i) => {
-        return row.groupId;
-      })
-    : [];
-  return items as string[];
+export async function isTitleUnique(title: string) : Promise<boolean> {
+  const {data, error} = await supabase
+    .from("group")
+    .select("id")
+    .eq("title", title)
+  if (error) {
+    throw new Error(error.message)
+  }
+  return data.length == 0
 }
 
-export async function isMemberOfGroup(groupId: string, userId: string): Promise<boolean>{
-  const profileId = (await getProfile(userId)).id
+export async function getUserGroups(profileId: string) : Promise<string[]> {
+  const {data, error} = await supabase
+    .from("groupRel")
+    .select("groupId")
+    .eq("profileId", profileId);
+  if (error) {
+   console.error(error.message)
+   throw new Error(error.message);
+  }
+  console.log("User groups: " + JSON.stringify(data))
+  return data.map((row) => {
+    return row.groupId as string
+  }) as string[]
+}
+
+export async function isMemberOfGroup(groupId: string, profileId: string): Promise<boolean>{
   const {data, error} = await supabase
     .from("groupRel")
     .select("id")
@@ -168,8 +187,7 @@ export async function isMemberOfGroup(groupId: string, userId: string): Promise<
   return data.length > 0
 }
 
-export async function leaveGroup(groupId: string, userId: string) {
-    const profileId = (await getProfile(userId)).id
+export async function leaveGroup(groupId: string, profileId: string) {
     await supabase
         .from("groupRel")
         .delete()
@@ -177,15 +195,13 @@ export async function leaveGroup(groupId: string, userId: string) {
         .eq("profileId", profileId);
 }
 
-export async function joinGroup(groupId: string, userId: string) {
-    const profileId = (await getProfile(userId)).id
+export async function joinGroup(groupId: string, profileId: string) {
     await supabase
         .from("groupRel")
         .insert({groupId: groupId, profileId: profileId, role:"member"});
 }
 
-export async function getRole(groupId: string, userId: string) : Promise<string>{
-    const profileId = (await getProfile(userId)).id
+export async function getRole(groupId: string, profileId: string) : Promise<string>{
     const {data, error} = await supabase
         .from("groupRel")
         .select("role")
@@ -197,16 +213,18 @@ export async function getRole(groupId: string, userId: string) : Promise<string>
     return data[0].role
 }
 
-export async function setRole(groupId: string, userId: string, role: string) {
-    const profileId = (await getProfile(userId)).id
+export async function setRole(groupId: string, profileId: string, role: string) {
     const {data, error} = await supabase
         .from("groupRel")
         .update({role: role})
         .eq("groupId", groupId)
         .eq("profileId", profileId)
+    console.error("Role query done")
     if (error) {
+        console.error("Setting role error: " + error.message)
         throw new Error(error.message)
     }
+    return
 }
 
 export async function getNumOfMembers(groupId: string): Promise<number> {
@@ -223,33 +241,11 @@ export async function getNumOfMembers(groupId: string): Promise<number> {
 export async function getMembers(groupId: string): Promise<GroupRelWithProfile[]> {
     const {data, error} = await supabase
         .from("groupRel")
-        .select("role, profile:profileId(*)")
+        .select("*,profile:profileId(*)")
         .eq("groupId", groupId)
     if (error) {
         throw new Error(error.message);
     }
 
     return data as any 
-
-    // const memberInfo = data.map((row, i) => {
-    //     const profile = row.profile as any as Tables<"profile">
-    //     return {
-    //         role: row.role,
-    //         id: profile.id,
-    //         user_id: profile.userId,
-    //         username: profile.username,
-    //         name: profile.name,
-    //         avatar: profile.avatar,
-    //         private: profile.private,
-    //         friends: profile.friends,
-    //         following: profile.following,
-    //         followers: profile.followers,
-    //         age: profile.age,
-    //         location: profile.location,
-    //         goal: profile.goal,
-    //         bio: profile.bio,
-    //         achievement: profile.achievement
-    //     } as MemberRelationship
-    //   });
-    // return memberInfo as MemberRelationship[];
 }

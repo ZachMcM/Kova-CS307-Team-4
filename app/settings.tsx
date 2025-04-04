@@ -9,7 +9,6 @@ import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { Heading } from "@/components/ui/heading";
 import { useState, useEffect } from "react";
 import { supabase } from '@/lib/supabase';
-import ExerciseSearchView from '@/components/search-views/ExerciseSearchView';
 import { useToast } from "@/components/ui/toast";
 import { showErrorToast } from "@/services/toastServices";
 import { useSession } from "@/components/SessionContext";

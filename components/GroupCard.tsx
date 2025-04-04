@@ -14,11 +14,13 @@ export default function GroupCard({ group }: { group: GroupOverview }) {
 
   return (
     <Pressable
-      onPress={() =>
-        router.push({
-          pathname: "/group/[id]",
-          params: { id: group.groupId },
-        })
+      onPress={() => {
+          console.log("Adding id: " + group.groupId)
+          router.push({
+            pathname: "/group/[id]",
+            params: { id: group.groupId },
+          })
+        }
       }
     >
       <Card variant="outline">
@@ -32,7 +34,7 @@ export default function GroupCard({ group }: { group: GroupOverview }) {
           </Avatar>
           <VStack>
             <Heading size="md">{group.title}</Heading>
-            <Text>{group.description}</Text>
+            <Text>{group.goal}</Text>
           </VStack>
         </HStack>
       </Card>

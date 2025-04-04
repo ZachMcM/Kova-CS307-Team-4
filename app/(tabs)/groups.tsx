@@ -3,47 +3,42 @@ import GroupCard from "@/components/GroupCard";
 import { useSession } from "@/components/SessionContext";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
+import { Input, InputField } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { getAllGroups, getGroupsOfUser } from "@/services/groupServices";
+import { getAllGroups, getUserGroups } from "@/services/groupServices";
 import { GroupOverview } from "@/types/extended-types";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView } from "react-native";
 
 export default function ProfileScreen() {
   const { session } = useSession();
-  
+  const router = useRouter();
+
   const { data: groups, isPending } = useQuery({
-    queryKey: ["groups"],
+    queryKey: ["group"],
     queryFn: async () => {
       const groups = await getAllGroups();
+      console.log(JSON.stringify(groups))
       return groups;
     },
   });
 
-  const router = useRouter();
+  const [userGroupQuery, setUserGroupQuery] = useState("");
+  const [groupQuery, setGroupQuery] = useState("");
 
-  const { data: userGroupIds, isPending: isUserPending } = useQuery({
+  const { data: userGroups, isPending: isUserPending } = useQuery({
     queryKey: ["groupRel"],
     queryFn: async () => {
-      const userGroupsIds = await getGroupsOfUser(session!.user.id)
-      return userGroupsIds
+      console.log("Performing user query")
+      const userGroups = await getUserGroups(session!.user.user_metadata.profileId)
+      console.log(userGroups)
+      return userGroups
     }
   })
-
-  const userGroups = [] as GroupOverview[]
-
-  if (!isPending && !isUserPending && groups && userGroupIds) {
-    for (let i = groups.length - 1; i >= 0; i--) {
-      if (userGroupIds.includes(groups[i].groupId)) {
-        const group = groups.splice(i, 1)[0]
-        userGroups.push(group)
-      }
-    }
-  }
 
   return (
     // TODO work on this UI
@@ -68,14 +63,32 @@ export default function ProfileScreen() {
           <Spinner />
         ) : (
           <><Heading>Your Groups</Heading><VStack space="md">
-              {(userGroups.length >= 1) ? (
-                userGroups?.map((group) => (
+              <Input>
+                <InputField
+                  value={userGroupQuery}
+                  onChangeText={setUserGroupQuery}
+                  placeholder="Search for one of your groups."
+                />
+              </Input>
+              {(groups && groups!.length >= 1) ? (
+                groups?.filter((group) => userGroups?.includes(group.groupId))
+                  .filter((group) => group.title?.includes(userGroupQuery))
+                  .map((group) => (
                   <GroupCard key={group.groupId} group={group} />
                 ))) : <Text>You haven't joined a group yet. Join one!</Text>}
             </VStack><Heading>All Groups</Heading><VStack space="md">
-                {groups?.map((group) => (
-                  <GroupCard key={group.groupId} group={group} />
-                ))}
+                <Input>
+                  <InputField
+                    value={groupQuery}
+                    onChangeText={setGroupQuery}
+                    placeholder="Search for a group to join."
+                  />
+                </Input>
+                {groups?.filter((group) => !userGroups?.includes(group.groupId))
+                  .filter((group) => group.title?.includes(groupQuery))
+                  .map((group) => (
+                    <GroupCard key={group.groupId} group={group} />
+                  ))}
             </VStack></> 
         )}
       </VStack>

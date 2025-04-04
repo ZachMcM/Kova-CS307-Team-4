@@ -75,6 +75,13 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      
+      <Tabs.Screen
+        name="group/edit/[id]"
+        options={{
+          title: "Edit Group",
+          href: null
+        }}/>
       <Tabs.Screen
         name="create-group"
         options={{
@@ -140,6 +147,12 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="relations/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="templates/[id]"
         options={{
           href: null,
         }}
