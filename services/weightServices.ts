@@ -22,7 +22,7 @@ export const getWeightEntries = async (userId: string, limit?: number): Promise<
     .select("*")
     .eq("user_id", userId)
     .order("date", { ascending: false });
-  console.log(data);
+  console.log("getWeightEntries", data);
   if (error) throw new Error(error.message);
   return data as WeightEntry[];
 };
@@ -38,7 +38,7 @@ export const addWeightEntry = async (entry: WeightEntryInsert): Promise<WeightEn
     .insert(entry)
     .select()
     .single();
-  console.log(data);
+  console.log("addWeightEntry", data);
   if (error) throw new Error(error.message);
   return data as WeightEntry;
 };
@@ -56,7 +56,7 @@ export const updateWeightEntry = async (id: string, updates: WeightEntryUpdate):
     .eq("id", id)
     .select()
     .single();
-  console.log(data);
+  console.log("updateWeightEntry", data);
   if (error) throw new Error(error.message);
   return data as WeightEntry;
 };
@@ -70,6 +70,6 @@ export const deleteWeightEntry = async (id: string): Promise<void> => {
     .from("weight_entries")
     .delete()
     .eq("id", id);
-  console.log(error);
+  console.log("deleteWeightEntry", error);
   if (error) throw new Error(error.message);
 }; 
