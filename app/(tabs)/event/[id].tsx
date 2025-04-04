@@ -52,7 +52,7 @@ export default function Event() {
   });
 
   const { data: groupRel } = useQuery({
-    queryKey: ["group", { id }],
+    queryKey: ["groupEv", { id }],
     queryFn: async () => {
       const groupRel = await getProfileGroupRel(
         session?.user.user_metadata.profileId,
@@ -215,10 +215,15 @@ function EditTile({
       showErrorToast(toast, err.message);
     },
     onSuccess: (data) => {
+      const groupId = event.groupId
       console.log(data);
       queryClient.invalidateQueries({ queryKey: ["event", { id: event.id }] });
       queryClient.invalidateQueries({
         queryKey: ["group", { id: event.groupId }],
+      });
+      queryClient.invalidateQueries({queryKey: ["group", {groupId}],});
+      queryClient.invalidateQueries({
+        queryKey: ["groupEv", { id: event.groupId }],
       });
       setEditTitle(false);
       showSuccessToast(toast, "Successfully edited title");

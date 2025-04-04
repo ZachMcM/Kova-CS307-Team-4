@@ -50,33 +50,35 @@ export default function MemberCard({ groupRel, isOwner }: { groupRel: GroupRelWi
             (isOwner && groupRel.profile.id !== profileId) ? (
             groupRel.role == "owner" ? 
             <Button onPress={() => {
-              setRole(groupId, groupRel.profile.id, "member")
-              showSuccessToast(toast, "Successfully demoted user!")
-              queryClient.invalidateQueries({queryKey: ["group", { groupId }]})
-              queryClient.invalidateQueries({queryKey: ["groupRel", { groupId }]})
-              queryClient.invalidateQueries({queryKey: ["groupRel members", { groupId }]})
-              queryClient.invalidateQueries({queryKey: ["group members", { groupId }]})
-              console.log(groupId + ", " + groupRel.groupId)
+              setRole(groupId, groupRel.profile.id, "member").then(() => {
+                showSuccessToast(toast, "Successfully demoted user!")
+                queryClient.invalidateQueries({queryKey: ["group", { groupId }]})
+                queryClient.invalidateQueries({queryKey: ["groupRel", { groupId }]})
+                queryClient.invalidateQueries({queryKey: ["groupRel members", { groupId }]})
+                queryClient.invalidateQueries({queryKey: ["group members", { groupId }]})
+                console.log(groupId + ", " + groupRel.groupId)
 
-              router.push({
-                pathname: "/(tabs)/group/members/[id]",
-                params: { id: groupId },
+                router.push({
+                  pathname: "/(tabs)/group/members/[id]",
+                  params: { id: groupId },
+                })
               })
             }}>
               <ButtonIcon as={ArrowDownIcon}></ButtonIcon>
               <ButtonText>Demote</ButtonText>
             </Button> : 
             <Button onPress={() => {
-              setRole(groupId, groupRel.profile.id, "owner")
-              showSuccessToast(toast, "Successfully promoted user!")
-              queryClient.invalidateQueries({queryKey: ["group", { groupId }]})
-              queryClient.invalidateQueries({queryKey: ["groupRel", { groupId }]})
-              queryClient.invalidateQueries({queryKey: ["group members", { groupId }]})
-              queryClient.invalidateQueries({queryKey: ["groupRel members", { groupId }]})
-              console.log(groupId + ", " + groupRel.groupId)
-              router.push({
-                pathname: "/(tabs)/group/members/[id]",
-                params: { id: groupRel.groupId },
+              setRole(groupId, groupRel.profile.id, "owner").then(() => {
+                showSuccessToast(toast, "Successfully promoted user!")
+                queryClient.invalidateQueries({queryKey: ["group", { groupId }]})
+                queryClient.invalidateQueries({queryKey: ["groupRel", { groupId }]})
+                queryClient.invalidateQueries({queryKey: ["group members", { groupId }]})
+                queryClient.invalidateQueries({queryKey: ["groupRel members", { groupId }]})
+                console.log(groupId + ", " + groupRel.groupId)
+                router.push({
+                  pathname: "/(tabs)/group/members/[id]",
+                  params: { id: groupRel.groupId },
+                })
               })
             }}>
               <ButtonIcon as={ArrowUpIcon}></ButtonIcon>

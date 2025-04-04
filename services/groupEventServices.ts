@@ -134,6 +134,7 @@ export const getProfileEventWorkouts = async (
 export const getEventWorkouts = async (
   eventId: string
 ): Promise<EventWorkoutWithProfile[]> => {
+  const event = await getEvent(eventId)
   const { data, error } = await supabase
     .from("eventWorkout")
     .select(
@@ -141,7 +142,9 @@ export const getEventWorkouts = async (
       *,
       profile:profileId(id, name, username, avatar)`
     )
-    .eq("groupEventId", eventId);
+    .eq("groupEventId", eventId)
+    .gte("created_at", event.start_date)
+    .lte("created_at", event.end_date);
   if (error) {
     console.log(error);
     throw new Error(error.message);

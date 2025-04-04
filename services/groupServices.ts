@@ -177,7 +177,7 @@ export async function getUserGroups(profileId: string) : Promise<string[]> {
     .select("groupId")
     .eq("profileId", profileId);
   if (error) {
-   console.error(error.message)
+  //  console.error(error.message)
    throw new Error(error.message);
   }
   console.log("User groups: " + JSON.stringify(data))
@@ -230,9 +230,9 @@ export async function setRole(groupId: string, profileId: string, role: string) 
         .update({role: role})
         .eq("groupId", groupId)
         .eq("profileId", profileId)
-    console.error("Role query done")
+    // console.error("Role query done")
     if (error) {
-        console.error("Setting role error: " + error.message)
+        // console.error("Setting role error: " + error.message)
         throw new Error(error.message)
     }
     return

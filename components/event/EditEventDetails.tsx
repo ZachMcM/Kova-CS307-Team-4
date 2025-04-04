@@ -81,6 +81,7 @@ export default function EditEventDetails({
     },
     onSuccess: (data) => {
       console.log(data);
+      
       queryClient.invalidateQueries({
         queryKey: ["event", { id: event.id }],
       });
@@ -92,6 +93,9 @@ export default function EditEventDetails({
       });
       queryClient.invalidateQueries({
         queryKey: ["my-event-workouts", { id: event.id }],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["collaboration-progress", { id: event.id }],
       });
       showSuccessToast(toast, "Successfully updated details");
       setEditDetails(false);
