@@ -24,6 +24,8 @@ import { uploadPostImages } from '@/services/postServices';
 import { Image } from '@/components/ui/image';
 import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/components/ui/radio';
 import { SummaryWorkoutData } from '@/components/WorkoutData';
+import { addWeightEntry } from '@/services/weightServices';
+import { WeightEntry } from '@/types/weight-types';
 
 const defaultWorkoutData = {
   duration: '0 minutes',
@@ -200,6 +202,14 @@ export default function PostScreen() {
       );
       return;
     }
+
+    if (illegalCharactersRegex.test(location)) {
+      Alert.alert(
+        "Invalid Location",
+        "Your location contains illegal characters. Please remove special characters like < > { } [ ] \\ ^ ~ | `"
+      );
+      return;
+    }
     
     if (!title.trim()) {
       Alert.alert(
@@ -272,6 +282,14 @@ export default function PostScreen() {
       }
       
       console.log('Post created successfully:', data);
+      if (weighIn > 0) {
+        await addWeightEntry({
+          user_id: userId,
+          weight: weighIn,
+          unit: 'lbs',
+          date: (new Date()).toISOString(),
+        });
+      }
 
       Alert.alert(
         "Post Created",
