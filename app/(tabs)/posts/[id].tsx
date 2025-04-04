@@ -23,21 +23,9 @@ import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
 import CommentCard from "@/components/CommentCard";
 import { DetailedWorkoutData } from "@/components/WorkoutData";
 import { LogBox } from 'react-native';
+import { Comment, getComments, pushComment } from "@/services/commentServices";
 
 LogBox.ignoreLogs(['Warning: Text strings must be rendered within a <Text> component']);
-
-export type Comment = {
-  id: string;
-  created_at: string;
-  profile: {
-    userId: string;
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  postId: string;
-  content: string;
-}
 
 type ReducedProfile = {
   username: string;
@@ -59,27 +47,43 @@ export default function PostDetails() {
   const [userId, setUserId] = useState("");
   const [userProfile, setUserProfile] = useState<ReducedProfile>();
   const [page, setPage] = useState(1);
-  const [allCommentsFetched, setAllCommentsFetched] = useState(false);
-  const [commentsWritten, setCommentsWritten] = useState(0);
   const [isCurrentUserPost, setIsCurrentUserPost] = useState(false);
   const [isCopyingTemplate, setIsCopyingTemplate] = useState(false);
+  const [displayComments, setDisplayComments] = useState(0);
+  const [fetchedComments, setFetchedComments] = useState(0);
+  const [writtenComments, setWrittenComments] = useState(0);
+  const [fetchingComments, setFetchingComments] = useState(false);
 
   useEffect(() => {
-    const fetchUserId = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUserId(session.user.id);
-      }
-    };
+    console.log("User profile updated: " + userProfile);
+  }, [userProfile])
 
-    fetchUserId();
-
-    const fetchUserProfile = async () => {
-      const {data} = await supabase.from("profile").select(`username, name, avatar`).eq("userId", userId).single();
-      setUserProfile(data as ReducedProfile);
-    }
-
-    fetchUserProfile();
+  useEffect(() => {
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (session) {
+          setUserId(session.user.id);
+          return session.user.id;
+        }
+        return null;
+      })
+      .then((id) => {
+        if (id) {
+          return supabase
+            .from("profile")
+            .select(`username, name, avatar`)
+            .eq("userId", id)
+            .single();
+        }
+      })
+      .then((response) => {
+        if (response && response.data) {
+          setUserProfile(response.data as ReducedProfile);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user data:", error);
+      });
   }, []);
 
   useEffect(() => {
@@ -90,6 +94,8 @@ export default function PostDetails() {
 
   const fetchPostDetails = async () => {
     try {
+      setComments([]);
+      setWrittenComments(0);
       setIsLoading(true);
       
       const { data } = await supabase
@@ -153,6 +159,7 @@ export default function PostDetails() {
           }
         }
         setPost(post);
+        setDisplayComments(post.comments);
       };
 
       postWithTaggedFriends(fetchedPost);
@@ -165,6 +172,8 @@ export default function PostDetails() {
         .range(0, PAGE_SIZE - 1);
 
       setComments(commentData as Comment[]);
+      setFetchedComments(PAGE_SIZE);
+      setPage(1);
     } catch (err) {
       showErrorToast(toast, "Error: Could not fetch post!")
     } finally {
@@ -179,28 +188,26 @@ export default function PostDetails() {
   }, [postId]);
 
   const fetchMoreComments = async () => {
-    const pageStart = PAGE_SIZE * page + commentsWritten;
-    const pageEnd = PAGE_SIZE * (page + 1) + commentsWritten;
+    if (!fetchingComments && !Array.isArray(postId)) {
+      setFetchingComments(true);
+      const pageStart = (PAGE_SIZE * page) + writtenComments;
+      const pageEnd = (PAGE_SIZE * (page + 1)) + writtenComments - 1;
 
-    const { data: commentData } = await supabase
-      .from('comment')
-      .select('*, profile:userId ( userId, username, name, avatar )')
-      .eq("postId", postId)
-      .order("created_at", { ascending: false })
-      .range(pageStart, pageEnd - 1);
+      console.log("Page " + page + ": " + pageStart + " - " + pageEnd);
 
-    const newComments = commentData as Comment[];
+      getComments(postId, pageStart, pageEnd).then((commentData => {
+        const newComments = commentData as Comment[];
 
-    if (PAGE_SIZE != newComments.length) {
-      setAllCommentsFetched(true);
+        for (let i = 0; i < newComments.length; i++) {
+          console.log("ADDING " + newComments[i])
+          comments?.push(newComments[i]);
+        }
+
+        setPage(prevPage => prevPage + 1);
+        setFetchedComments(prevFetchedComments => prevFetchedComments + PAGE_SIZE);
+        setFetchingComments(false);
+      }));
     }
-
-    for (let i = 0; i < newComments.length; i++) {
-      console.log("ADDING " + newComments[i])
-      comments?.push(newComments[i]);
-    }
-
-    setPage(page + 1);
   }
 
   const handleCommentSubmit = async () => {
@@ -213,43 +220,37 @@ export default function PostDetails() {
       created_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from("comment")
-      .insert(comment)
-      .select();
-    
-    if (error) {
-      showErrorToast(toast, "Error: Failed to post comment!")
-    }
-    else {
-      const {data: incData, error: incError } = await supabase.rpc('increment_comments', {post_id: post?.id});
+    if (post) {
+      const {data, success} = await pushComment(post?.id, comment);
 
-      console.log("PROFILE: " + userProfile)
-
-      if (userProfile) {
-        console.log("ADDING COMMENT TO UI")
-        const facadeComment: Comment = {
-          id: "",
-          created_at: comment.created_at,
-          profile: {
-            userId: userId,
-            name: userProfile.name,
-            username: userProfile.username,
-            avatar: userProfile.avatar
-          },
-          postId: comment.content,
-          content: comment.content
-        };
-        comments?.unshift(facadeComment);
-        if (post) { post.comments += 1; }
+      if (!success) {
+        showErrorToast(toast, "Error: Failed to post comment!");
+      }
+      else {
+        if (userProfile) {
+          const facadeComment: Comment = {
+            id: "",
+            created_at: comment.created_at,
+            profile: {
+              userId: userId,
+              name: userProfile.name,
+              username: userProfile.username,
+              avatar: userProfile.avatar
+            },
+            postId: comment.content,
+            content: comment.content
+          };
+          comments?.unshift(facadeComment);
+        }
+  
+        showSuccessToast(toast, "Posted comment!")
+        setCommentValue("");
+        setWrittenComments(prevWrittenComments => prevWrittenComments + 1);
+        setDisplayComments(prevDisplayComments => prevDisplayComments + 1);
       }
 
-      showSuccessToast(toast, "Posted comment!")
-      setCommentValue("");
-      setCommentsWritten(commentsWritten + 1);
+      setIsSubmitPending(false);
     }
-
-    setIsSubmitPending(false);
   }
 
   const copyTemplate = async () => {
@@ -546,7 +547,7 @@ export default function PostDetails() {
       </Box>
       <Box className = "mb-12 pb-16 px-6 pt-2 bg-[#f7f7f7] border-t border-gray-300">
         <VStack className = "pb-3 border-b border-gray-300">
-          <Text size="lg" className = "mb-2" bold>Comments ({post?.comments})</Text>
+          <Text size="lg" className = "mb-2" bold>Comments ({displayComments})</Text>
           <Box className="rounded p-2 border border-[#6FA8DC]">
             <VStack>
               <TextInput maxLength={500} 
@@ -580,10 +581,12 @@ export default function PostDetails() {
           {comments && comments.map((comment: Comment) => (
             <CommentCard key = {comment.created_at} comment = {comment}></CommentCard>
           ))}
-          {!allCommentsFetched && (
+          {post && post.comments > fetchedComments + writtenComments ? (
             <Button onPress = {fetchMoreComments}>
               <ButtonText>Load more</ButtonText>
             </Button>
+          ) : isLoading || fetchingComments && (
+            <Spinner></Spinner>
           )}
         </VStack>
       </Box>

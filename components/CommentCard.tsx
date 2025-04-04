@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { Heading } from "./ui/heading";
 import { Text } from "./ui/text";
-import { Comment } from "@/app/(tabs)/posts/[id]";
+import { Comment } from "@/services/commentServices";
 
 function formatDate(date: string) {
   const now = new Date();
