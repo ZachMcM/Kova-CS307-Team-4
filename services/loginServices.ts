@@ -21,7 +21,6 @@ export const createAccount = async (
     password: userPassword,
   });
   if (signUpError) {
-    console.log(signUpError.message);
     if (signUpError.message == "Password should be at least 6 characters.") {
       throw new Error(
         "Password must be at least 6 characters\n and include a letter and number"

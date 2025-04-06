@@ -10,7 +10,6 @@ export async function startWorkout(workout: Workout) {
     const jsonValue = JSON.stringify(workout)
     await AsyncStorage.setItem("live-workout", jsonValue)
   } catch (e) {
-    console.log(e)
     throw new Error("Error starting workout")
   }
 }
@@ -44,7 +43,6 @@ export async function setWorkoutEndTime(endTime: number) {
     await AsyncStorage.setItem("live-workout", jsonValue)
   }
   catch (e) {
-    console.log(e)
     throw new Error("Error ending workout")
   }
 }
@@ -58,7 +56,6 @@ export async function saveContributionsToStorage(contributions: WorkoutContribut
     const stringVal = JSON.stringify(contributions)
     await AsyncStorage.setItem("contributions", stringVal)
   } catch (e) {
-    console.log(e)
     throw new Error("Error saving contributions")
   }
 }
@@ -71,7 +68,6 @@ export async function getContributionsFromStorage(): Promise<WorkoutContribution
     }
     return JSON.parse(stringVal)
   } catch (e) {
-    console.log(e)
     throw new Error("Error getting contributions")
   }
 }

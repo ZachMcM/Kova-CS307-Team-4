@@ -563,7 +563,6 @@ export const ProfileActivities = ({
                       backgroundColor: '#ffffff',
                       backgroundGradientFrom: '#ffffff',
                       backgroundGradientTo: '#ffffff',
-                      // decimalPlaces: Math.max(...prepareWorkoutCountChart().datasets[0].data) > 2 ? 0 : 1,
                       decimalPlaces: 0,
                       color: (opacity = 1) => `rgba(111, 168, 220, ${opacity})`,
                       barPercentage: 0.95,
@@ -660,10 +659,10 @@ export const ProfileActivities = ({
                   )}
                   <Card variant="outline">
                     <Heading className="mb-5" size="xl">Favorite Exercises ⭐</Heading>
-                    {favoriteExercises.favorites.length === 0} && (
-                      {/* <Heading size="lg">No workouts recorded yet. Do a workout to get some data!</Heading>
-                      <Text>{favoriteExercises.favorites.length}</Text> */}
-                    ) : (
+                    {favoriteExercises.favorites.length === 0 && (
+                      <Heading size="lg">No workouts recorded yet. Do a workout to get some data!</Heading>
+                    )}
+
                     {favoriteExercises && favoriteExercises.favorites.slice(0, favoritesViewCount).map((favorite) => (
                       <Card className="mb-3" variant="filled" key={favorite.name}>
                         <Heading size="lg">{favorite.name}</Heading>
@@ -671,13 +670,14 @@ export const ProfileActivities = ({
                         <Text size="md">You have done {favorite.count} sets of this exercise!</Text>
                       </Card>
                     ))}
+
                     {favoriteExercises && favoriteExercises.favorites.length > favoritesViewCount && (
                       <Button
                         onPress={() => { setFavoritesViewCount(favoritesViewCount + 4); }}
                       >
-                        <ButtonText>{'Render more Favorites'}</ButtonText>
+                        <ButtonText>Render more Favorites</ButtonText>
                       </Button>
-                    )})
+                    )}
                   </Card>
                 </Card>
               </VStack>

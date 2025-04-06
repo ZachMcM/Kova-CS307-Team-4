@@ -32,7 +32,6 @@ const sendPasswordReset = async (email: string) => {
     }
   });
   if (error) {
-    console.log(error);
     throw error;
   }
   console.log("SUCCESS, recovery email sent");

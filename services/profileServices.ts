@@ -145,7 +145,6 @@ export const getProfilePrivacies = async (userId: string) => {
 
    if (error) throw new Error(error.message);
 
-   console.log("returning " + privacy_settings.privacy_settings["age"]);
    return privacy_settings.privacy_settings as privacies;
 }
 

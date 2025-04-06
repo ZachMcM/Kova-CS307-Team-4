@@ -46,7 +46,6 @@ export function LiveWorkoutProvider({
 
   useEffect(() => {
     const subscription = watch(async (updatedValues) => {
-      console.log("Updated Values", JSON.stringify( updatedValues))
 
       updateWorkout({
         templateId: updatedValues.templateId!,

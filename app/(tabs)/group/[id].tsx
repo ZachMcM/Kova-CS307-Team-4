@@ -23,12 +23,10 @@ export default function Group() {
   const toast = useToast()
   const queryClient = useQueryClient()
   const profileId = session?.user.user_metadata.profileId
-  console.log(groupId)
   const { data: group, isPending } = useQuery({
     queryKey: ["group", {groupId}],
     queryFn: async () => {
       const group = await getGroup(groupId);
-      console.log(JSON.stringify(group))
       return group;
     },
   });

@@ -20,7 +20,6 @@ export function TemplateFormProvider({
   children: ReactNode;
   template?: ExtendedTemplateWithCreator;
 }) {
-  console.log(template)
 
   const form = useForm<TemplateFormValues>({
     resolver: zodResolver(templateFormSchema),

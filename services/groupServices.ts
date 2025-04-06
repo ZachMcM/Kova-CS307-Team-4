@@ -41,7 +41,6 @@ export const getProfileGroupRel = async (
     .single();
 
   if (error) {
-    console.log(error);
     throw new Error(error.message);
   }
 
@@ -63,7 +62,6 @@ export const getGroup = async (
     console.log("Group Error:" + error.message);
     throw new Error(error.message);
   }
-  console.log(group)
   return group;
 };
 
@@ -92,7 +90,6 @@ export const getGroupProfiles = async (
     .eq("groupId", id);
 
   if (profileErr) {
-    console.log("Profile Error", profileErr);
     throw new Error(profileErr.message);
   }
 
@@ -167,7 +164,6 @@ export async function isTitleUniqueToGroup(title: string, groupId: string) : Pro
   if (error) {
     throw new Error(error.message)
   }
-  console.log(JSON.stringify(data) + ", " + groupId)
   return data.length == 0
 }
 
@@ -180,7 +176,6 @@ export async function getUserGroups(profileId: string) : Promise<string[]> {
   //  console.error(error.message)
    throw new Error(error.message);
   }
-  console.log("User groups: " + JSON.stringify(data))
   return data.map((row) => {
     return row.groupId as string
   }) as string[]

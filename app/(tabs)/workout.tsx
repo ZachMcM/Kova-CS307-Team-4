@@ -20,11 +20,9 @@ export default function Workout() {
   const { data: templates, isPending } = useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      console.log("Attempting to load");
       const templates = await getUserTemplates(
         session?.user.user_metadata.profileId
       );
-      console.log("Loaded: " + templates);
       return templates;
     },
   });
@@ -37,9 +35,7 @@ export default function Workout() {
   let searchItems = undefined;
   let wordCounter = undefined;
   let searchIdToIndex = undefined;
-  console.log("Before: " + templates);
   if (!isPending) {
-    console.log("Attempting to load: " + templates);
     searchItems = templatesToSearch(templates!);
     wordCounter = createWordCounter(searchItems);
     searchIdToIndex = new Map<string, number>();

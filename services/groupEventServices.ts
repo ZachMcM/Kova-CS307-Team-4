@@ -88,8 +88,6 @@ export const getUserEvents = async (
     events.forEach((event) => allEvents.push(event));
   }
 
-  console.log("Events", allEvents);
-
   return allEvents;
 };
 
@@ -106,7 +104,6 @@ export const addEventWorkout = async (workout: Workout, profileId: string) => {
     });
 
     if (insertErr) {
-      console.log(insertErr);
       throw new Error(insertErr.message);
     }
   }
@@ -124,7 +121,6 @@ export const getProfileEventWorkouts = async (
     .eq("profileId", profileId);
 
   if (error) {
-    console.log(error);
     throw new Error(error.message);
   }
 
@@ -146,7 +142,6 @@ export const getEventWorkouts = async (
     .gte("created_at", event.start_date)
     .lte("created_at", event.end_date);
   if (error) {
-    console.log(error);
     throw new Error(error.message);
   }
 
@@ -190,7 +185,6 @@ export const getWorkoutContributions = async (
   for (const event of events) {
     let points = 0;
     for (const exercise of exercises) {
-      console.log(exercise);
       points += getExercisePoints(event, exercise);
     }
     contributions.push({
@@ -210,7 +204,6 @@ export const getProfilePoints = (
   workouts: EventWorkoutWithProfile[]
 ) => {
   let points = 0;
-  console.log("Workouts", JSON.stringify(workouts));
   for (const workout of workouts) {
     for (const exercise of workout.workoutData.exercises) {
       points += getExercisePoints(event, exercise);

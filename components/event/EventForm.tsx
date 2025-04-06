@@ -114,7 +114,6 @@ export default function EventForm({ groupId }: { groupId: string }) {
       return data;
     },
     onSuccess: (data) => {
-      console.log(data);
       queryClient.invalidateQueries({
         queryKey: ["group", { id: groupId }],
       });

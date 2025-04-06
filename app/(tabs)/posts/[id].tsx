@@ -25,8 +25,6 @@ import { DetailedWorkoutData } from "@/components/WorkoutData";
 import { LogBox } from 'react-native';
 import { Comment, getComments, pushComment } from "@/services/commentServices";
 
-LogBox.ignoreLogs(['Warning: Text strings must be rendered within a <Text> component']);
-
 type ReducedProfile = {
   username: string;
   name: string;
@@ -55,7 +53,7 @@ export default function PostDetails() {
   const [fetchingComments, setFetchingComments] = useState(false);
 
   useEffect(() => {
-    console.log("User profile updated: " + userProfile);
+    console.log("User profile updated");
   }, [userProfile])
 
   useEffect(() => {
@@ -193,13 +191,10 @@ export default function PostDetails() {
       const pageStart = (PAGE_SIZE * page) + writtenComments;
       const pageEnd = (PAGE_SIZE * (page + 1)) + writtenComments - 1;
 
-      console.log("Page " + page + ": " + pageStart + " - " + pageEnd);
-
       getComments(postId, pageStart, pageEnd).then((commentData => {
         const newComments = commentData as Comment[];
 
         for (let i = 0; i < newComments.length; i++) {
-          console.log("ADDING " + newComments[i])
           comments?.push(newComments[i]);
         }
 
@@ -475,13 +470,15 @@ export default function PostDetails() {
                         </HStack>
                       </Box>
                     )}
-                    {post.weighIn && (
+                    {post.weighIn ? (
                       <Box className="flex-1 h-full justify-center items-center">
                         <Text size="md">Weigh-In</Text>
                         <HStack>
-                          <Text size = "lg" bold>{post.weighIn} lbs</Text>
+                          <Text size="lg" bold>{post.weighIn} lbs</Text>
                         </HStack>
                       </Box>
+                    ) : (
+                      <></>
                     )}
                   </HStack>
                   {post.workoutData.exercises.reduce((rows: Exercise[][], exercise: any, index: number) => {

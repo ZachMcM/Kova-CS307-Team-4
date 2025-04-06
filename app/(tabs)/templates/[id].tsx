@@ -17,7 +17,6 @@ export default function EditTemplate() {
     queryFn: async () => {
       // TODO implement db call
       const template = (await getTemplate(id as string)) || null;
-      console.log(JSON.stringify(template));
       return template;
     },
   });

@@ -161,8 +161,6 @@ export default function FeedScreen() {
       .order("createdAt", { ascending: false })
       .range(from, to);
 
-      console.log("TEMPLATE ID: " + postsData?.[0]?.template_id);
-
       if (postsError) {
         throw postsError;
       }

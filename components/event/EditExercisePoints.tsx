@@ -50,7 +50,6 @@ export default function EditExercisePoints({
       return data;
     },
     onSuccess: (data) => {
-      console.log(data);
       showSuccessToast(toast, "Successfully updated exercise point values");
       queryClient.invalidateQueries({
         queryKey: ["event", { id: event.id }],
@@ -64,7 +63,6 @@ export default function EditExercisePoints({
   });
 
   function onSubmit(values: FieldValues) {
-    console.log(values);
     mutate(values as ExercisePointsFormValues);
   }
 

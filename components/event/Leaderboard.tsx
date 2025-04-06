@@ -29,7 +29,6 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
     queryKey: ["event-leaderboard", { id: event.id }],
     queryFn: async () => {
       const eventWorkouts = await getEventWorkouts(event.id);
-      console.log(eventWorkouts);
 
       // creating the map
       const profileTable = new Map<string, EventWorkoutWithProfile[]>();

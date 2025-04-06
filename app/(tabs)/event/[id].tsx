@@ -216,7 +216,6 @@ function EditTile({
     },
     onSuccess: (data) => {
       const groupId = event.groupId
-      console.log(data);
       queryClient.invalidateQueries({ queryKey: ["event", { id: event.id }] });
       queryClient.invalidateQueries({
         queryKey: ["group", { id: event.groupId }],

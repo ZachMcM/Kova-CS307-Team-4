@@ -63,7 +63,6 @@ export default function EditEventDetails({
   });
 
   async function onSubmit(values: FieldValues) {
-    console.log(values);
     mutate(values as EditEventDetailsValues);
   }
 
@@ -80,7 +79,6 @@ export default function EditEventDetails({
       showErrorToast(toast, err.message);
     },
     onSuccess: (data) => {
-      console.log(data);
       
       queryClient.invalidateQueries({
         queryKey: ["event", { id: event.id }],

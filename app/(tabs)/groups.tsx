@@ -22,7 +22,6 @@ export default function Groups() {
     queryKey: ["group"],
     queryFn: async () => {
       const groups = await getAllGroups();
-      console.log(JSON.stringify(groups))
       return groups;
     },
   });
@@ -33,9 +32,7 @@ export default function Groups() {
   const { data: userGroups, isPending: isUserPending } = useQuery({
     queryKey: ["groupRel"],
     queryFn: async () => {
-      console.log("Performing user query")
       const userGroups = await getUserGroups(session!.user.user_metadata.profileId)
-      console.log(userGroups)
       return userGroups
     }
   })

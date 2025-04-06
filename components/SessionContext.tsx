@@ -196,10 +196,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         password: oldPassword
       });
 
-      console.log("verifyData: " + verifyData);
-
       if (verifyError || !verifyData) {
-        console.log(verifyError)
         throw new Error("Old Password is not correct")
       }
     }
@@ -213,7 +210,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     })
 
     if (updateError) {
-      console.log(updateError.message)
       if (updateError.message == "New password should be different from the old password.") {
         throw updateError;  
       }
@@ -235,7 +231,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
 
     if (verifyError || !verifyData) {
-      console.log(verifyError)
       throw new Error("Verification Password is not correct")
     }
 
@@ -248,7 +243,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     })
 
     if (updateError) {
-      console.log(updateError.message)
       throw updateError;
     }
 
@@ -262,7 +256,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
 
     if (verifyError || !verifyData) {
-      console.log(verifyError)
       throw new Error("Verification Password is not correct")
     }
 
@@ -281,7 +274,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       .eq('username', newUsername)
 
     if (data && data.length != 0) {
-      console.log("data: " + data)
       if (data[0].userId == session?.user.id) throw new Error("New username cannot be the same as old username");
       else throw new Error("Username is already in use");
     }
@@ -292,7 +284,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       .eq('userId', session?.user.id);
 
     if (fetchError) {
-      console.log(fetchError);
       throw fetchError;
     }
 

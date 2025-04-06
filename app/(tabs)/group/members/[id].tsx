@@ -159,7 +159,6 @@ export default function GroupMembers() {
     queryFn: async () => {
       const members = await getMembers(groupId)
       console.log("MEMBERS -- " + JSON.stringify(members))
-      console.log(Array.isArray(members) + ", " + members)
       return members as GroupRelWithProfile[]
     }
   })

@@ -102,7 +102,6 @@ export const WorkoutPost = ({
     queryKey: ["likeRel", { id: postId }],
     queryFn: async () => {
       let items = getLikes(postId!);
-      console.log(items);
       return items;
     },
   });

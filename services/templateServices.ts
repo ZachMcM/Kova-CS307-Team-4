@@ -46,8 +46,6 @@ export const getUserTemplates = async (
     return [];
   }
 
-  console.log("Templates", JSON.stringify(templates));
-
   return templates as ExtendedTemplateWithCreator[];
 };
 

@@ -80,14 +80,11 @@ export default function PostScreen() {
     checkSession();
     
     const workoutDataParam = params.workoutData || (params.params && JSON.parse(params.params as string).workoutData);
-    console.log("Raw workout data param:", workoutDataParam);
     
     if (workoutDataParam) {
       try {
         const parsedData = JSON.parse(workoutDataParam as string);
-        console.log("Parsed workout data:", parsedData);
         // Check for template ID
-        console.log("Template ID:", parsedData.templateId);
         
         const processedWorkoutData = {
           duration: parsedData.duration || '0 minutes',

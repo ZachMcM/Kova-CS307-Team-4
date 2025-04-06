@@ -235,7 +235,6 @@ export default function ProfileScreen() {
     queryKey: ["group profile"],
     queryFn: async () => {
       const groups = await getAllGroups();
-      console.log(JSON.stringify(groups))
       return groups;
     },
   });
@@ -243,9 +242,7 @@ export default function ProfileScreen() {
   const { data: userGroups, isPending: isUserPending } = useQuery({
     queryKey: ["groupRel profile"],
     queryFn: async () => {
-      console.log("Performing user query")
       const userGroups = await getUserGroups(session!.user.user_metadata.profileId)
-      console.log(userGroups)
       return userGroups
     }
   })

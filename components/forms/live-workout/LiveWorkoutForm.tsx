@@ -143,7 +143,7 @@ export default function LiveWorkoutForm() {
   const { mutate: postWorkout, isPending: postPending } = useMutation({
     mutationFn: async (values: LiveWorkoutValues) => {
       // TODO interact with post workout (need to omit done because it is not needed in final iteration)
-      console.log("Successfully posted workout", JSON.stringify(values));
+      console.log("Successfully posted workout");
       await clearWorkout();
       await addEventWorkout(
         values,
@@ -169,8 +169,7 @@ export default function LiveWorkoutForm() {
       };
 
       console.log(
-        "Navigating to post screen with data:",
-        JSON.stringify(postData)
+        "Navigating to post screen"
       );
 
       // Add a small delay to ensure any pending operations complete
@@ -314,8 +313,7 @@ export default function LiveWorkoutForm() {
                   // Get the form values
                   const values = getValues();
                   console.log(
-                    "Post workout button clicked",
-                    JSON.stringify(values)
+                    "Post workout button clicked"
                   );
 
                   // Close the modal

@@ -23,7 +23,6 @@ export default function MemberCard({ groupRel, isOwner }: { groupRel: GroupRelWi
   const queryClient = useQueryClient()
   const toast = useToast()
   const groupId = groupRel.groupId
-  console.log(profileId + ", " + groupRel.profileId + ", " + groupRel.profile.id + ", " + JSON.stringify(groupRel))
   return (
     <Pressable
       onPress={() =>
@@ -56,7 +55,6 @@ export default function MemberCard({ groupRel, isOwner }: { groupRel: GroupRelWi
                 queryClient.invalidateQueries({queryKey: ["groupRel", { groupId }]})
                 queryClient.invalidateQueries({queryKey: ["groupRel members", { groupId }]})
                 queryClient.invalidateQueries({queryKey: ["group members", { groupId }]})
-                console.log(groupId + ", " + groupRel.groupId)
 
                 router.push({
                   pathname: "/(tabs)/group/members/[id]",
@@ -74,7 +72,6 @@ export default function MemberCard({ groupRel, isOwner }: { groupRel: GroupRelWi
                 queryClient.invalidateQueries({queryKey: ["groupRel", { groupId }]})
                 queryClient.invalidateQueries({queryKey: ["group members", { groupId }]})
                 queryClient.invalidateQueries({queryKey: ["groupRel members", { groupId }]})
-                console.log(groupId + ", " + groupRel.groupId)
                 router.push({
                   pathname: "/(tabs)/group/members/[id]",
                   params: { id: groupRel.groupId },
