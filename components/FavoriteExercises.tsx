@@ -30,7 +30,7 @@ export default function FavoriteExercises() {
 
   return (
     <VStack space="md">
-      <Heading size="2xl">Exercises</Heading>
+      <Heading size="2xl">Favorite Exercises</Heading>
       {isPending ? (
         <Spinner />
       ) : favoriteExercises && favoriteExercises.length > 0 ? (
