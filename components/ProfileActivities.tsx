@@ -510,7 +510,7 @@ export const ProfileActivities = ({
     return (
         <View className="mb-10">
             <VStack space="2xl">
-              <VStack>
+              <VStack space="sm">
                 <Heading size="2xl">Profile Summary</Heading>
                 <Card variant="outline">
                   <HStack className="justify-between mb-4">
@@ -658,7 +658,7 @@ export const ProfileActivities = ({
                   />
                   )}
                   <Card variant="outline">
-                    <Heading className="mb-5" size="xl">Favorite Exercises ⭐</Heading>
+                    <Heading className="mb-5" size="xl">Most Popular Exercises ⭐</Heading>
                     {favoriteExercises.favorites.length === 0 && (
                       <Heading size="lg">No workouts recorded yet. Do a workout to get some data!</Heading>
                     )}

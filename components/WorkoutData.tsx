@@ -7,12 +7,102 @@ import { Exercise } from "@/components/WorkoutPost";
 import { Box } from "@/components/ui/box";
 import { Ionicons } from "@expo/vector-icons";
 import { Post } from '@/app/(tabs)/feed';
-import { postStyles } from '@/app/(tabs)/post';
+import { StyleSheet } from 'react-native';
 
 type WorkoutHeaderProps = {
   duration: string,
   dateTime?: string,
 }
+
+export const postStyles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    marginVertical: 16,
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  formContainer: {
+    padding: 16,
+  },
+  toggleContainer: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  workoutDataContainer: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  sectionTitle: {
+    marginBottom: 12,
+  },
+  workoutSummary: {
+    marginBottom: 16,
+  },
+  summaryItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  exercisesTitle: {
+    marginBottom: 8,
+  },
+  exerciseItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  privacyHint: {
+    color: '#666',
+    marginTop: 4,
+  },
+  submitButton: {
+    marginTop: 24,
+  },
+  buttonText: {
+    color: 'white',
+  },
+  friendSelectorContainer: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginTop: 8,
+  },
+  friendsList: {
+    maxHeight: 200,
+  },
+  friendItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  selectedFriendsContainer: {
+    marginTop: 8,
+  },
+  selectedFriendChip: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginBottom: 8,
+    marginRight: 8,
+  },
+  errorText: {
+    color: '#E53E3E',
+    fontSize: 12,
+    marginTop: 2,
+  },
+});
 
 export const WorkoutHeader = ({
   duration,
