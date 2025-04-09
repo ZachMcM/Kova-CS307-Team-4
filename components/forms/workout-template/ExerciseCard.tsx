@@ -4,23 +4,20 @@ import { Box } from "@/components/ui/box";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Icon } from "@/components/ui/icon";
-import { Spinner } from "@/components/ui/spinner";
+import { Pressable } from "@/components/ui/pressable";
+import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import {
   addFavorite,
   isExerciseFavorited,
   removeFavorite,
 } from "@/services/exerciseServices";
+import { showErrorToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
 import { ExtendedExercise } from "@/types/extended-types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Button, View } from "react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { showErrorToast } from "@/services/toastServices";
-import { useToast } from "@/components/ui/toast";
-import { Pressable } from "@/components/ui/pressable";
 
 export default function ExerciseCard({
   exercise,
@@ -72,7 +69,7 @@ function Favorite({
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  const { mutate: unfavorite, isPending: isUnfavoritePending } = useMutation({
+  const { mutate: unfavorite } = useMutation({
     mutationFn: async () => {
       await removeFavorite(session?.user.user_metadata.profileId, exercise.id);
     },
@@ -84,15 +81,12 @@ function Favorite({
         queryKey: ["is-favorited", { id: exercise.id }],
       });
       queryClient.invalidateQueries({
-        queryKey: [
-          "favorite-exercises",
-          { id: session?.user.user_metadata.profileId },
-        ],
+        queryKey: ["favorite-exercises"],
       });
     },
   });
 
-  const { mutate: favorite, isPending: isFavoritePending } = useMutation({
+  const { mutate: favorite } = useMutation({
     mutationFn: async () => {
       await addFavorite(session?.user.user_metadata.profileId, exercise.id);
     },
@@ -104,10 +98,7 @@ function Favorite({
         queryKey: ["is-favorited", { id: exercise.id }],
       });
       queryClient.invalidateQueries({
-        queryKey: [
-          "favorite-exercises",
-          { id: session?.user.user_metadata.profileId },
-        ],
+        queryKey: ["favorite-exercises"],
       });
     },
   });

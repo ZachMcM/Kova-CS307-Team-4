@@ -87,13 +87,7 @@ export const addFavorite = async (profileId: string, exerciseId: string) => {
 export const isExerciseFavorited = async (profileId: string, exerciseId: string): Promise<boolean> => {
   const favorites = await getFavoriteExercises(profileId)
 
-  let favorited = false
+  const exercise = favorites.find(favorite => favorite.id == exerciseId)
 
-  for (const favorite of favorites) {
-    if (favorite.id == exerciseId) {
-      favorited = true
-    }
-  }
-
-  return favorited
+  return exercise != null && exercise != undefined
 }

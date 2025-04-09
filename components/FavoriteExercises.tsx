@@ -1,14 +1,34 @@
+import {
+  getExercises,
+  getFavoriteExercises,
+} from "@/services/exerciseServices";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useSession } from "./SessionContext";
-import { getFavoriteExercises } from "@/services/exerciseServices";
-import { VStack } from "./ui/vstack";
-import { Heading } from "./ui/heading";
-import { Input, InputField, InputIcon, InputSlot } from "./ui/input";
-import { InfoIcon, SearchIcon } from "./ui/icon";
-import { Spinner } from "./ui/spinner";
-import { Alert, AlertIcon, AlertText } from "./ui/alert";
 import ExerciseCard from "./forms/workout-template/ExerciseCard";
+import { useSession } from "./SessionContext";
+import { Alert, AlertIcon, AlertText } from "./ui/alert";
+import { Button, ButtonIcon, ButtonText } from "./ui/button";
+import { Heading } from "./ui/heading";
+import { HStack } from "./ui/hstack";
+import {
+  ArrowRightIcon,
+  CloseIcon,
+  Icon,
+  InfoIcon,
+  SearchIcon,
+} from "./ui/icon";
+import { Input, InputField, InputIcon, InputSlot } from "./ui/input";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+} from "./ui/modal";
+import { Spinner } from "./ui/spinner";
+import { VStack } from "./ui/vstack";
+import { router } from "expo-router";
 
 export default function FavoriteExercises() {
   const [exerciseQuery, setExerciseQuery] = useState("");
@@ -16,10 +36,7 @@ export default function FavoriteExercises() {
   const { session } = useSession();
 
   const { data: favoriteExercises, isPending } = useQuery({
-    queryKey: [
-      "favorite-exercises",
-      { id: session?.user.user_metadata.profileId },
-    ],
+    queryKey: ["favorite-exercises"],
     queryFn: async () => {
       const favorites = await getFavoriteExercises(
         session?.user.user_metadata.profileId
@@ -30,7 +47,13 @@ export default function FavoriteExercises() {
 
   return (
     <VStack space="md">
-      <Heading size="2xl">Favorite Exercises</Heading>
+      <HStack className="items-center justify-between">
+        <Heading size="2xl">Favorite Exercises</Heading>
+        <Button variant="link" onPress={() => router.push("/exercises")}>
+          <ButtonText>View All</ButtonText>
+          <ButtonIcon as={ArrowRightIcon} />
+        </Button>
+      </HStack>
       {isPending ? (
         <Spinner />
       ) : favoriteExercises && favoriteExercises.length > 0 ? (

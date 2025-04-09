@@ -170,6 +170,12 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="exercises"
+        options={{
+          href: null
+        }}
+      />
     </Tabs>
   ) : (
     <Redirect href="/live-workout" />
