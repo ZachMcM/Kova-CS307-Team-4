@@ -46,12 +46,17 @@ export default function ExercisePointsForm({
         allExercises
           .filter(
             (exercise) =>
-              exercise.name
+              (exercise.name
                 ?.toLowerCase()
                 .includes(exerciseQuery.toLowerCase()) ||
-              exercise.tags.filter((tag) =>
-                tag.name?.toLowerCase().includes(exerciseQuery.toLowerCase())
-              ).length > 0
+                exercise.tags.filter((tag) =>
+                  tag.name?.toLowerCase().includes(exerciseQuery.toLowerCase())
+                ).length > 0) &&
+              !form
+                .getValues("exercises")
+                .find((other: any) => {
+                  return other.exerciseId == exercise.id
+                })
           )
           .map((exercise) => (
             <Pressable
@@ -74,10 +79,12 @@ export default function ExercisePointsForm({
         <Card variant="outline" key={exercise.exerciseId}>
           <VStack space="xl">
             <HStack className="items-center justify-between">
-              <Heading 
-                // @ts-expect-error
-                size="md">{exercise.exerciseName
-              }</Heading>
+              <Heading
+                size="md"
+              >
+                {/* @ts-ignore-error */}
+                {exercise.exerciseName}
+              </Heading>
               <Pressable onPress={() => remove(index)}>
                 <Icon as={TrashIcon} size="xl" color="red" />
               </Pressable>

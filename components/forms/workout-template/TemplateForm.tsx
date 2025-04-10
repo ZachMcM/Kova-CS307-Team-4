@@ -7,12 +7,10 @@ import { useToast } from "@/components/ui/toast";
 import { getExercises } from "@/services/exerciseServices";
 import { newTemplate, updateTemplate } from "@/services/templateServices";
 import { showErrorToast } from "@/services/toastServices";
-import { ExtendedExercise } from "@/types/extended-types";
 import {
-  compareToTaggedQuery,
   createTagCounter,
   createWordCounter,
-  exercisesToSearch,
+  exercisesToSearch
 } from "@/types/searcher-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -37,7 +35,8 @@ export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
   const [exerciseQuery, setExerciseQuery] = useState<string>("");
 
-  const { control, handleSubmit, watch, formState } = useTemplateForm();
+  const { control, handleSubmit, watch, formState, getValues } =
+    useTemplateForm();
 
   const templateId = watch("id");
 
@@ -149,12 +148,17 @@ export default function TemplateForm() {
           allExercises
             .filter(
               (exercise) =>
-                exercise.name
+                (exercise.name
                   ?.toLowerCase()
                   .includes(exerciseQuery.toLowerCase()) ||
-                exercise.tags.filter((tag) =>
-                  tag.name?.toLowerCase().includes(exerciseQuery.toLowerCase())
-                ).length > 0
+                  exercise.tags.filter((tag) =>
+                    tag.name
+                      ?.toLowerCase()
+                      .includes(exerciseQuery.toLowerCase())
+                  ).length > 0) &&
+                !getValues("data").find((other: any) => {
+                  return other.info.id == exercise.id;
+                })
             )
             .map((exercise) => (
               <Pressable

@@ -49,7 +49,7 @@ export default function EditExercisePoints({
 
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       showSuccessToast(toast, "Successfully updated exercise point values");
       queryClient.invalidateQueries({
         queryKey: ["event", { id: event.id }],

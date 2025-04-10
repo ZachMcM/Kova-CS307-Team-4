@@ -4,7 +4,6 @@ import { TemplateFormProvider } from "@/components/forms/workout-template/Templa
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { getExercises } from "@/services/exerciseServices";
 
 
 export default function NewTemplate() {
