@@ -15,7 +15,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 
 export default function Exercises() {
-  const { data: allExercises, isPaused: exercisesPending } = useQuery({
+  const { data: allExercises, isPending: exercisesPending } = useQuery({
     queryKey: ["exercises"],
     queryFn: async () => {
       const exercises = await getExercises();

@@ -6,9 +6,7 @@ export async function getExercises(): Promise<ExtendedExercise[]> {
   const { data, error } = await supabase
     .from('exercise')
     .select(`
-      id,
-      name,
-      created_at,
+      *,
       tags:relTag(tag(*))
     `);
   
@@ -19,7 +17,7 @@ export async function getExercises(): Promise<ExtendedExercise[]> {
   // Correctly transform and type the data
   const exercises = data.map(exercise => ({
     ...exercise,
-    tags: exercise.tags.map(item => item.tag as any)
+    tags: exercise.tags.map((item: any) => item.tag as any)
   }));
   
   return exercises as ExtendedExercise[];

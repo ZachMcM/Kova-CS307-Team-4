@@ -1,8 +1,8 @@
 import {
-  getExercises,
-  getFavoriteExercises,
+  getFavoriteExercises
 } from "@/services/exerciseServices";
 import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { useState } from "react";
 import ExerciseCard from "./forms/workout-template/ExerciseCard";
 import { useSession } from "./SessionContext";
@@ -12,23 +12,12 @@ import { Heading } from "./ui/heading";
 import { HStack } from "./ui/hstack";
 import {
   ArrowRightIcon,
-  CloseIcon,
-  Icon,
   InfoIcon,
-  SearchIcon,
+  SearchIcon
 } from "./ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "./ui/input";
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-} from "./ui/modal";
 import { Spinner } from "./ui/spinner";
 import { VStack } from "./ui/vstack";
-import { router } from "expo-router";
 
 export default function FavoriteExercises() {
   const [exerciseQuery, setExerciseQuery] = useState("");

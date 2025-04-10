@@ -90,16 +90,19 @@ export type Database = {
       exercise: {
         Row: {
           created_at: string
+          details: string | null
           id: string
           name: string | null
         }
         Insert: {
           created_at?: string
+          details?: string | null
           id?: string
           name?: string | null
         }
         Update: {
           created_at?: string
+          details?: string | null
           id?: string
           name?: string | null
         }
@@ -135,7 +138,7 @@ export type Database = {
           {
             foreignKeyName: "favoriteRel_profileId_fkey"
             columns: ["profileId"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profile"
             referencedColumns: ["id"]
           },
