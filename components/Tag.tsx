@@ -11,3 +11,13 @@ export default function Tag({ tag }: { tag: Tables<'tag'> }) {
     </Box>
   );
 }
+
+export function TagString({ tag }: { tag: string }) {
+  return (
+    <Box className="p-2 rounded-md bg-secondary-500 w-fit">
+      <Text className="capitalize text-xs font-medium text-typography-1">
+        {tag}
+      </Text>
+    </Box>
+  );
+}

@@ -23,11 +23,43 @@ export async function getExercises(): Promise<ExtendedExercise[]> {
   return exercises as ExtendedExercise[];
 }
 
+export const getTagsAndDetails = async (exerciseNames: string[]): Promise<{tagMap: Record<string, string[]>, detailsMap: Record<string, string>}> => {
+  const { data, error } = await supabase
+    .from('exercise')
+    .select(`
+      name,
+      details,
+      relTag!inner (
+        tag (
+          name
+        )
+      )
+    `)
+    .in('name', exerciseNames)
+
+  if (error) {
+    console.error('Error fetching exercise tags:', error)
+    throw error
+  }
+
+  const exerciseTagsMap: Record<string, string[]> = {}
+  const exerciseDetailsMap: Record<string, string> = {}
+
+  data?.forEach(exercise => {
+    const tagNames = exercise.relTag.map((rel: any) => rel.tag.name)
+    exerciseTagsMap[exercise.name] = tagNames
+    exerciseDetailsMap[exercise.name] = exercise.details
+  })
+
+  return {tagMap: exerciseTagsMap, detailsMap: exerciseDetailsMap}
+}
+
 export const getFavoriteExercises = async (profileId: string): Promise<ExtendedExercise[]> => {
   const { data: favoriteRels, error } = await supabase
     .from("favoriteRel")
     .select(`*,
       exercise:exerciseId(*)`)
+    .eq("profileId", profileId)
 
   if (error) {
     console.log(error)

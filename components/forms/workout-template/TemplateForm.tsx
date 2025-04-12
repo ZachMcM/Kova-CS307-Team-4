@@ -16,7 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
-import { Pressable } from "react-native";
+import { Pressable, ScrollView} from "react-native";
 import {
   FormControl,
   FormControlError,
@@ -30,6 +30,7 @@ import { VStack } from "../../ui/vstack";
 import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
+import { Box } from "@/components/ui/box";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -182,7 +183,8 @@ export default function TemplateForm() {
               >
                 <ExerciseCard exercise={exercise} />
               </Pressable>
-            ))}
+            ))
+            .slice(0, 15)}
         <VStack space="4xl">
           {exercises.map((exercise, i) => (
             <VStack space="md" key={exercise.info.id}>

@@ -2,6 +2,7 @@ import { Session, User, WeakPassword } from "@supabase/auth-js";
 import { Tables } from "./database.types";
 import { ExerciseData, Workout } from "./workout-types";
 import { PublicProfile } from "./profile-types";
+import { PopularExercise } from "@/components/ProfileActivities";
 
 // Extended template type that includes creator's profile
 export type ExtendedTemplateWithCreator = Omit<Tables<'template'>, 'data'> & {

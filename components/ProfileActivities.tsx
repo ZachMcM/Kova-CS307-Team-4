@@ -21,9 +21,20 @@ import { useNavigation } from "@react-navigation/native";
 import { WorkoutData } from "@/types/workout-types";
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio";
-import { Icon, TrashIcon, EditIcon, AddIcon, ChevronLeftIcon, DownloadIcon } from "@/components/ui/icon";
+import { Icon, TrashIcon, EditIcon, AddIcon, ChevronLeftIcon, DownloadIcon, CloseIcon, InfoIcon } from "@/components/ui/icon";
 import { Box } from "./ui/box";
 import { Accordion, AccordionContent, AccordionContentText, AccordionHeader, AccordionTitleText } from "./ui/accordion";
+import { getTagsAndDetails } from "@/services/exerciseServices";
+import { TagString } from "./Tag";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+} from "@/components/ui/modal";
+import { Pressable } from "./ui/pressable";
 
 type ProfileActivitiesProps = {
     posts: Post[];
@@ -31,11 +42,13 @@ type ProfileActivitiesProps = {
     updatePostFunc: (postId: string, title: string, description: string) => Promise<any[]>;
 }
 
-type FavoriteExercise = {
+export type PopularExercise = {
     name: string;
     count: number;
     weight: number;
     unit: string;
+    details: string;
+    tags: string[];
 }
 
 export const ProfileActivities = ({
@@ -46,6 +59,9 @@ export const ProfileActivities = ({
 
     const { session } = useSession();
     const navigation = useNavigation();
+    const toast = useToast();
+
+    const [detailsModal, setDetailsModal] = useState("");
 
     const [postViewCount, setPostViewCount] = useState(4); //Initially only view 4 posts
     const [visiblePosts, setVisiblePosts] = useState(posts.length > 4 ? posts.slice(0, 4) : posts.slice());
@@ -66,13 +82,7 @@ export const ProfileActivities = ({
       totalPostsMonth: 0,
       totalPostsWeek: 0,
     });
-    const [favoriteExercises, setFavoriteExercises] = useState({
-      favorites: [] as FavoriteExercise[],
-      favoritesYear: [] as FavoriteExercise[],
-      favoritesMonth: [] as FavoriteExercise[],
-      favoritesWeek: [] as FavoriteExercise[],
-
-    });
+    const [popularExercises, setPopularExercises] = useState([] as PopularExercise[]);
     const [totalWorkouts, setTotalWorkouts] = useState({
       totalWorkouts: workouts.length,
       totalWorkoutsYear: 0,
@@ -91,6 +101,24 @@ export const ProfileActivities = ({
       workoutsMonth: [] as Post[],
       workoutsWeek: [] as Post[],
     })
+
+
+    const { mutate, isPending: isTagsPending } = useMutation({
+      mutationFn: async (popularExercises: PopularExercise[]) => {
+        const temp = await getTagsAndDetails(popularExercises.map((exercise) => {return exercise.name}));
+        popularExercises.map((favorite) => {
+          favorite.tags = temp.tagMap[favorite.name];
+          favorite.details = temp.detailsMap[favorite.name];
+          return favorite
+        })
+        setPopularExercises(popularExercises)
+      },
+      onError: (err) => {
+        showErrorToast(toast, err.message);
+      },
+      onSuccess: () => {
+      },
+    });
 
     const calculateStats = () => {
       const now = new Date();
@@ -116,6 +144,7 @@ export const ProfileActivities = ({
       const postsWeek = posts.filter((post) => 
         (new Date(post.createdAt)).getFullYear() === now.getFullYear() &&
         (new Date(post.createdAt)).getMonth() === now.getMonth() &&
+        (Math.abs((new Date(post.createdAt)).getDate() - now.getDate()) <= now.getDay()) &&
         DOWArray.includes((new Date(post.createdAt)).getDay())
       );
       
@@ -146,15 +175,10 @@ export const ProfileActivities = ({
         totalSecondsMonth: 0,
         totalSecondsWeek: 0,
       };
-      let favoriteData = {
-        favorites: [] as FavoriteExercise[],
-        favoritesYear: [] as FavoriteExercise[],
-        favoritesMonth: [] as FavoriteExercise[],
-        favoritesWeek: [] as FavoriteExercise[],
-      };
-      const addFavorites = (data: WorkoutData, favoriteArray: FavoriteExercise[]) => {
+      let popularData = [] as PopularExercise[];
+      const addFavorites = (data: WorkoutData, popularArray: PopularExercise[]) => {
         data.exercises.map((exercise) => {
-          let favoriteIndex = favoriteArray.findIndex(favorite => favorite.name === exercise.name);
+          let popularIndex = popularArray.findIndex(favorite => favorite.name === exercise.name);
           let weight = exercise.weight ? (
             exercise.weight.split(" ")[1] === "kg" ? (
               parseInt(exercise.weight.split(" ")[0]) * 2.2046226218 //kg to lbs
@@ -162,45 +186,42 @@ export const ProfileActivities = ({
               parseInt(exercise.weight.split(" ")[0])
             )
           ) : 0
-          let oldWeight = favoriteIndex !== -1 && favoriteArray[favoriteIndex].weight && favoriteArray[favoriteIndex].unit ? (
-            favoriteArray[favoriteIndex].unit === "kg" ? (
-              favoriteArray[favoriteIndex].weight * 2.2046226218 //kg to lbs
+          let oldWeight = popularIndex !== -1 && popularArray[popularIndex].weight && popularArray[popularIndex].unit ? (
+            popularArray[popularIndex].unit === "kg" ? (
+              popularArray[popularIndex].weight * 2.2046226218 //kg to lbs
             ) : (
-              favoriteArray[favoriteIndex].weight
+              popularArray[popularIndex].weight
             )
           ) : 0
-          if (favoriteIndex > -1) {
-            favoriteArray[favoriteIndex].count += (exercise.sets ? exercise.sets : 0)
+          if (popularIndex > -1) {
+            popularArray[popularIndex].count += (exercise.sets ? exercise.sets : 0)
             if (exercise.weight && oldWeight < weight) {
-              favoriteArray[favoriteIndex].weight = parseInt(exercise.weight.split(" ")[0])
-              favoriteArray[favoriteIndex].unit = exercise.weight.split(" ")[1]
+              popularArray[popularIndex].weight = parseInt(exercise.weight.split(" ")[0])
+              popularArray[popularIndex].unit = exercise.weight.split(" ")[1]
             }
           } else {
-            favoriteArray.push({
+            popularArray.push({
               name: exercise.name,
               count: exercise.sets,
               weight: weight,
               unit: exercise.weight ? exercise.weight.split(" ")[1] : "lbs",
-            } as FavoriteExercise)
+            } as PopularExercise)
           }
         })
       }
       workouts.map((workout) => {
         if (!workout.workoutData || !workout.workoutData.duration) return;
         secondData.totalSeconds += (parseInt(workout.workoutData.duration.split(":")[1]) + parseInt(workout.workoutData.duration.split(":")[0])*60);
-        addFavorites(workout.workoutData as WorkoutData, favoriteData.favorites);
+        addFavorites(workout.workoutData as WorkoutData, popularData);
 
         if (workoutsYear.includes(workout)) {
           secondData.totalSecondsMonth += (parseInt(workout.workoutData.duration.split(":")[1]) + parseInt(workout.workoutData.duration.split(":")[0])*60);
-          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesYear);
         }
         if (workoutsMonth.includes(workout)) {
           secondData.totalSecondsMonth += (parseInt(workout.workoutData.duration.split(":")[1]) + parseInt(workout.workoutData.duration.split(":")[0])*60);
-          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesMonth);
         }
         if (workoutsWeek.includes(workout)) {
           secondData.totalSecondsWeek += (parseInt(workout.workoutData.duration.split(":")[1]) + parseInt(workout.workoutData.duration.split(":")[0])*60);
-          addFavorites(workout.workoutData as WorkoutData, favoriteData.favoritesWeek);
         }
       });
       setTotalMinutes({
@@ -209,11 +230,12 @@ export const ProfileActivities = ({
         totalMinutesMonth: secondData.totalSecondsMonth / 60,
         totalMinutesWeek: secondData.totalSecondsWeek / 60,
       });
-      favoriteData.favorites.sort((a, b) => {
+      popularData.sort((a, b) => {
         if (a.count === b.count) return b.weight - a.weight;
         return b.count - a.count;
       });
-      setFavoriteExercises(favoriteData);
+      setPopularExercises(popularData);
+      mutate(popularData);
     }
 
     // Prepare chart data
@@ -659,19 +681,53 @@ export const ProfileActivities = ({
                   )}
                   <Card variant="outline">
                     <Heading className="mb-5" size="xl">Most Popular Exercises ⭐</Heading>
-                    {favoriteExercises.favorites.length === 0 && (
+                    {popularExercises.length === 0 && (
                       <Heading size="lg">No workouts recorded yet. Do a workout to get some data!</Heading>
                     )}
 
-                    {favoriteExercises && favoriteExercises.favorites.slice(0, favoritesViewCount).map((favorite) => (
+                    {popularExercises && popularExercises.slice(0, favoritesViewCount).map((favorite) => (
                       <Card className="mb-3" variant="filled" key={favorite.name}>
-                        <Heading size="lg">{favorite.name}</Heading>
+                        <HStack space="md" className="justify-between">
+                          <Heading size="lg">{favorite.name}</Heading>
+                          <Pressable onPress={() => setDetailsModal(favorite.name)}>
+                            <Icon as={InfoIcon} size="xl" />
+                          </Pressable>
+                        </HStack>
                         <Heading size="md">Personal Best: {favorite.weight} {favorite.unit}</Heading>
                         <Text size="md">You have done {favorite.count} sets of this exercise!</Text>
+                        <Box className="flex flex-row flex-wrap gap-2">
+                          {favorite.tags && favorite.tags.map((tag) => (
+                            <TagString key={tag} tag={tag} />
+                          ))}
+                        </Box>
+                        <Modal
+                          isOpen={detailsModal === favorite.name}
+                          onClose={() => setDetailsModal("")}
+                          size="md"
+                          closeOnOverlayClick
+                        >
+                        <ModalBackdrop />
+                        <ModalContent>
+                          <ModalHeader>
+                            <Heading size="lg">Details</Heading>
+                            <ModalCloseButton>
+                              <Icon
+                                as={CloseIcon}
+                                className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
+                              />
+                            </ModalCloseButton>
+                          </ModalHeader>
+                          <ModalBody>
+                            <Text size="md" className="text-typography-700">
+                              {favorite.details}
+                            </Text>
+                          </ModalBody>
+                        </ModalContent>
+                      </Modal>
                       </Card>
                     ))}
 
-                    {favoriteExercises && favoriteExercises.favorites.length > favoritesViewCount && (
+                    {popularExercises && popularExercises.length > favoritesViewCount && (
                       <Button
                         onPress={() => { setFavoritesViewCount(favoritesViewCount + 4); }}
                       >
