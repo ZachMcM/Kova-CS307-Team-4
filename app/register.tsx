@@ -9,11 +9,14 @@ import { VStack } from "@/components/ui/vstack";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";
 import { useSession } from "@/components/SessionContext";
+import { GoogleSignin, GoogleSigninButton, statusCodes } from '@react-native-google-signin/google-signin';
+import { Platform, View } from "react-native";
+import { Divider } from "@/components/ui/divider";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -24,8 +27,26 @@ export default function RegisterScreen() {
 
   const toast = useToast();
   const router = useRouter();
-  const { createAccount, setSessionLoading, sessionLoading } = useSession();
+  const { createAccount, signInWithGoogle, setSessionLoading, sessionLoading } = useSession();
 
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const session = await signInWithGoogle();
+      if (session) {
+        showSuccessToast(toast, "Signed in with Google successfully!");
+        // Navigate to the main part of the app, e.g., feed or profile
+        // Adjust the profile route as needed, potentially fetching the new profile ID
+        router.replace({
+            pathname: "/(tabs)/profiles/[id]",
+            params: { id: session.user.id}
+        });
+    }
+    } catch (error: any) {
+      console.error("Google Sign-In failed in component:", error);
+      showErrorToast(toast, error.message || "Google Sign-In failed.");
+    }
+  };
   return (
     <Container>
       <Button
@@ -126,9 +147,28 @@ export default function RegisterScreen() {
               })
             }}
           >
-            <ButtonText className="text-white">Register For Account</ButtonText>
+            <ButtonText className="text-white">Register For Account LOL</ButtonText>
             {sessionLoading && <ButtonSpinner color="#FFF" />}
           </Button>
+           {/* Divider and Google Button */}
+          <HStack className="items-center my-4 mx-3">
+            <Divider className="flex-1" />
+            <Text size="sm" className="mx-2 text-typography-500">OR</Text>
+            <Divider className="flex-1" />
+          </HStack>
+
+          <View className="items-center mb-5 mx-3">
+              <GoogleSigninButton
+                style={{ width: '100%', height: 52 }} // Adjust size as needed
+                size={GoogleSigninButton.Size.Wide}
+                color={GoogleSigninButton.Color.Dark}
+                onPress={handleGoogleSignIn}
+                disabled={sessionLoading} // Disable button while loading
+              />
+          </View>
+
+
+
         </VStack>
       </Card>
     </Container>

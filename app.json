@@ -22,6 +22,15 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "ios": {
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["com.googleusercontent.apps.21969337941-mtq5gqmn3q0ef3gvvmf3to5sl5n9vcoo"]
+          }
+        ]
+      }
+    },
     "plugins": [
       "expo-router",
       [

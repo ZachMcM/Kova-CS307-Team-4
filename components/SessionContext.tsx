@@ -8,6 +8,10 @@ import {
   useEffect,
   useState,
 } from "react";
+import {
+  GoogleSignin,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 
 type SessionContextValues = {
   session: Session | null;
@@ -39,6 +43,7 @@ type SessionContextValues = {
     password: string,
     newUsername: string
   ) => Promise<boolean>;
+  signInWithGoogle: () => Promise<Session | null>;
 };
 
 const SessionContext = createContext<SessionContextValues | null>(null);
@@ -49,12 +54,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [OTPSignIn, setOTPSignIn] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+
+
+    GoogleSignin.configure({
+      scopes: ["email", "profile"], // Request basic profile info and email
+      iosClientId: process.env.GOOGLE_IOS_CLIENT_ID, // Add if you have one for iOS standalone builds
     });
   }, []);
 
@@ -139,6 +144,149 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     console.log("created account");
     return updatedUser as AuthAccountResponse;
+  };
+
+  const checkAndCreateProfile = async (user: any) => {
+    const { data: profileData, error: profileError } = await supabase
+      .from("profile")
+      .select("id")
+      .eq("userId", user.id)
+      .single();
+
+    if (profileError && profileError.code !== "PGRST116") {
+      // PGRST116 means no rows found, which is expected for new users
+      console.error("Error checking profile:", profileError);
+      throw new Error(`Failed to check profile: ${profileError.message}`);
+    }
+
+    if (!profileData) {
+      // Profile doesn't exist, create it
+      console.log("Profile not found for user, creating one...");
+      const { error: insertError } = await supabase.from("profile").insert({
+        userId: user.id,
+        // Extract username and name from Google data if available
+        username:
+          user.user_metadata?.email?.split("@")[0] || // Default username from email
+          `user_${user.id.substring(0, 8)}`, // Fallback username
+        name: user.user_metadata?.full_name || "Kova User", // Google display name
+        avatar: user.user_metadata?.avatar_url || null, // Google avatar
+        show_tutorial: true, // Or your default value
+        // Initialize privacy settings
+        privacy_settings: {
+          friends_following: "PUBLIC",
+          age: "PRIVATE",
+          weight: "PRIVATE",
+          location: "PRIVATE",
+          goal: "FRIENDS",
+          bio: "FRIENDS",
+          achievement: "FRIENDS",
+          gender: "PRIVATE",
+          posts: "PUBLIC", // Default post privacy
+        },
+      });
+
+      if (insertError) {
+        console.error("Error creating profile:", insertError);
+        throw new Error(`Failed to create profile: ${insertError.message}`);
+      }
+      console.log("Profile created successfully for:", user.id);
+
+      // Re-fetch session data to potentially include profileId in user_metadata
+      const { data: updatedSessionData } = await supabase.auth.getSession();
+      if (updatedSessionData.session) {
+        const { data: newProfileData } = await supabase
+          .from("profile")
+          .select("id")
+          .eq("userId", user.id)
+          .single();
+        if (newProfileData) {
+          // Manually add profileId to user_metadata if Supabase doesn't do it automatically
+          // Note: Supabase might handle this via triggers/functions, check your setup
+          updatedSessionData.session.user.user_metadata = {
+            ...updatedSessionData.session.user.user_metadata,
+            profileId: newProfileData.id,
+          };
+          setSession(updatedSessionData.session); // Update session state
+        }
+      }
+    } else {
+        console.log("Profile already exists for user:", user.id);
+        // Optionally update existing profile data (e.g., avatar) if needed
+        // const { error: updateError } = await supabase
+        //   .from('profile')
+        //   .update({ avatar: user.user_metadata?.avatar_url })
+        //   .eq('userId', user.id);
+        // if (updateError) console.error("Error updating profile avatar:", updateError);
+
+        // Ensure profileId is in session metadata
+        if (!user.user_metadata?.profileId) {
+             const { data: updatedSessionData } = await supabase.auth.getSession();
+             if (updatedSessionData.session) {
+                updatedSessionData.session.user.user_metadata = {
+                    ...updatedSessionData.session.user.user_metadata,
+                    profileId: profileData.id,
+                };
+                setSession(updatedSessionData.session);
+             }
+        }
+    }
+  };
+
+  const signInWithGoogle = async (): Promise<Session | null> => {
+    setSessionLoading(true);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+
+      if (userInfo.data?.idToken) {
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: "google",
+          token: userInfo.data.idToken,
+        });
+
+        if (error) {
+          console.error("Supabase Google Sign-In Error:", error);
+          throw new Error(
+            error.message || "Failed to sign in with Google via Supabase."
+          );
+        }
+
+        if (data.session) {
+          console.log("Supabase session established via Google:", data.session.user.id);
+          await checkAndCreateProfile(data.user); // Check/create profile
+           // Fetch the session again AFTER profile check/creation to ensure metadata is fresh
+          const { data: finalSessionData } = await supabase.auth.getSession();
+          if (finalSessionData.session) {
+            setSession(finalSessionData.session);
+            setOTPSignIn(false);
+            return finalSessionData.session;
+          } else {
+             throw new Error("Failed to retrieve final session after profile check.");
+          }
+        } else {
+          throw new Error("Supabase did not return a session.");
+        }
+      } else {
+        throw new Error("Google Sign-In did not return an ID token.");
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log("Google Sign-In Cancelled");
+        // Optional: Show a toast or message
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log("Google Sign-In already in progress");
+        // Optional: Show a toast
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.error("Google Play Services not available or outdated");
+        throw new Error("Google Play Services are required for Google Sign-In.");
+      } else {
+        console.error("Google Sign-In Error:", error);
+        throw new Error(error.message || "An unknown Google Sign-In error occurred.");
+      }
+      return null; // Return null on handled errors like cancellation
+    } finally {
+      setSessionLoading(false);
+    }
   };
 
   const signInUser = async (
@@ -302,7 +450,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         signOutUser,
         updatePassword,
         updateEmail,
-        updateUsername
+        updateUsername,
+        signInWithGoogle
       }}
     >
       {children}
