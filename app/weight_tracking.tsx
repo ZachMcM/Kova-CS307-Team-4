@@ -11,7 +11,9 @@ import {
   DownloadIcon,
   EditIcon,
   Icon,
+ InfoIcon,
   TrashIcon,
+ TargetIcon,
 } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import { Pressable } from "@/components/ui/pressable";
@@ -22,6 +24,15 @@ import {
   RadioIndicator,
   RadioLabel,
 } from "@/components/ui/radio";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
@@ -35,20 +46,34 @@ import {
   updateWeightEntry,
 } from "@/services/weightServices";
 import {
+  getActiveWeightGoal,
+  createWeightGoal,
+  updateWeightGoal,
+  achieveWeightGoal,
+  deactivateGoal,
+} from "@/services/goalServices";
+import {
   cancelNotification,
   getNotificationSettings,
   requestNotificationPermissions,
   scheduleDailyNotification,
 } from "@/services/notificationServices";
 import { WeightEntry } from "@/types/weight-types";
+import { WeightGoal, WeightGoalInsert, WeightGoalUpdate } from "@/types/goal-types";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import React, { useEffect, useState } from "react";
 import { Alert, Dimensions, ScrollView } from "react-native";
 import { LineChart } from "react-native-chart-kit";
+
+// Helper to format date as YYYY-MM-DD for input[type=date] if needed, or keep using localeString
+const formatDateForDisplay = (dateString: string | Date): string => {
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  return date.toLocaleDateString(); // Adjust format as needed
+};
 
 export default function WeightTrackingScreen() {
   const router = useRouter();
@@ -78,6 +103,12 @@ export default function WeightTrackingScreen() {
     averageWeight: 0,
     highestWeight: 0,
     lowestWeight: 0,
+   // Goal related stats
+   weightToGo: 0,
+   progressPercentage: 0,
+   goalTargetWeight: 0,
+   goalUnit: '',
+   goalType: '',
   });
 
   // Notification settings state
@@ -87,6 +118,12 @@ export default function WeightTrackingScreen() {
   });
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationTime, setNotificationTime] = useState(new Date());
+
+ // Goal state
+ const [showGoalModal, setShowGoalModal] = useState(false);
+ const [isEditingGoal, setIsEditingGoal] = useState(false);
+ const [goalFormData, setGoalFormData] = useState<Partial<WeightGoalUpdate>>({});
+ const [showGoalTargetDatePicker, setShowGoalTargetDatePicker] = useState(false);
 
   // Fetch user ID
   useEffect(() => {
@@ -105,16 +142,32 @@ export default function WeightTrackingScreen() {
   // Fetch weight entries
   const {
     data: weightEntries,
-    isPending,
-    refetch,
+    isPending: isWeightPending,
+    refetch: refetchWeight,
   } = useQuery({
     queryKey: ["weightEntries", userId],
     queryFn: async () => {
       if (!userId) return [];
-      return await getWeightEntries(userId);
+      const entries = await getWeightEntries(userId);
+     // Sort entries by date ascending for calculations
+     return entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     },
     enabled: !!userId,
   });
+
+ // Fetch active weight goal
+ const {
+   data: activeGoal,
+   isPending: isGoalPending,
+   refetch: refetchGoal,
+ } = useQuery({
+   queryKey: ["activeWeightGoal", userId],
+   queryFn: async () => {
+     if (!userId) return null;
+     return await getActiveWeightGoal(userId);
+   },
+   enabled: !!userId,
+ });
 
   // Handle date change
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -123,6 +176,14 @@ export default function WeightTrackingScreen() {
       setDate(selectedDate);
     }
   };
+
+ // Handle Goal Target date change
+ const onGoalTargetDateChange = (event: any, selectedDate?: Date) => {
+   setShowGoalTargetDatePicker(false);
+   if (selectedDate) {
+     setGoalFormData({ ...goalFormData, target_date: selectedDate.toISOString() });
+   }
+ };
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -155,7 +216,7 @@ export default function WeightTrackingScreen() {
 
       if (editingEntry) {
         // Update existing entry
-        updateWeightEntry(editingEntry.id, {
+        await updateWeightEntry(editingEntry.id, {
           weight: weightValue,
           unit,
           date: date.toISOString(),
@@ -163,7 +224,7 @@ export default function WeightTrackingScreen() {
         showSuccessToast(toast, "Weight entry updated");
       } else {
         // Add new entry
-        addWeightEntry({
+        await addWeightEntry({
           user_id: userId,
           weight: weightValue,
           unit,
@@ -174,7 +235,7 @@ export default function WeightTrackingScreen() {
 
       // Reset form and refetch data
       resetForm();
-      refetch();
+     queryClient.invalidateQueries({ queryKey: ["weightEntries", userId] });
     } catch (error) {
       console.error(error);
       showErrorToast(toast, "Failed to save weight entry");
@@ -192,9 +253,9 @@ export default function WeightTrackingScreen() {
   // Handle delete
   const handleDelete = async (id: string) => {
     try {
-      deleteWeightEntry(id);
+     await deleteWeightEntry(id);
       showSuccessToast(toast, "Weight entry deleted");
-      refetch();
+     queryClient.invalidateQueries({ queryKey: ["weightEntries", userId] });
     } catch (error) {
       console.error(error);
       showErrorToast(toast, "Failed to delete weight entry");
@@ -218,482 +279,438 @@ export default function WeightTrackingScreen() {
   };
 
   // Calculate statistics
-  const calculateStats = (entries: WeightEntry[]) => {
-    if (entries.length === 0) return;
+ const calculateStats = (entries: WeightEntry[], goal: WeightGoal | null) => {
+   let totalChange = 0;
+   let averageWeight = 0;
+   let highestWeight = 0;
+   let lowestWeight = Infinity;
+   let weightToGo = 0;
+   let progressPercentage = 0;
 
-    const weights = entries.map((entry) => entry.weight);
-    const totalChange = entries[0].weight - entries[entries.length - 1].weight;
-    const averageWeight = weights.reduce((a, b) => a + b, 0) / weights.length;
-    const highestWeight = Math.max(...weights);
-    const lowestWeight = Math.min(...weights);
+   if (entries.length > 0) {
+       const weights = entries.map((entry) => entry.weight);
+       // Ensure entries are sorted by date ascending before calculating totalChange
+       const sortedEntries = [...entries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+       totalChange = sortedEntries[sortedEntries.length - 1].weight - sortedEntries[0].weight;
+       averageWeight = weights.reduce((a, b) => a  b, 0) / weights.length;
+       highestWeight = Math.max(...weights);
+       lowestWeight = Math.min(...weights);
+
+       if (goal) {
+           const currentWeight = sortedEntries[sortedEntries.length - 1].weight;
+           const initialWeight = goal.initial_weight;
+           const targetWeight = goal.target_weight;
+
+           weightToGo = currentWeight - targetWeight;
+
+           const totalGoalChange = targetWeight - initialWeight;
+           const currentProgress = currentWeight - initialWeight;
+
+           if (totalGoalChange !== 0) {
+               progressPercentage = (currentProgress / totalGoalChange) * 100;
+               // Cap progress at 100% if goal is met or exceeded in the intended direction
+               if ((goal.goal_type === 'loss' && currentWeight <= targetWeight) || (goal.goal_type === 'gain' && currentWeight >= targetWeight)) {
+                   progressPercentage = 100;
+               } else if (progressPercentage < 0) {
+                   // Don't show negative progress if moving away from goal
+                   progressPercentage = 0;
+               }
+           } else {
+               progressPercentage = currentWeight === targetWeight ? 100 : 0; // Handle case where initial and target are the same
+           }
+       }
+   }
 
     setStats({
       totalChange,
       averageWeight,
-      highestWeight,
-      lowestWeight,
+     highestWeight: highestWeight || 0,
+     lowestWeight: lowestWeight === Infinity ? 0 : lowestWeight,
+     weightToGo: goal ? weightToGo : 0,
+     progressPercentage: goal ? Math.max(0, Math.min(100, progressPercentage)) : 0, // Clamp between 0 and 100
+     goalTargetWeight: goal ? goal.target_weight : 0,
+     goalUnit: goal ? goal.unit : '',
+     goalType: goal ? goal.goal_type : '',
     });
   };
 
   // Filter entries by time period
   const filterEntriesByTimePeriod = (entries: WeightEntry[]) => {
     const now = new Date();
+   // Ensure entries are sorted by date descending for filtering recent entries
+   const sortedEntries = [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const filteredEntries = entries.filter((entry) => {
       const entryDate = new Date(entry.date);
       const diffTime = Math.abs(now.getTime() - entryDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+   // Prepare chart data
+   const prepareChartData = (entries: WeightEntry[]) => {
+     const filteredEntries = filterEntriesByTimePeriod(entries);
+    const sortedEntriesForChart = [...filteredEntries].sort(
+       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+     );
+       ),
+       datasets: [
+         {
+          data: sortedEntriesForChart.map((entry) => entry.weight),
+         },
+       ],
+     };
+     }
+   };
+ 
+ // --- Goal Management ---
 
-      switch (timePeriod) {
-        case "week":
-          return diffDays <= 7;
-        case "month":
-          return diffDays <= 30;
-        case "year":
-          return diffDays <= 365;
-        default:
-          return true;
+ const openGoalModal = (edit = false) => {
+   setIsEditingGoal(edit);
+   if (edit && activeGoal) {
+     setGoalFormData({
+       target_weight: activeGoal.target_weight,
+       target_date: activeGoal.target_date,
+       goal_type: activeGoal.goal_type,
+       unit: activeGoal.unit,
+     });
+   } else {
+     // Pre-fill unit based on last entry or default
+     const lastUnit = weightEntries && weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].unit : 'lbs';
+     setGoalFormData({ unit: lastUnit, goal_type: 'loss' }); // Default to loss
+   }
+   setShowGoalModal(true);
+ };
+
+ const closeGoalModal = () => {
+   setShowGoalModal(false);
+   setGoalFormData({});
+   setIsEditingGoal(false);
+ };
+
+ const handleGoalSubmit = async () => {
+   if (!userId || !weightEntries || weightEntries.length === 0) {
+     showErrorToast(toast, "Please add at least one weight entry before setting a goal.");
+     return;
+   }
+   if (!goalFormData.target_weight || !goalFormData.target_date || !goalFormData.goal_type || !goalFormData.unit) {
+     showErrorToast(toast, "Please fill all goal fields.");
+     return;
+   }
+
+   goalMutation.mutate(goalFormData);
+ };
+
+ // --- Effects ---
+
+   // Update statistics when entries change
+   useEffect(() => {
+     if (weightEntries) {
+      calculateStats(weightEntries, activeGoal);
+     }
+   }, [weightEntries]);
+     }
+   };
+ 
+ // --- Goal Achievement Check ---
+ useEffect(() => {
+    if (activeGoal && weightEntries && weightEntries.length > 0) {
+      const latestEntry = weightEntries[weightEntries.length - 1]; // Assuming sorted ascending
+
+      let goalMet = false;
+      if (activeGoal.goal_type === 'loss' && latestEntry.weight <= activeGoal.target_weight) {
+        goalMet = true;
+      } else if (activeGoal.goal_type === 'gain' && latestEntry.weight >= activeGoal.target_weight) {
+        goalMet = true;
       }
-    });
 
-    return filteredEntries;
-  };
-
-  // Prepare chart data
-  const prepareChartData = (entries: WeightEntry[]) => {
-    const filteredEntries = filterEntriesByTimePeriod(entries);
-    const sortedEntries = [...filteredEntries].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-
-    return {
-      labels: sortedEntries.map((entry) =>
-        new Date(entry.date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
-      ),
-      datasets: [
-        {
-          data: sortedEntries.map((entry) => entry.weight),
-        },
-      ],
-    };
-  };
-
-  // Export data to CSV
-  const exportToCSV = async () => {
-    try {
-      if (!weightEntries) return;
-
-      const csvContent = [
-        ["Date", "Weight", "Unit"],
-        ...weightEntries.map((entry) => [
-          new Date(entry.date).toLocaleDateString(),
-          entry.weight,
-          entry.unit,
-        ]),
-      ]
-        .map((row) => row.join(","))
-        .join("\n");
-
-      const fileUri = `${FileSystem.documentDirectory}weight_history.csv`;
-      await FileSystem.writeAsStringAsync(fileUri, csvContent);
-
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri);
+      if (goalMet) {
+        achieveGoalMutation.mutate(activeGoal.id);
       }
-    } catch (error) {
-      console.error(error);
-      showErrorToast(toast, "Failed to export data");
     }
-  };
+  }, [weightEntries, activeGoal]); // Re-run when entries or goal changes
 
-  // Update statistics when entries change
-  useEffect(() => {
-    if (weightEntries) {
-      calculateStats(weightEntries);
-    }
-  }, [weightEntries]);
+ // --- Mutations ---
 
-  // Load notification settings
-  useEffect(() => {
-    const loadNotificationSettings = async () => {
-      const settings = await getNotificationSettings();
-      setNotificationSettings(settings);
-      if (settings.time) {
-        const [hours, minutes] = settings.time.split(':').map(Number);
-        const date = new Date();
-        date.setHours(hours, minutes);
-        setNotificationTime(date);
-      }
-    };
-    loadNotificationSettings();
-  }, []);
+ const goalMutation = useMutation({
+    mutationFn: async (formData: Partial<WeightGoalUpdate>) => {
+        if (!userId || !weightEntries || weightEntries.length === 0) throw new Error("User or weight data missing");
 
-  // Handle notification time change
-  const onTimeChange = async (event: any, selectedTime?: Date) => {
-    setShowTimePicker(false);
-    if (selectedTime) {
-      setNotificationTime(selectedTime);
-      const timeString = `${selectedTime.getHours().toString().padStart(2, '0')}:${selectedTime.getMinutes().toString().padStart(2, '0')}`;
-      
-      try {
-        const hasPermission = await requestNotificationPermissions();
-        if (!hasPermission) {
-          showErrorToast(toast, "Please enable notifications in your device settings");
-          return;
+        const latestWeightEntry = weightEntries[weightEntries.length - 1]; // Assuming sorted ascending
+
+        if (isEditingGoal && activeGoal) {
+            // Update existing goal
+            return await updateWeightGoal(activeGoal.id, formData as WeightGoalUpdate);
+        } else {
+            // Create new goal
+            const newGoalData: WeightGoalInsert = {
+                user_id: userId,
+                target_weight: formData.target_weight!,
+                initial_weight: latestWeightEntry.weight, // Use the latest weight as initial
+                unit: formData.unit!,
+                goal_type: formData.goal_type!,
+                target_date: formData.target_date!,
+            };
+            return await createWeightGoal(newGoalData);
         }
-
-        const notificationId = await scheduleDailyNotification(timeString);
-        setNotificationSettings({ enabled: true, time: timeString });
-        showSuccessToast(toast, "Daily reminder set successfully");
-      } catch (error) {
-        console.error(error);
-        showErrorToast(toast, "Failed to set reminder");
-      }
+    },
+    onSuccess: () => {
+        showSuccessToast(toast, `Weight goal ${isEditingGoal ? 'updated' : 'set'} successfully!`);
+        closeGoalModal();
+        queryClient.invalidateQueries({ queryKey: ["activeWeightGoal", userId] });
+    },
+    onError: (error) => {
+        showErrorToast(toast, `Failed to ${isEditingGoal ? 'update' : 'set'} weight goal: ${error.message}`);
     }
-  };
+ });
 
-  // Handle notification toggle
-  const toggleNotification = async () => {
-    if (notificationSettings.enabled) {
-      try {
-        await cancelNotification(notificationSettings.time);
-        setNotificationSettings({ enabled: false, time: '' });
-        showSuccessToast(toast, "Reminder cancelled");
-      } catch (error) {
-        console.error(error);
-        showErrorToast(toast, "Failed to cancel reminder");
-      }
-    } else {
-      setShowTimePicker(true);
-    }
-  };
+ const achieveGoalMutation = useMutation({
+     mutationFn: achieveWeightGoal,
+     onSuccess: (achievedGoal) => {
+         showSuccessToast(toast, "Congratulations! You reached your weight goal!");
+         queryClient.invalidateQueries({ queryKey: ["activeWeightGoal", userId] });
+         // Prepare data and navigate to post screen
+         const latestEntry = weightEntries?.[weightEntries.length - 1];
+         if (latestEntry) {
+             const postData = {
+                 goalAchieved: true,
+                 title: "Reached my weight goal!",
+                 description: `Started at ${achievedGoal.initial_weight} ${achievedGoal.unit}, aimed for ${achievedGoal.target_weight} ${achievedGoal.unit} by ${formatDateForDisplay(achievedGoal.target_date)}, and reached ${latestEntry.weight} ${latestEntry.unit} today!`,
+                 weighIn: latestEntry.weight // Optionally prefill weigh-in
+             };
+             router.push({
+                 pathname: "/(tabs)/post",
+                 params: { goalAchievedData: JSON.stringify(postData) },
+             });
+         }
+     },
+     onError: (error) => {
+         showErrorToast(toast, `Failed to mark goal as achieved: ${error.message}`);
+     }
+ });
 
-  return (
-    <StaticContainer className="flex">
-      <ScrollView className="flex px-6 py-16" keyboardShouldPersistTaps="handled">
-        <VStack space="md">
-          <HStack space="md" className="items-center">
-            <Pressable onPress={() => router.back()}>
-              <Icon as={ChevronLeftIcon} size="xl" />
-            </Pressable>
-            <Heading size="xl">Weight Tracking</Heading>
-          </HStack>
+ const deactivateGoalMutation = useMutation({
+     mutationFn: deactivateGoal,
+     onSuccess: () => {
+         showSuccessToast(toast, "Weight goal deactivated.");
+         queryClient.invalidateQueries({ queryKey: ["activeWeightGoal", userId] });
+     },
+     onError: (error) => {
+         showErrorToast(toast, `Failed to deactivate goal: ${error.message}`);
+     }
+ });
 
+ // Confirm goal deactivation
+ const confirmDeactivateGoal = (goalId: string) => {
+     Alert.alert(
+         "Deactivate Goal",
+         "Are you sure you want to deactivate this goal? You can set a new one later.",
+         [
+             { text: "Cancel", style: "cancel" },
+             {
+                 text: "Deactivate",
+                 onPress: () => deactivateGoalMutation.mutate(goalId),
+                 style: "destructive",
+             },
+         ]
+     );
+ };
+
+   return (
+     <StaticContainer className="flex">
+       <ScrollView className="flex px-6 py-16" keyboardShouldPersistTaps="handled">
+             </VStack>
+           </Box>
+ 
+          {/* --- Goal Section --- */}
           <Box className="border border-gray-300 rounded-lg p-4 mt-2">
             <VStack space="md">
-              <Heading size="md">
-                {editingEntry ? "Edit Weight Entry" : "Add Weight Entry"}
-              </Heading>
-
-              <HStack space="md" className="items-center">
-                <Text size="md" className="w-20">
-                  Weight:
-                </Text>
-                <Input className="flex-1">
-                  <InputField
-                    value={weight}
-                    onChangeText={setWeight}
-                    keyboardType="numeric"
-                    placeholder="Enter weight"
-                  />
-                </Input>
-              </HStack>
-
-              <HStack space="md" className="items-center">
-                <Text size="md" className="w-20">
-                  Unit:
-                </Text>
-                <RadioGroup
-                  value={unit}
-                  onChange={setUnit as (value: string) => void}
-                >
-                  <HStack space="xl">
-                    <Radio value="lbs" isInvalid={false} isDisabled={false}>
-                      <RadioIndicator>
-                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                      </RadioIndicator>
-                      <RadioLabel>lbs</RadioLabel>
-                    </Radio>
-                    <Radio value="kg" isInvalid={false} isDisabled={false}>
-                      <RadioIndicator>
-                        <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                      </RadioIndicator>
-                      <RadioLabel>kg</RadioLabel>
-                    </Radio>
-                  </HStack>
-                </RadioGroup>
-              </HStack>
-
-              <HStack space="md" className="items-center">
-                <Text size="md" className="w-20">
-                  Date:
-                </Text>
-                <Pressable
-                  onPress={() => setShowDatePicker(true)}
-                  className="flex-1 h-10 border border-gray-300 rounded-md px-3 justify-center"
-                >
-                  <Text>{date.toLocaleDateString()}</Text>
-                </Pressable>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="default"
-                    onChange={onDateChange}
-                    maximumDate={new Date()}
-                  />
-                )}
-              </HStack>
-
-              <HStack space="md">
-                {editingEntry ? (
-                  <>
-                    <Button
-                      size="md"
-                      variant="outline"
-                      action="secondary"
-                      className="flex-1"
-                      onPress={resetForm}
-                    >
-                      <ButtonText>Cancel</ButtonText>
-                    </Button>
-                    <Button
-                      size="md"
-                      variant="solid"
-                      action="primary"
-                      className="flex-1 bg-[#6FA8DC]"
-                      onPress={handleSubmit}
-                    >
-                      <ButtonText className="text-white">Update</ButtonText>
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    size="md"
-                    variant="solid"
-                    action="primary"
-                    className="flex-1 bg-[#6FA8DC]"
-                    onPress={handleSubmit}
-                  >
-                    <ButtonText className="text-white">Add Entry</ButtonText>
-                    <ButtonIcon as={AddIcon} className="text-white" />
-                  </Button>
-                )}
-              </HStack>
-            </VStack>
-          </Box>
-
-          {/* Add notification settings section */}
-          <Box className="border border-gray-300 rounded-lg p-4 mt-2">
-            <VStack space="md">
-              <Heading size="md">Daily Reminder</Heading>
-              <HStack space="md" className="items-center">
-                <Text size="md">Set a daily reminder to track your weight</Text>
+              <HStack space="md" className="items-center justify-between">
+                <Heading size="md">Weight Goal</Heading>
                 <Button
                   size="sm"
-                  variant={notificationSettings.enabled ? "outline" : "solid"}
-                  action={notificationSettings.enabled ? "secondary" : "primary"}
-                  className={notificationSettings.enabled ? "border-[#6FA8DC]" : "bg-[#6FA8DC]"}
-                  onPress={toggleNotification}
+                  variant="outline"
+                  action="primary"
+                  className="border-[#6FA8DC]"
+                  onPress={() => openGoalModal(!!activeGoal)}
+                  isDisabled={isGoalPending}
                 >
-                  <ButtonIcon as={BellIcon} className={notificationSettings.enabled ? "text-[#6FA8DC]" : "text-white"} />
-                  <ButtonText className={notificationSettings.enabled ? "text-[#6FA8DC]" : "text-white"}>
-                    {notificationSettings.enabled ? "Disable" : "Enable"}
+                  <ButtonIcon as={activeGoal ? EditIcon : TargetIcon} className="text-[#6FA8DC]" />
+                  <ButtonText className="text-[#6FA8DC]">
+                    {isGoalPending ? "Loading..." : activeGoal ? "Edit Goal" : "Set Goal"}
                   </ButtonText>
                 </Button>
               </HStack>
-              {notificationSettings.enabled && (
+              {activeGoal && (
                 <Text size="sm" className="text-gray-500">
-                  Reminder set for {notificationSettings.time}
+                  Target: {activeGoal.target_weight} {activeGoal.unit} by {formatDateForDisplay(activeGoal.target_date)}
                 </Text>
               )}
-              {showTimePicker && (
-                <DateTimePicker
-                  value={notificationTime}
-                  mode="time"
-                  display="default"
-                  onChange={onTimeChange}
-                />
-              )}
+              {!activeGoal && !isGoalPending && <Text size="sm" className="text-gray-500">No active goal set.</Text>}
             </VStack>
           </Box>
 
-          {weightEntries && weightEntries.length > 0 && (
-            <Box className="mt-4">
-              <HStack className="justify-between items-center mb-4">
-                <Heading size="md">Weight Progress</Heading>
-                <HStack space="sm">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    action="secondary"
-                    className="border-[#6FA8DC]"
-                    onPress={() => refetch()}
-                  >
-                    <ButtonText className="text-[#6FA8DC]">Refresh</ButtonText>
-                    <ButtonIcon as={ArrowRightIcon} className="text-[#6FA8DC]" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    action="secondary"
-                    className="border-[#6FA8DC]"
-                    onPress={exportToCSV}
-                  >
-                    <ButtonText className="text-[#6FA8DC]">Export</ButtonText>
-                    <ButtonIcon as={DownloadIcon} className="text-[#6FA8DC]" />
-                  </Button>
-                </HStack>
-              </HStack>
+           {/* Add notification settings section */}
+           <Box className="border border-gray-300 rounded-lg p-4 mt-2">
+             <VStack space="md">
+             </VStack>
+           </Box>
+ 
+          {weightEntries && weightEntries.length > 0 ? (
+             <Box className="mt-4">
+               <HStack className="justify-between items-center mb-4">
+                 <Heading size="md">Weight Progress</Heading>
+                     variant="outline"
+                     action="secondary"
+                     className="border-[#6FA8DC]"
+                    onPress={() => refetchWeight()}
+                   >
+                     <ButtonText className="text-[#6FA8DC]">Refresh</ButtonText>
+                     <ButtonIcon as={ArrowRightIcon} className="text-[#6FA8DC]" />
+                       >
+                         {stats.totalChange >= 0 ? "" : ""}
+                         {stats.totalChange.toFixed(1)} {unit}
+                      </Heading> */}
+                     </Box>
+                     <Box className="w-[48%] bg-gray-100 p-3 rounded-lg">
+                       <Text size="sm" className="text-gray-600">
+                         Lowest Weight
+                       </Text>
+                       <Heading size="md">
+                        {stats.lowestWeight.toFixed(1)} {unit}
+                      </Heading>
+                    </Box>
+                    {/* Goal Stats */}
+                    {activeGoal && (
+                      <>
+                        <Box className="w-[48%] bg-gray-100 p-3 rounded-lg mt-2">
+                          <Text size="sm" className="text-gray-600">
+                            Goal Progress
+                          </Text>
+                          <Heading size="md">
+                            {stats.progressPercentage.toFixed(0)}%
+                          </Heading>
+                        </Box>
+                        <Box className="w-[48%] bg-gray-100 p-3 rounded-lg mt-2">
+                          <Text size="sm" className="text-gray-600">
+                            Weight to {stats.goalType === 'loss' ? 'Lose' : 'Gain'}
+                          </Text>
+                          <Heading size="md" className={stats.weightToGo <= 0 ? "text-green-500" : "text-red-500"}>
+                            {Math.abs(stats.weightToGo).toFixed(1)} {stats.goalUnit}
+                          </Heading>
+                        </Box>
+                      </>
+                    )}
+                       </Heading>
+                     </Box>
+                   </HStack>
+               Weight History
+             </Heading>
+ 
+            {isWeightPending ? (
+               <Spinner />
+             ) : weightEntries && weightEntries.length > 0 ? (
+               <VStack space="sm">
+             ) : (
+               <Text className="text-center py-4">No weight entries yet</Text>
+             )}
+          </Box>) : (
+             <Text className="text-center py-4 mt-4">Add your first weight entry to see progress!</Text>
+          )}
+         </VStack>
 
-              <Box className="bg-white p-4 rounded-lg border border-gray-300">
-                <HStack className="justify-between mb-4">
+        {/* Goal Setting/Editing Modal */}
+        <Modal isOpen={showGoalModal} onClose={closeGoalModal} size="lg">
+          <ModalBackdrop />
+          <ModalContent>
+            <ModalHeader>
+              <Heading size="lg">{isEditingGoal ? "Edit" : "Set"} Weight Goal</Heading>
+              <ModalCloseButton>
+                <Icon as={InfoIcon} /> {/* Using InfoIcon as placeholder */}
+              </ModalCloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <VStack space="md">
+                {/* Goal Type */}
+                <HStack space="md" className="items-center">
+                  <Text size="md" className="w-24">Goal Type:</Text>
                   <RadioGroup
-                    value={timePeriod}
-                    onChange={setTimePeriod as (value: string) => void}
+                    value={goalFormData.goal_type || 'loss'}
+                    onChange={(value) => setGoalFormData({ ...goalFormData, goal_type: value as 'loss' | 'gain' })}
                   >
                     <HStack space="xl">
-                      <Radio value="week" isInvalid={false} isDisabled={false}>
-                        <RadioIndicator>
-                          <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                      <Radio value="loss">
+                        <RadioIndicator mr="$2">
+                          <RadioIcon as={CircleIcon} />
                         </RadioIndicator>
-                        <RadioLabel>Week</RadioLabel>
+                        <RadioLabel>Loss</RadioLabel>
                       </Radio>
-                      <Radio value="month" isInvalid={false} isDisabled={false}>
-                        <RadioIndicator>
-                          <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                      <Radio value="gain">
+                        <RadioIndicator mr="$2">
+                          <RadioIcon as={CircleIcon} />
                         </RadioIndicator>
-                        <RadioLabel>Month</RadioLabel>
-                      </Radio>
-                      <Radio value="year" isInvalid={false} isDisabled={false}>
-                        <RadioIndicator>
-                          <RadioIcon as={ChevronLeftIcon}></RadioIcon>
-                        </RadioIndicator>
-                        <RadioLabel>Year</RadioLabel>
+                        <RadioLabel>Gain</RadioLabel>
                       </Radio>
                     </HStack>
                   </RadioGroup>
                 </HStack>
 
-                <LineChart
-                  data={prepareChartData(weightEntries)}
-                  width={Dimensions.get("window").width - 65}
-                  height={220}
-                  chartConfig={{
-                    backgroundColor: "#ffffff",
-                    backgroundGradientFrom: "#ffffff",
-                    backgroundGradientTo: "#ffffff",
-                    decimalPlaces: 1,
-                    color: (opacity = 1) => `rgba(111, 168, 220, ${opacity})`,
-                    style: {
-                      borderRadius: 16,
-                    },
-                  }}
-                  bezier
-                  style={{
-                    marginVertical: 8,
-                    borderRadius: 16,
-                  }}
-                />
-
-                <VStack space="md" className="mt-4">
-                  <Heading size="sm">Statistics</Heading>
-                  <HStack className="flex-wrap justify-between">
-                    <Box className="w-[48%] bg-gray-100 p-3 rounded-lg">
-                      <Text size="sm" className="text-gray-600">
-                        Total Change
-                      </Text>
-                      <Heading
-                        size="md"
-                        className={
-                          stats.totalChange >= 0
-                            ? "text-red-500"
-                            : "text-green-500"
-                        }
-                      >
-                        {stats.totalChange >= 0 ? "+" : ""}
-                        {stats.totalChange.toFixed(1)} {unit}
-                      </Heading>
-                    </Box>
-                    <Box className="w-[48%] bg-gray-100 p-3 rounded-lg">
-                      <Text size="sm" className="text-gray-600">
-                        Average Weight
-                      </Text>
-                      <Heading size="md">
-                        {stats.averageWeight.toFixed(1)} {unit}
-                      </Heading>
-                    </Box>
-                    <Box className="w-[48%] bg-gray-100 p-3 rounded-lg mt-2">
-                      <Text size="sm" className="text-gray-600">
-                        Highest Weight
-                      </Text>
-                      <Heading size="md">
-                        {stats.highestWeight.toFixed(1)} {unit}
-                      </Heading>
-                    </Box>
-                    <Box className="w-[48%] bg-gray-100 p-3 rounded-lg mt-2">
-                      <Text size="sm" className="text-gray-600">
-                        Lowest Weight
-                      </Text>
-                      <Heading size="md">
-                        {stats.lowestWeight.toFixed(1)} {unit}
-                      </Heading>
-                    </Box>
-                  </HStack>
-                </VStack>
-              </Box>
-            </Box>
-          )}
-
-          <Box className="mt-4">
-            <Heading size="md" className="mb-2">
-              Weight History
-            </Heading>
-
-            {isPending ? (
-              <Spinner />
-            ) : weightEntries && weightEntries.length > 0 ? (
-              <VStack space="sm">
-                {weightEntries.map((item) => (
-                  <Box
-                    key={item.id}
-                    className="border border-gray-300 rounded-md p-3 mb-2"
+                {/* Target Weight */}
+                <HStack space="md" className="items-center">
+                  <Text size="md" className="w-24">Target:</Text>
+                  <Input className="flex-1">
+                    <InputField
+                      value={goalFormData.target_weight?.toString() || ''}
+                      onChangeText={(text) => setGoalFormData({ ...goalFormData, target_weight: Number(text) || undefined })}
+                      keyboardType="numeric"
+                      placeholder="Enter target weight"
+                    />
+                  </Input>
+                  {/* Unit Selection (Optional - could default to user preference) */}
+                  <RadioGroup
+                      value={goalFormData.unit || 'lbs'}
+                      onChange={(value) => setGoalFormData({ ...goalFormData, unit: value as 'kg' | 'lbs' })}
                   >
-                    <HStack className="justify-between items-center">
-                      <VStack>
-                        <HStack space="sm">
-                          <Heading size="sm">
-                            {item.weight} {item.unit}
-                          </Heading>
-                          <Text size="sm" className="text-gray-500">
-                            {formatDate(item.date)}
-                          </Text>
-                        </HStack>
-                      </VStack>
-                      <HStack space="sm">
-                        <Pressable onPress={() => handleEdit(item)}>
-                          <Icon as={EditIcon} size="md" />
-                        </Pressable>
-                        <Pressable onPress={() => confirmDelete(item.id)}>
-                          <Icon
-                            as={TrashIcon}
-                            size="md"
-                            className="text-red-500"
-                          />
-                        </Pressable>
+                      <HStack space="md">
+                          <Radio value="lbs"><RadioLabel>lbs</RadioLabel></Radio>
+                          <Radio value="kg"><RadioLabel>kg</RadioLabel></Radio>
                       </HStack>
-                    </HStack>
-                  </Box>
-                ))}
+                  </RadioGroup>
+                </HStack>
+
+                {/* Target Date */}
+                <HStack space="md" className="items-center">
+                  <Text size="md" className="w-24">Target Date:</Text>
+                  <Pressable
+                    onPress={() => setShowGoalTargetDatePicker(true)}
+                    className="flex-1 h-10 border border-gray-300 rounded-md px-3 justify-center"
+                  >
+                    <Text>{goalFormData.target_date ? formatDateForDisplay(goalFormData.target_date) : 'Select Date'}</Text>
+                  </Pressable>
+                  {showGoalTargetDatePicker && (
+                    <DateTimePicker
+                      value={goalFormData.target_date ? new Date(goalFormData.target_date) : new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={onGoalTargetDateChange}
+                      minimumDate={new Date()} // Can't set goal in the past
+                    />
+                  )}
+                </HStack>
               </VStack>
-            ) : (
-              <Text className="text-center py-4">No weight entries yet</Text>
-            )}
-          </Box>
-        </VStack>
-      </ScrollView>
-    </StaticContainer>
-  );
-}
+            </ModalBody>
+            <ModalFooter>
+              {isEditingGoal && activeGoal && (
+                  <Button variant="outline" action="negative" mr="$3" onPress={() => confirmDeactivateGoal(activeGoal.id)} isDisabled={deactivateGoalMutation.isPending}>
+                      <ButtonText>Deactivate Goal</ButtonText>
+                  </Button>
+              )}
+              <Button variant="outline" action="secondary" mr="$3" onPress={closeGoalModal}>
+                <ButtonText>Cancel</ButtonText>
+              </Button>
+              <Button onPress={handleGoalSubmit} isDisabled={goalMutation.isPending}>
+                <ButtonText>{isEditingGoal ? "Update" : "Set"} Goal</ButtonText>
+                {goalMutation.isPending && <Spinner ml="$2" color="$white"/>}
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+       </ScrollView>
+     </StaticContainer>
+   );
