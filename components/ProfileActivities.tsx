@@ -40,6 +40,7 @@ type ProfileActivitiesProps = {
     posts: Post[];
     isLoading: boolean;
     updatePostFunc: (postId: string, title: string, description: string) => Promise<any[]>;
+    userId: string;
 }
 
 export type PopularExercise = {
@@ -55,6 +56,7 @@ export const ProfileActivities = ({
     posts,
     isLoading,
     updatePostFunc,
+    userId
 }: ProfileActivitiesProps) => {
 
     const { session } = useSession();
@@ -789,7 +791,7 @@ export const ProfileActivities = ({
 
                     {visiblePosts && visiblePosts.map((post) => (
                         <WorkoutPost
-                            id={post.profile?.userId || ""}
+                            id={userId || ""}
                             key={post.id}
                             postId={post.id}
                             username={post.profile?.username || "Unknown user"}
@@ -812,7 +814,7 @@ export const ProfileActivities = ({
                             }
                             workoutDuration={post.workoutData?.duration || undefined}
                             workoutCalories={post.workoutData?.calories || undefined}
-                            userId={session?.user.id!}
+                            userId={userId}
                             comments={post.comments}
                             imageUrls={post.images || undefined}
                             weighIn={post.weighIn}
