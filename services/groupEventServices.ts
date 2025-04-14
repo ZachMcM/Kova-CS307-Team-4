@@ -94,7 +94,12 @@ export const getUserEvents = async (
 // function to add competitionWorkout to competition
 
 export const addEventWorkout = async (workout: Workout, profileId: string) => {
-  const events = await getUserEvents(profileId);
+  let events = await getUserEvents(profileId);
+  events = events.filter(
+    (event) =>
+      new Date(event.start_date!).getTime() <= Date.now() &&
+      new Date(event.end_date!).getTime() >= Date.now()
+  );
 
   for (const event of events) {
     const { error: insertErr } = await supabase.from("eventWorkout").insert({
@@ -130,7 +135,6 @@ export const getProfileEventWorkouts = async (
 export const getEventWorkouts = async (
   eventId: string
 ): Promise<EventWorkoutWithProfile[]> => {
-  const event = await getEvent(eventId);
   const { data, error } = await supabase
     .from("eventWorkout")
     .select(
@@ -138,9 +142,7 @@ export const getEventWorkouts = async (
       *,
       profile:profileId(id, name, username, avatar)`
     )
-    .eq("groupEventId", eventId)
-    .gte("created_at", event.start_date)
-    .lte("created_at", event.end_date);
+    .eq("groupEventId", eventId);
   if (error) {
     throw new Error(error.message);
   }
@@ -190,7 +192,13 @@ export const getWorkoutContributions = async (
   endTime: number,
   profileId: string
 ): Promise<WorkoutContribution[]> => {
-  const events = await getUserEvents(profileId);
+  let events = await getUserEvents(profileId);
+  events = events.filter(
+    (event) =>
+      new Date(event.start_date!).getTime() <= Date.now() &&
+      new Date(event.end_date!).getTime() >= Date.now()
+  );
+
   const contributions: WorkoutContribution[] = [];
 
   for (const event of events) {
