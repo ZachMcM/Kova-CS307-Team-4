@@ -69,6 +69,7 @@ import Container from "@/components/Container";
 import { getAllGroups, getUserGroups } from "@/services/groupServices";
 import GroupCard from "@/components/GroupCard";
 import FavoriteExercises from "@/components/FavoriteExercises";
+import PersonalGoals from "@/components/PersonalGoals";
 
 export default function ProfileScreen() {
   // General states
@@ -584,8 +585,6 @@ export default function ProfileScreen() {
         .order("createdAt", { ascending: false });
 
       setPosts(postsData ? postsData : []);
-      console.log("PROFILE ID " + profile?.id);
-      console.log("PROFILE UID " + id);
 
       if (postsError) {
         throw postsError;
@@ -1206,6 +1205,7 @@ export default function ProfileScreen() {
         {profile && (
           <>
             <FavoriteExercises />
+            <PersonalGoals goals = {profile.goals}/>
             <ProfileActivities
               posts={posts as Post[]}
               isLoading={postsIsLoading}

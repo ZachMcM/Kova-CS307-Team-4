@@ -84,7 +84,8 @@ export const getProfile = async (id: string): Promise<Profile> => {
     goal: profile.goal,
     bio: profile.bio,
     achievement: profile.achievement,
-    privacy_settings: profile.privacy_settings
+    privacy_settings: profile.privacy_settings,
+    goals: profile.goals,
   } as PublicProfile;
 }
 
