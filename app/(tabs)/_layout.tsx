@@ -176,6 +176,12 @@ export default function TabLayout() {
           href: null
         }}
       />
+      <Tabs.Screen
+        name="tutorial-profile-1"
+        options={{
+          href: null
+        }}
+      />
     </Tabs>
   ) : (
     <Redirect href="/live-workout" />

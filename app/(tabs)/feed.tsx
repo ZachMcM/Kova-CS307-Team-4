@@ -12,6 +12,17 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { getFollowing, getFriends } from "@/services/profileServices";
+import { HStack } from "@/components/ui/hstack";
+import {
+  Icon,
+  MenuIcon,
+  TrashIcon,
+  CheckCircleIcon,
+  CircleIcon,
+  AlertCircleIcon,
+  EditIcon,
+  HelpCircleIcon
+} from "@/components/ui/icon";
 
 export type Post = {
   id: string;
@@ -281,9 +292,21 @@ export default function FeedScreen() {
     >
       <Container>
         <View style={styles.header}>
+          <HStack className="justify-between">
           <Text style={styles.headerTitle} size="xl" bold>
             Workout Feed
           </Text>
+            <Button
+              onPress={() => router.replace("/tutorial-profile-1")}
+              className="w-0 h-0"
+            >
+              <Icon
+                as={HelpCircleIcon}
+                size="xl"
+                className="mt-8 ml-8 w-8 h-8"
+              ></Icon>
+            </Button>
+          </HStack>
         </View>
 
         {isLoading && !refreshing && (
