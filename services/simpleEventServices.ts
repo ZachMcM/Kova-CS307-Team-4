@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { CollabView, CompeteView, GroupEvent } from "@/types/collab-types";
 import { GroupWorkout } from "@/types/event-types";
+import { EventWithGroup } from "@/types/extended-types";
 
 export async function getEvent(eventId: string): Promise<GroupEvent> {
   const { data, error } = await supabase
@@ -29,6 +30,55 @@ export async function getAllEvents(groupId: string): Promise<GroupEvent[]> {
     return getGroupEvent(row);
   });
   return events as GroupEvent[];
+}
+
+export async function getCurrentEvents(groupId: string): Promise<EventWithGroup[]> {
+  const time = Date.now()
+  const {data, error} = await supabase
+    .from("groupEvent")
+    .select(
+      "*,group:groupId(id,title)")
+    .eq("groupId", groupId)
+    .lte("start_date", time)
+    .gte("end_date", time)
+  if (error) {
+    throw new Error(error.message)
+  }
+  const events = [] as EventWithGroup[]
+  data.forEach((event) => events.push(event));
+  return events
+}
+
+export async function getFutureEvents(groupId: string): Promise<EventWithGroup[]> {
+  const time = Date.now()
+  const {data, error} = await supabase
+    .from("groupEvent")
+    .select(
+      "*,group:groupId(id,title)")
+    .eq("groupId", groupId)
+    .gte("start_date", time)
+  if (error) {
+    throw new Error(error.message)
+  }
+  const events = [] as EventWithGroup[]
+  data.forEach((event) => events.push(event));
+  return events
+}
+
+export async function getPastEvents(groupId: string): Promise<EventWithGroup[]> {
+  const time = Date.now()
+  const {data, error} = await supabase
+    .from("groupEvent")
+    .select(
+      "*,group:groupId(id,title)")
+    .eq("groupId", groupId)
+    .lte("end_date", time)
+  if (error) {
+    throw new Error(error.message)
+  }
+  const events = [] as EventWithGroup[]
+  data.forEach((event) => events.push(event));
+  return events
 }
 
 export async function getGroupWorkouts(

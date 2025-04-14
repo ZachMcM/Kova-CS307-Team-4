@@ -12,6 +12,7 @@ import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { getGroup, getMembers, getRole, isMemberOfGroup, joinGroup, leaveGroup } from "@/services/groupServices";
+import { getCurrentEvents } from "@/services/simpleEventServices";
 import { showSuccessToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,6 +43,13 @@ export default function Group() {
       else {
         return "none"
       }
+    }
+  })
+
+  const { data: currentEvents, isPending: gettingEvents} = useQuery({
+    queryKey: ["currentEvents", {groupId}],
+    queryFn: async () => {
+      return await getCurrentEvents(groupId)
     }
   })
 
@@ -99,24 +107,26 @@ export default function Group() {
           >
             <ButtonText>View Members</ButtonText>
           </Button>
-          <VStack space="md">
-            <Heading size="lg">Competitions</Heading>
-            <GroupEvents
-              events={
-                group?.events.filter((event) => event.type == "competition")!
-              }
-              type="competitions"
-            />
-          </VStack>
-          <VStack space="md">
-            <Heading size="lg">Collaborations</Heading>
-            <GroupEvents
-              events={
-                group?.events.filter((event) => event.type == "collaboration")!
-              } 
-              type="collaborations"
-            />
-          </VStack>
+          { (!gettingEvents) ?
+            <> <VStack space="md">
+              <Heading size="lg">Competitions</Heading>
+              <GroupEvents
+                events={
+                  currentEvents?.filter((event) => event.type == "competition")!
+                }
+                type="competitions"
+              />
+            </VStack>
+            <VStack space="md">
+              <Heading size="lg">Collaborations</Heading>
+              <GroupEvents
+                events={
+                  currentEvents?.filter((event) => event.type == "collaboration")!
+                } 
+                type="collaborations"
+              />
+            </VStack> </>: <Spinner/>
+          }
           {
             (!gettingRole)?
               (role === "owner") ? 
