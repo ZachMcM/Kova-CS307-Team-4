@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { AuthAccountResponse } from "@/types/extended-types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
 import {
   createContext,
@@ -39,6 +40,9 @@ type SessionContextValues = {
     password: string,
     newUsername: string
   ) => Promise<boolean>;
+  deleteAccount: (
+    verifyPassword: string
+  ) => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextValues | null>(null);
@@ -290,6 +294,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return true;
   }
 
+  const deleteAccount = async (verifyPassword: string) => {
+    
+    const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
+      password: verifyPassword
+    });
+
+    if (verifyError || !verifyData) {
+      throw new Error("Verification Password is not correct")
+    }
+
+    //TODO check if these are the correct steps
+    signOutUser();
+    console.log("Delete account to be implemented");
+    AsyncStorage.clear();
+    setSession(null);
+    setSessionLoading(false);
+    setOTPSignIn(false);
+  }
+
   return (
     <SessionContext.Provider
       value={{
@@ -302,7 +325,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         signOutUser,
         updatePassword,
         updateEmail,
-        updateUsername
+        updateUsername,
+        deleteAccount,
       }}
     >
       {children}
