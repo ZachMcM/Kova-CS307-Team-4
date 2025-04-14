@@ -7,9 +7,10 @@ export type ExercisePoints = {
 export type WorkoutContribution = {
   competition: {
     title: string,
-    id: string
+    id: string,
   },
-  points: number
+  value: number,
+  type: "minutes" | "points"
 }
 
 export type GroupWorkout = {

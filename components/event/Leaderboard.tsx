@@ -1,5 +1,6 @@
 import {
   getEventWorkouts,
+  getProfileMinutes,
   getProfilePoints,
 } from "@/services/groupEventServices";
 import { useQuery } from "@tanstack/react-query";
@@ -30,6 +31,8 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
     queryFn: async () => {
       const eventWorkouts = await getEventWorkouts(event.id);
 
+      console.log("Event workouts", eventWorkouts)
+
       // creating the map
       const profileTable = new Map<string, EventWorkoutWithProfile[]>();
       for (const eventWorkout of eventWorkouts) {
@@ -51,15 +54,15 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
 
       const leaderboard = Array.from(profileTable.keys()).map((key) => {
         const workouts = profileTable.get(key)!;
-        const totalPoints = getProfilePoints(event, workouts);
-        console.log(totalPoints);
+        const totalValue = event.type == "total-time" ? getProfileMinutes(workouts) : getProfilePoints(event, workouts);
+        console.log(totalValue);
         return {
           profile: workouts[0].profile,
-          totalPoints,
+          totalValue,
         };
       });
 
-      leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
+      leaderboard.sort((a, b) => b.totalValue - a.totalValue);
 
       return leaderboard;
     },
@@ -73,13 +76,13 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
     <VStack space="lg">
       <VStack>
         <Heading size="xl">Leaderboard</Heading>
-        <Text>Participants ranked by total points earned</Text>
+        <Text>Participants ranked by total {event.type == "total-time" ? "workout minutes" : "points earned"}</Text>
       </VStack>
       {isPending ? (
         <Spinner />
       ) : leaderboard && leaderboard.length > 0 ? (
         <VStack space="md">
-          {leaderboard.map(({ totalPoints, profile }, i) => (
+          {leaderboard.map(({ totalValue, profile }, i) => (
             <Card
               key={profile.id}
               variant="outline"
@@ -127,11 +130,11 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
                   <HStack className="items-center justify-between">
                     <Text>Progress torwards goal</Text>
                     <Text>
-                      {Math.round((totalPoints / event.goal!) * 100)}%
+                      {Math.round((totalValue / event.goal!) * 100).toFixed(2)}%
                     </Text>
                   </HStack>
                   <Progress
-                    value={Math.round((totalPoints / event.goal!) * 100)}
+                    value={Math.round((totalValue / event.goal!) * 100)}
                     size="lg"
                     orientation="horizontal"
                   >
@@ -139,10 +142,10 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
                   </Progress>
                   <HStack className="items-center justify-between">
                     <Text>
-                      {totalPoints} / {event.goal}
+                      {totalValue.toFixed(2)} / {event.goal?.toFixed(2)}
                     </Text>
-                    {event.goal! - totalPoints >= 0 ? (
-                      <Text>{event.goal! - totalPoints} pts remaining</Text>
+                    {event.goal! - totalValue >= 0 ? (
+                      <Text>{(event.goal! - totalValue).toFixed(2)} { event.type == "total-time" ? "mins" : "pts"} remaining</Text>
                     ) : (
                       <Box className="bg-success-50 border border-success-200 rounded-full py-0.5 px-2">
                         <Heading size="xs" className="text-success-400">

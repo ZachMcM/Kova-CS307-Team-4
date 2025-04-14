@@ -28,7 +28,9 @@ export default function EditEventDetails({
 }) {
   const schema = z
     .object({
-      end_date: z.date({ message: "Must be a valid date later than the current end date." }),
+      end_date: z.date({
+        message: "Must be a valid date later than the current end date.",
+      }),
       goal: z.coerce
         .number({ invalid_type_error: "Must be a valid number" })
         .min(1, { message: "Goal cannot be less than 1" })
@@ -36,18 +38,46 @@ export default function EditEventDetails({
         .nullish(),
       weightMultiplier: z.coerce
         .number({ invalid_type_error: "Must be a valid number" })
-        .min(1, { message: "Weight Multiplier cannot be less than 1" })
-        .nonnegative()
         .nullish(),
       repMultiplier: z.coerce
         .number({ invalid_type_error: "Must be a valid number" })
-        .min(1, { message: "Weight Multiplier cannot be less than 1" })
-        .nonnegative()
         .nullish(),
     })
-    .refine((data) => new Date(event.start_date) <= data.end_date, {
-      message: "End date must be after start date",
-      path: ["end_date"],
+    .superRefine((data, ctx) => {
+      // Validate that end_date is after start_date
+      if (new Date(event.start_date) > data.end_date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End date must be after start date",
+          path: ["end_date"],
+        });
+      }
+
+      // Only validate multipliers if type is not "total-time"
+      if (event.type !== "total-time") {
+        if (
+          data.weightMultiplier !== null &&
+          data.weightMultiplier !== undefined
+        ) {
+          if (data.weightMultiplier < 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Weight Multiplier cannot be less than 1",
+              path: ["weightMultiplier"],
+            });
+          }
+        }
+
+        if (data.repMultiplier !== null && data.repMultiplier !== undefined) {
+          if (data.repMultiplier < 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Rep Multiplier cannot be less than 1",
+              path: ["repMultiplier"],
+            });
+          }
+        }
+      }
     });
 
   type EditEventDetailsValues = z.infer<typeof schema>;
@@ -78,8 +108,7 @@ export default function EditEventDetails({
       console.log(err);
       showErrorToast(toast, err.message);
     },
-    onSuccess: (data) => {
-      
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["event", { id: event.id }],
       });
@@ -156,52 +185,57 @@ export default function EditEventDetails({
           </FormControl>
         )}
       />
-      <Controller
-        control={form.control}
-        name="weightMultiplier"
-        render={({ field: { onChange, value }, fieldState }) => (
-          <FormControl isInvalid={fieldState.invalid}>
-            <VStack space="sm">
-              <Heading size="md">Weight Multiplier</Heading>
-              <Input>
-                <InputField
-                  onChangeText={onChange}
-                  value={value?.toString()}
-                  keyboardType="numeric"
-                />
-              </Input>
-            </VStack>
-            <FormControlError>
-              <FormControlErrorText>
-                {fieldState.error?.message || "Invalid weight multiplier"}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="repMultiplier"
-        render={({ field: { onChange, value }, fieldState }) => (
-          <FormControl isInvalid={fieldState.invalid}>
-            <VStack space="sm">
-              <Heading size="md">Rep Multiplier</Heading>
-              <Input>
-                <InputField
-                  onChangeText={onChange}
-                  value={value?.toString()}
-                  keyboardType="numeric"
-                />
-              </Input>
-            </VStack>
-            <FormControlError>
-              <FormControlErrorText>
-                {fieldState.error?.message || "Invalid rep multiplier"}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
+      {event.type != "total-time" && (
+        <>
+          {" "}
+          <Controller
+            control={form.control}
+            name="weightMultiplier"
+            render={({ field: { onChange, value }, fieldState }) => (
+              <FormControl isInvalid={fieldState.invalid}>
+                <VStack space="sm">
+                  <Heading size="md">Weight Multiplier</Heading>
+                  <Input>
+                    <InputField
+                      onChangeText={onChange}
+                      value={value?.toString()}
+                      keyboardType="numeric"
+                    />
+                  </Input>
+                </VStack>
+                <FormControlError>
+                  <FormControlErrorText>
+                    {fieldState.error?.message || "Invalid weight multiplier"}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="repMultiplier"
+            render={({ field: { onChange, value }, fieldState }) => (
+              <FormControl isInvalid={fieldState.invalid}>
+                <VStack space="sm">
+                  <Heading size="md">Rep Multiplier</Heading>
+                  <Input>
+                    <InputField
+                      onChangeText={onChange}
+                      value={value?.toString()}
+                      keyboardType="numeric"
+                    />
+                  </Input>
+                </VStack>
+                <FormControlError>
+                  <FormControlErrorText>
+                    {fieldState.error?.message || "Invalid rep multiplier"}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
+          />
+        </>
+      )}
       <HStack space="md">
         <Button action="secondary" onPress={() => setEditDetails(false)}>
           <ButtonText>Cancel</ButtonText>
