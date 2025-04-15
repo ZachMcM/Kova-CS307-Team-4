@@ -182,6 +182,30 @@ export default function TabLayout() {
           href: null
         }}
       />
+      <Tabs.Screen
+        name="tutorial/tutorial-feed"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="tutorial/tutorial-workout"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="tutorial/tutorial-post"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="tutorial/tutorial-groups"
+        options={{
+          href: null
+        }}
+      />
     </Tabs>
   ) : (
     <Redirect href="/live-workout" />

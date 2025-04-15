@@ -22,7 +22,7 @@ export default function LoginScreen() {
 
   const toast = useToast();
   const router = useRouter();
-  const { signInUser, sessionLoading, setSessionLoading } = useSession();
+  const { signInUser, sessionLoading, setSessionLoading, showTutorial } = useSession();
 
   return (
     <Container>
@@ -67,9 +67,14 @@ export default function LoginScreen() {
               signInUser(email, password)
                 .then((OTPSignIn: boolean) => {
                   if (!OTPSignIn) {
-                    showSuccessToast(toast, "Welcome Back to Kova")
-                    router.replace("/(tabs)");
-                    setSessionLoading(false);
+                    showSuccessToast(toast, "Welcome Back to Kova");
+                    if (showTutorial) {
+                      router.replace("/tutorial/tutorial-profile");
+                      setSessionLoading(false);
+                    } else {
+                      router.replace("/(tabs)");
+                      setSessionLoading(false);
+                    }
                   } else {
                     showSuccessToast(toast, "OTP sign in success, redirecting to password reset");
                     setSessionLoading(false);
