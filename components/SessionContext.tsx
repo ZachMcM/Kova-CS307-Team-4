@@ -14,6 +14,7 @@ type SessionContextValues = {
   session: Session | null;
   sessionLoading: boolean;
   OTPSignIn: boolean;
+  showTutorial: boolean;
   setSessionLoading: React.Dispatch<React.SetStateAction<boolean>>;
   createAccount: (
     userEmail: string,
@@ -43,14 +44,19 @@ type SessionContextValues = {
   deleteAccount: (
     verifyPassword: string
   ) => Promise<void>;
+  updateShowTutorial: (
+    updateTutorial: boolean
+  ) => Promise<void>
 };
 
 const SessionContext = createContext<SessionContextValues | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
+
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(false);
   const [OTPSignIn, setOTPSignIn] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -142,6 +148,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     console.log("created account");
+    setShowTutorial(true);
     return updatedUser as AuthAccountResponse;
   };
 
@@ -170,7 +177,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return true;
       }
 
-    const { error: passwordError } =
+    const { data: signInData, error: passwordError } =
       await supabase.auth.signInWithPassword({
         email: userEmail,
         password: userPassword,
@@ -181,13 +188,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     console.log("signing in");
 
-    setOTPSignIn(false)
+    setOTPSignIn(false);
+
+    console.log("sign in data", signInData.session.user.id)
+
+    const {data, error: fetchError} = await supabase
+    .from('profile')
+    .select("show_tutorial")
+    .eq('userId', signInData.session.user.id);
+
+    if (!data || data.length == 0 || fetchError) {
+      console.log("Error fetching tutorial for user account");
+      return false;
+    }
+
+    setShowTutorial(data[0].show_tutorial);
+
     return false;
   };
 
   const signOutUser = async () => {
     const { error } = await supabase.auth.signOut();
     console.log("signed out user");
+    AsyncStorage.clear();
 
     if (error) throw new Error(error.message);
   };
@@ -313,12 +336,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setOTPSignIn(false);
   }
 
+  const updateShowTutorial = async (updateTutorial: boolean) => {
+    setShowTutorial(updateTutorial);
+    const {error: fetchError} = await supabase
+    .from('profile')
+    .update({show_tutorial: updateTutorial})
+    .eq('userId', session?.user.id);
+  }
+
   return (
     <SessionContext.Provider
       value={{
         session,
         sessionLoading,
         OTPSignIn,
+        showTutorial,
         setSessionLoading,
         createAccount,
         signInUser,
@@ -327,6 +359,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         updateEmail,
         updateUsername,
         deleteAccount,
+        updateShowTutorial,
       }}
     >
       {children}

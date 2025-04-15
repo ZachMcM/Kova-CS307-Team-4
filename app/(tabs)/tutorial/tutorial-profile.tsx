@@ -26,7 +26,7 @@ import {
   InfoIcon,
   ChevronLeftIcon,
 } from "@/components/ui/icon";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter, useSegments } from "expo-router";
 import {
   getProfile,
   updateProfile,
@@ -43,7 +43,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "@/components/ui/spinner";
 import { getProfileAccess, Profile } from "@/types/profile-types";
 import { supabase } from "@/lib/supabase";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import {
   showErrorToast,
@@ -53,7 +53,7 @@ import {
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import * as ImagePicker from "expo-image-picker";
 import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
-import { View, StyleSheet, Dimensions } from "react-native";
+import { View, StyleSheet, Dimensions, ScrollView } from "react-native";
 import {
   RadioGroup,
   Radio,
@@ -82,14 +82,13 @@ import {
   shift,
   useSpotlightTour,
 } from "react-native-spotlight-tour";
-import { Popover, PopoverArrow, PopoverBackdrop, PopoverBody, PopoverContent } from "@/components/ui/popover";
 import { Modal, ModalBackdrop, ModalCloseButton, ModalContent, ModalHeader, ModalBody } from "@/components/ui/modal";
 import ExerciseCard from "@/components/forms/workout-template/ExerciseCard";
 import Tag, { TagString } from "@/components/Tag";
 import { Tables } from "@/types/database.types";
 import { Ionicons } from "@expo/vector-icons";
 import { LineChart, BarChart } from 'react-native-chart-kit';
-import { WorkoutPost } from "@/components/WorkoutPost";
+import { TaggedFriend, WorkoutPost } from "@/components/WorkoutPost";
 import { TutorialWorkoutPost } from "@/components/tutorial/TutorialWorkoutPost";
 import { WorkoutHeader } from "@/components/WorkoutData";
 
@@ -100,7 +99,7 @@ export default function TutorialProfileScreen1() {
     user_id: "",
     username: "jkova",
     name: "John Kova",
-    avatar: "",
+    avatar: "https://spntxjldrghjrhyhhncu.supabase.co/storage/v1/object/public/post-images/tutorial/John%20Kova.jpeg",
     private: "",
     friends: 13,
     following: 25,
@@ -123,15 +122,21 @@ export default function TutorialProfileScreen1() {
   },
   {
     groupId: "",
-    icon: "",
+    icon: "https://spntxjldrghjrhyhhncu.supabase.co/storage/v1/object/public/post-images/tutorial/Waltuh.jpeg",
     goal: "Jesse, we need to lift. I am the one who benches.",
     title: "Breaking Benches",
+  },
+  {
+    groupId: "",
+    icon: "",
+    goal: "Getting huge together.",
+    title: "Bar Brothers"
   }] as GroupOverview[];
 
-  const favoriteExercises = [{ //TODO get 4 of these
+  const favoriteExercises = [{
     created_at: "",
     details: null,
-    id: "",
+    id: "1",
     name: "Pull ups",
     tags: ["Back", "Biceps", "Lats", "Forearms", "Grip"],
     favorited: true
@@ -139,66 +144,156 @@ export default function TutorialProfileScreen1() {
   {
     created_at: "",
     details: null,
-    id: "",
-    name: "Front Squat",
+    id: "2",
+    name: "Front Squats",
     tags: ["Legs", "Core", "Glutes", "Quadriceps"],
     favorited: true
-  }]
+  },
+  {
+    created_at: "",
+    details: null,
+    id: "3",
+    name: "Deadlifts",
+    tags: ["Back", "Legs", "Core", "Glutes", "Hamstrings", "Traps", "Forearms", "Grip"],
+    favorited: true
+  },
+  {
+    created_at: "",
+    details: null,
+    id: "4",
+    name: "Dumbbell Shoulder Press",
+    tags: ["Shoulders", "Triceps", "Deltoids"],
+    favorited: true
+  },]
 
   const popularExercises = [{
-    name: "pull ups",
+    name: "Pull ups",
     weight: 15,
     unit: "lbs",
     count: 134,
     tags: ["Back", "Biceps", "Lats", "Forearms", "Grip"],
-  }];
+  },
+  {
+    name: "Deadlifts",
+    weight: 275,
+    unit: "lbs",
+    count: 117,
+    tags: ["Back", "Legs", "Core", "Glutes", "Hamstrings", "Traps", "Forearms", "Grip"],
+  },
+  {
+    name: "Single-Leg Calf Raises",
+    weight: 35,
+    unit: "lbs",
+    count: 99,
+    tags: ["Legs", "Calves", "Stability"],
+  },
+  {
+    name: "Russian Twists",
+    weight: 25,
+    unit: "lbs",
+    count: 88,
+    tags: ["Core", "Abs", "Obliques"],
+  },];
 
   const visiblePosts = [{
     id: "p1",
     username: "jkova",
     name: "John Kova",
     avatar: "",
-    date: "Apr 11, 2025",
+    date: "Apr 12, 2025",
+    title: "Saturday Grind Day",
+    description: "Hit a great pump today. Finishing out the week strong. Won't be posting so much next week. I've got to go and save some orphans from Detroit and volunteer at the soup kitchen next week.",
+    exercises: ["Front Squat", "Medicine Ball Slams", "Single-Leg Calf Raises", "Deadlifts"],
+    images: [],
+    isOwnPost: true,
+    taggedFriends: []
+  },
+  {
+    id: "p2",
+    username: "jkova",
+    name: "John Kova",
+    avatar: "",
+    date: "Apr 12, 2025",
     title: "Crazy Ford Protein Hamburger",
     description: "Be sure to try out the new CRAZY protein hamburger from Ford Dining Court.",
+    exercises: [],
+    images: ["https://spntxjldrghjrhyhhncu.supabase.co/storage/v1/object/public/post-images/tutorial/Crazy_Protein.jpeg"],
+    isOwnPost: true,
+    taggedFriends: []
+  },
+  {
+    id: "p3",
+    username: "jkova",
+    name: "John Kova",
+    avatar: "",
+    date: "Apr 11, 2025",
+    title: "Call me the Pumper",
+    description: "Just another Friday for the OG. Shoutout to my boy Purdue Pete for his spotting today.",
+    exercises: ["Front Squat", "Dumbbell Shoulder Press", "Russian Twists"],
+    images: [],
+    isOwnPost: true,
+    taggedFriends: [
+      {
+        userId: "",
+        name: "Purdue Pete",
+        avatar: "https://spntxjldrghjrhyhhncu.supabase.co/storage/v1/object/public/profile-images/7d57b4ea-5be5-46cb-a6b8-f2b38893a65b/E0A9554D-3BAD-4756-BC01-6169A955E323.jpg"
+      }
+    ] as TaggedFriend[]
+  },
+  {
+    id: "p4",
+    username: "jkova",
+    name: "John Kova",
+    avatar: "",
+    date: "Apr 11, 2025",
+    title: "I... Am Steve.",
+    description: "Minecraft movie was the experience of a lifetime. Make sure you hit the minecraft movie after you hit the gym today.",
     exercises: [],
     images: [],
     isOwnPost: true,
     taggedFriends: []
-  }]
+  },]
 
   const visibleWorkouts = [{
     id: "w1",
-    date: "Apr 11th 2025",
+    date: "Apr 12, 2025",
+    duration: "50 Min"
+  }, 
+  {
+    id: "w2",
+    date: "Apr 11, 2025",
     duration: "56 Min"
-  }]
+  },
+  {
+    id: "w3",
+    date: "Apr 10, 2025",
+    duration: "49 Min"
+  },
+  {
+    id: "w4",
+    date: "Apr 9, 2025",
+    duration: "77 Min"
+  },]
 
   const mySteps: TourStep[] = [
     {
-      // Configuration for first step
-      floatingProps: {
-        middleware: [offset(10), shift(), flip()],
-        placement: "bottom",
-      },
-      render: ({ next, previous }) => (
+      render: ({ next, stop }) => (
         <View style={styles.stepContainer}>
+          <HStack>
           <Text style={styles.stepTitle}>This is your profile page</Text>
-            <View style={styles.buttonContainer}>
-            <Button onPress={previous} action='kova'>
-              <ButtonText size='lg'>Previous</ButtonText>
-            </Button>
-            <View style={styles.buttonSpacer} />
+          </HStack>
+          <Text className="text-wrap mb-4">You can see a breakdown of your profile, edit your profile, and access your friends and followers by tapping on the friends, followers, or following numbers</Text>
             <Button onPress={next} action='kova'>
               <ButtonText size='lg'>Next</ButtonText>
             </Button>
-          </View>
+            <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+              <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+            </Pressable>
         </View>
       )
     },
     {
-      // Configuration for second step
-      render: ({previous, next}) => {
-        // Using the hook inside the step component
+      render: ({previous, next, stop}) => {
         return (
           <View style={styles.stepContainer}>
             <VStack>
@@ -210,30 +305,253 @@ export default function TutorialProfileScreen1() {
                 <ButtonText size='lg'>Previous</ButtonText>
               </Button>
               <View style={styles.buttonSpacer} />
-              <Button onPress={() => {next(); setScrollPosition(2)}} action='kova'>
-                <ButtonText size='lg'>Stop</ButtonText>
+              <Button onPress={() => {next()}} action='kova'>
+                <ButtonText size='lg'>Next</ButtonText>
               </Button>
             </View>
+            <Pressable onPress = {() => {stop(); router.replace(`/profiles/${session?.user.id}`);}} className = "pb-2 border-b border-gray-300 mt-4">
+              <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+            </Pressable>
           </View>
         );
       }
-    }
+    },
+    {
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>Access the settings page</Text>
+          <Text className="text-wrap mb-4">You can log out and modify your account through this menu</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={previous} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next(); scrollMore(100);}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
+    {
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>View your groups</Text>
+          <Text className="text-wrap mb-4">You can see a brief description of them here, and access them by tapping them or going through the groups tab</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={() => {previous(); scrollMore(-100);}} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next(); scrollMore(600);}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
+    {
+      floatingProps:{
+        middleware: [offset(-150), shift(), flip()],
+      },
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>Breakdown of exercises you've favorited</Text>
+          <Text className="text-wrap mb-4">Exercises can be favorited by tapping on the blue ribbon here, or when creating a template</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={() => {previous(); scrollMore(-600);}} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next(); scrollMore(600);}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
+    {
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>Summary of your profile</Text>
+          <Text className="text-wrap mb-4">The summary includes workout statistics, most popular exercises, workout history, and post history.</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={() => {previous(); scrollMore(-600);}} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next();}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
+    {
+      floatingProps:{
+        middleware: [offset(-150), shift(), flip()],
+      },
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>View workout data over different time periods</Text>
+          <Text className="text-wrap mb-4">Change what timeframe this graph data is displayed from by tapping the above icons</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={previous} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next(); scrollMore(600);}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
+    {
+      floatingProps:{
+        middleware: [offset(-300), shift(), flip()],
+      },
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>View most popular exercises</Text>
+          <Text className="text-wrap mb-4">These exercises are the ones which you've performed the most sets on</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={() => {previous(); scrollMore(-600);}} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next(); scrollMore(600);}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
+    {
+      floatingProps:{
+        middleware: [offset(-300), shift(), flip()],
+      },
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>View workout history</Text>
+          <Text className="text-wrap mb-4">See all of your workouts that you've ever done! You can tap on one of the cards to see more details in your profile tab</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={() => {previous(); scrollMore(-600);}} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next(); scrollMore(600);}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
+    {
+      floatingProps:{
+        middleware: [offset(-300), shift(), flip()],
+      },
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>View post history</Text>
+          <Text className="text-wrap mb-4">See all of your posts that you've ever made! You can enlarge the post in your profile view by tapping on it</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={() => {previous(); scrollMore(-600);}} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next(); scrollMore(1000);}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
+    {
+      render: ({ next, previous, stop }) => (
+        <View style={styles.stepContainer}>
+          <Text style={styles.stepTitle}>View First Four</Text>
+          <Text className="text-wrap mb-4">For posts, workouts, and most popular exercises. The first 4 will always be listed when you enter the profile view, and you render more by pressing the render more button</Text>
+            <View style={styles.buttonContainer}>
+            <Button onPress={() => {previous(); scrollMore(-1000);}} action='kova'>
+              <ButtonText size='lg'>Previous</ButtonText>
+            </Button>
+            <View style={styles.buttonSpacer} />
+            <Button onPress={() => {next();}} action='kova'>
+              <ButtonText size='lg'>Next</ButtonText>
+            </Button>
+          </View>
+          <Pressable onPress = {() => {router.replace(`/profiles/${session?.user.id}`); stop();}} className = "pb-2 border-b border-gray-300 mt-4">
+            <Text size="lg"><Icon as = {ChevronLeftIcon} className = "h-3.5 w-4"></Icon>Leave Tutorial</Text>
+          </Pressable>
+        </View>
+      )
+    },
   ];
 
   const [renderPopover, setRenderPopover] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
+  const scrollRef = useRef<ScrollView>(null)
+  const [scrolly, setScrolly] = useState(0);
+
+  const scrollMore = (y: number) => {
+    scrollRef.current?.scrollTo({y: scrolly + y, animated: true})
+    setScrolly(y + scrolly)
+  }
 
   const router = useRouter();
+  const navigation = useNavigation();
+  const { session, showTutorial, updateShowTutorial } = useSession();
 
   useEffect(() => {
     // Short timeout to ensure component is fully mounted
+    setScrolly(0);
+    scrollMore(0);
     const timer = setTimeout(() => {
-      setScrollPosition(0);
       setRenderPopover(true);
     }, 100);
     
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+      const unsubscribe = navigation.addListener('focus', () => {
+        {
+          setScrolly(0);
+          scrollMore(0);
+          const timer = setTimeout(() => {
+            setRenderPopover(true);
+          }, 100);
+          
+          return () => clearTimeout(timer);
+        }
+      });
+  
+      return unsubscribe;
+    }, [navigation]);     
 
   return (
 
@@ -247,13 +565,13 @@ export default function TutorialProfileScreen1() {
       }}
     >
       {({ start }) => (
-        <Container className="flex px-6 py-16">
-          {scrollPosition == 0 && (
+      <ScrollView keyboardShouldPersistTaps="handled" ref={scrollRef}>
+        <View className={"flex px-6 py-24 mb-12"}>
+
             <Modal
               isOpen={renderPopover}
-              onClose={() => setRenderPopover(false)}
+              onClose={() => setRenderPopover(false)} //TODO remove this later so users can't back out of tutorial
               size="md"
-              closeOnOverlayClick
             >
             <ModalBackdrop />
             <ModalContent>
@@ -266,20 +584,34 @@ export default function TutorialProfileScreen1() {
                     Start Kova Tutorial!
                   </ButtonText>
                 </Button>
+                <Button className="bg-blue-700 mt-5" onPress={async () => {
+                  if (showTutorial) {
+                    await updateShowTutorial(false);
+                  }
+                  router.replace(`/profiles/${session?.user.id}`);
+                  setRenderPopover(false);}}>
+                  <ButtonText size="md">
+                    I know what I'm doing!
+                  </ButtonText>
+                </Button>
               </ModalBody>
             </ModalContent>
-          </Modal>)}
+          </Modal>
 
               <VStack space="3xl">
-              {scrollPosition == 0 ? (
+
+                <AttachStep index={0}>
                 <Box className="border-b border-gray-300 pb-2">
                 <VStack space="lg">
-                  <AttachStep index={0}>
                   <HStack space="md">
-                    <Avatar className="bg-indigo-600 mt-1" size="xl">
-                      <AvatarFallbackText className="text-white">
-                        {demoProfile.name}
-                      </AvatarFallbackText>
+                  <Avatar className="bg-indigo-600 mt-1" size="xl">
+                      {demoProfile.avatar ? (
+                        <AvatarImage source={{ uri: demoProfile.avatar }} />
+                      ) : (
+                        <AvatarFallbackText className="text-white">
+                          {demoProfile.name}
+                        </AvatarFallbackText>
+                      )}
                     </Avatar>
                     <VStack space="xs">
                       <VStack>
@@ -320,14 +652,15 @@ export default function TutorialProfileScreen1() {
                     <Button
                       className="w-0 h-0"
                     >
+                      <AttachStep index={2}>
                       <Icon
                         as={MenuIcon}
                         size="xl"
                         className="mt-8 ml-8 w-8 h-8"
                       ></Icon>
+                      </AttachStep>
                     </Button>
                   </HStack>
-                  </AttachStep>
                   <VStack>
                     <Box className="border border-gray-300 rounded p-2 mt-2">
                       <HStack className="text-wrap">
@@ -351,7 +684,7 @@ export default function TutorialProfileScreen1() {
                           ⚖️:
                         </Heading>
                         <View className="w-11/12">
-                          <Heading size="md">{demoProfile.weight}</Heading>
+                          <Heading size="md">{demoProfile.weight} lbs</Heading>
                         </View>
                       </HStack>
                       <HStack className="text-wrap">
@@ -404,17 +737,23 @@ export default function TutorialProfileScreen1() {
                     </Button>
                   </VStack>
                 </VStack>
-              </Box>) : (<></>)}
+              </Box>
+              </AttachStep>
 
-              {(scrollPosition == 0 || scrollPosition == 1) && (<VStack space="sm">
+              <AttachStep index={3}>
+              <VStack space="sm">
                 <Heading>Your Groups</Heading>
                 <VStack space="md">
-                  {groups.map((group) => (    //inlining group component for the tutorial
+                  {groups.map((group) => (    //inlining group component for the tutorial TODO fix text-wrapping issue
                     <Card key={group.title} variant="outline">
                       <HStack space="2xl">
-                        <Avatar className="bg-indigo-600" size="md">
-                          <AvatarFallbackText className="text-white">{group.title[0]}</AvatarFallbackText>
-                        </Avatar>
+                      <Avatar className="bg-indigo-600" size="md">
+                        {group?.icon ? (
+                          <AvatarImage source={{ uri: group.icon }} />
+                        ) : (
+                          <AvatarFallbackText className="text-white">{group?.title![0]}</AvatarFallbackText>
+                        )}
+                      </Avatar>
                         <VStack>
                           <Heading size="md">{group.title}</Heading>
                           <Text>{group.goal}</Text>
@@ -423,11 +762,11 @@ export default function TutorialProfileScreen1() {
                     </Card>
                   ))}
                 </VStack>
-              </VStack>)}
+              </VStack>
+              </AttachStep>
 
-
-            {scrollPosition == 1 && /* Inline a lot of components */(
               <VStack space="md">
+                <AttachStep index={1}>
                 <HStack className="items-center justify-between">
                   <Heading size="2xl">Favorite Exercises</Heading>
                   <Button variant="link">
@@ -435,6 +774,8 @@ export default function TutorialProfileScreen1() {
                     <ButtonIcon as={ArrowRightIcon} />
                   </Button>
                 </HStack>
+                </AttachStep>
+                <AttachStep index={4}>
                   <VStack space="md">
                     <Input size="md">
                       <InputField
@@ -480,14 +821,15 @@ export default function TutorialProfileScreen1() {
                         </Card>
                       ))}
                   </VStack>
+                  </AttachStep>
               </VStack>
-            )}
 
-            {scrollPosition == 2 && (
                       <View className="mb-10">
                       <VStack space="2xl">
                         <VStack space="sm">
+                          <AttachStep index={5}>
                           <Heading size="2xl">Profile Summary</Heading>
+                          </AttachStep>
                           <Card variant="outline">
                             <HStack className="justify-between mb-4">
                               <RadioGroup value={"week"}>
@@ -520,12 +862,14 @@ export default function TutorialProfileScreen1() {
                               </RadioGroup>
                             </HStack>
                             <Heading size="xl">Workout Count: Week</Heading>
+                            <AttachStep index={6}>
+                            <VStack>
                             {
                               <LineChart
                               data={{
                                 labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
                                 datasets: [{
-                                  data: [1, 1, 0, 1, 1, 1, 2],
+                                  data: [1, 2, 0, 1, 1, 1, 1],
                                 }],
                               }}
                               width={Dimensions.get('window').width - 85}
@@ -555,7 +899,7 @@ export default function TutorialProfileScreen1() {
                               data={{
                                 labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
                                 datasets: [{
-                                  data: [45, 50, 0, 77, 49, 56, 101],
+                                  data: [45, 101, 0, 77, 49, 56, 50],
                                 }],
                               }}
                               width={Dimensions.get('window').width - 85}
@@ -579,6 +923,9 @@ export default function TutorialProfileScreen1() {
                                 marginVertical: 8,
                               }}
                             />}
+                            </VStack>
+                            </AttachStep>
+                            <AttachStep index={7}>
                             <Card variant="outline">
                               <Heading className="mb-5" size="xl">Most Popular Exercises ⭐</Heading>
           
@@ -601,8 +948,10 @@ export default function TutorialProfileScreen1() {
                                   <ButtonText>Render more Exercises</ButtonText>
                                 </Button>
                             </Card>
+                            </AttachStep>
                           </Card>
                         </VStack>
+                        <AttachStep index={8}>
                         <VStack>
                           <Heading size="2xl">Workout History</Heading>
                           <Card className="my-3" variant="outline">
@@ -615,14 +964,16 @@ export default function TutorialProfileScreen1() {
                               <ButtonText>{'Render more workouts'}</ButtonText>
                             </Button>
                         </VStack>
+                        </AttachStep>
                           <Heading size="2xl">Post History</Heading>
+                          <AttachStep index={9}>
                           <Card variant="outline">
                               {visiblePosts && visiblePosts.map((post) => (
                                   <TutorialWorkoutPost
                                       key={post.id}
                                       username={post.username || "Unknown user"}
                                       name={post.name || "Unkown user"}
-                                      avatar={post.avatar}
+                                      avatar={demoProfile.avatar}
                                       date={post.date}
                                       title={post.title || ""}
                                       description={post.description || ""}
@@ -633,21 +984,19 @@ export default function TutorialProfileScreen1() {
                                   />
                               ))}
                           </Card>
+                          </AttachStep>
+                          <AttachStep index={10}>
                               <Button>
                                   <ButtonText>{'Render more posts'}</ButtonText>
                               </Button>
+                          </AttachStep>
                       </VStack>
                   </View>
-            )}
 
 
             </VStack>
-            <AttachStep index={1}>
-              <Card className="py-24">
-              <Text>Bottom Bar</Text>
-              </Card>
-            </AttachStep>
-          </Container>
+            </View>
+          </ScrollView>
       )}
     </SpotlightTourProvider>
   );

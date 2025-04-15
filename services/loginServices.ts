@@ -51,10 +51,8 @@ export const signInUser = async (
     });
 
   //Checking if profile exists for this user
-  if (
-    (await supabase.from("profile").select().eq("userId", signInData.user?.id))
-      .data?.length == 0
-  ) {
+  const profile = await supabase.from("profile").select().eq("userId", signInData.user?.id);
+  if (profile.data?.length == 0) {
     //Create default profile
     console.log("create default profile");
     const { error: insertionError } = await supabase.from("profile").insert({

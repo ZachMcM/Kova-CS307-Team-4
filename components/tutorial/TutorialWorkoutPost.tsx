@@ -27,6 +27,7 @@ import { Spinner } from "../ui/spinner";
 import { Image } from "../ui/image";
 import { ScrollView } from "../ui/scroll-view";
 import { supabase } from "@/lib/supabase";
+import { TaggedFriend } from "../WorkoutPost";
 
 type TutorialWorkoutPostProps = {
   username: string;
@@ -38,7 +39,7 @@ type TutorialWorkoutPostProps = {
   exercises: string[];
   imageUrls?: string[];
   isOwnPost?: boolean;
-  taggedFriends?: string[];
+  taggedFriends?: TaggedFriend[];
   onUpdatePost?: (
     postId: string,
     title: string,
@@ -149,13 +150,17 @@ export const TutorialWorkoutPost = ({
                 <GText>With </GText>
                 {taggedFriends.map((friend, index) => (
                   <Pressable
-                    key={friend}>
+                    key={friend.name}>
                     <HStack space = "xs">
                       <Avatar size = "xs" className="bg-indigo-600">
-                          <AvatarFallbackText className="text-white">{friend}</AvatarFallbackText>
-                      </Avatar>
+                        {friend.avatar ? (
+                          <AvatarImage source={{ uri: friend.avatar }}></AvatarImage>
+                        ) : ( 
+                          <AvatarFallbackText className="text-white">{friend.name}</AvatarFallbackText>
+                        )}
+                        </Avatar>
                       <GText className="font-bold text-blue-500">
-                        {friend}
+                        {friend.name}
                         {index < taggedFriends.length - 1 ? ", " : ""}
                       </GText>
                     </HStack>
