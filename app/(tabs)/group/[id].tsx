@@ -112,31 +112,40 @@ export default function Group() {
             <ButtonText>View Members</ButtonText>
           </Button>
           <VStack space="md">
-            <Heading size="lg">Collaborations</Heading>
+            <Heading size="lg">Team Challenges</Heading>
             <GroupEvents
               events={
                 group?.events.filter((event) => event.type == "collaboration")!
               }
-              type="collaborations"
+              type="team challenges"
             />
           </VStack>
           <VStack space="md">
-            <Heading size="lg">Default Competitions</Heading>
+            <Heading size="lg">Points Races</Heading>
             <GroupEvents
               events={
                 group?.events.filter((event) => event.type == "competition")!
               }
-              type="default competitions"
+              type="points races"
             />
           </VStack>
 
           <VStack space="md">
-            <Heading size="lg">Total Time Competitions</Heading>
+            <Heading size="lg">Endurance Challenges</Heading>
             <GroupEvents
               events={
                 group?.events.filter((event) => event.type == "total-time")!
               }
-              type="total time competitions"
+              type="endurance challenges"
+            />
+          </VStack>
+          <VStack space="md">
+            <Heading size="lg">Single Session Showdowns</Heading>
+            <GroupEvents
+              events={
+                group?.events.filter((event) => event.type == "single-workout")!
+              }
+              type="single session showdowns"
             />
           </VStack>
           {!gettingRole ? (

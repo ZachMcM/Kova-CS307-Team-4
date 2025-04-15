@@ -3,6 +3,7 @@ import CollaborationProgress from "@/components/event/CollaborationProgress";
 import EditEventDetails from "@/components/event/EditEventDetails";
 import ExercisePointsView from "@/components/event/ExercisePointsView";
 import Leaderboard from "@/components/event/Leaderboard";
+import SingleSessionLeaderboard from "@/components/event/SingleSessionLeaderboard";
 import YourWorkouts from "@/components/event/YourWorkouts";
 import { useSession } from "@/components/SessionContext";
 import {
@@ -79,7 +80,7 @@ export default function Event() {
           ) : (
             <HStack className="items-center justify-between">
               <VStack space="sm">
-                <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
+                <Heading className="text-4xl lg:text-5xl xl:text-[56px] w-96">
                   {event.title}
                 </Heading>
                 <HStack space="md" className="items-center">
@@ -113,12 +114,12 @@ export default function Event() {
                 <Text>
                   {editDetails ? "Edit" : "View"}{" "}
                   {event.type == "competition"
-                    ? "default competition"
+                    ? "point race"
                     : event.type == "total-time"
-                    ? "total time competition"
-                    : event.type == "personal-best"
-                    ? "personal best competition"
-                    : "collaboration"}
+                    ? "endurance challenge"
+                    : event.type == "single-workout"
+                    ? "single session showdown"
+                    : "team challenge"}{" "}
                   details
                 </Text>
               </VStack>
@@ -150,16 +151,18 @@ export default function Event() {
                       </Text>
                     </VStack>
                   </HStack>
-                  <HStack space="md" className="items-center">
-                    <Feather name="target" size={24} />
-                    <VStack>
-                      <Heading size="md">Goal</Heading>
-                      <Text size="md">
-                        {event?.goal}{" "}
-                        {event.type == "total-time" ? "Minutes" : "Points"}
-                      </Text>
-                    </VStack>
-                  </HStack>
+                  {event.goal && (
+                    <HStack space="md" className="items-center">
+                      <Feather name="target" size={24} />
+                      <VStack>
+                        <Heading size="md">Goal</Heading>
+                        <Text size="md">
+                          {event?.goal}{" "}
+                          {event.type == "total-time" ? "Minutes" : "Points"}
+                        </Text>
+                      </VStack>
+                    </HStack>
+                  )}
                   {event.type != "total-time" && (
                     <>
                       <HStack space="md" className="items-center">
@@ -187,7 +190,11 @@ export default function Event() {
           {event.type == "collaboration" && (
             <CollaborationProgress event={event} />
           )}
-          <Leaderboard event={event} />
+          {event.type == "single-workout" ? (
+            <SingleSessionLeaderboard event={event} />
+          ) : (
+            <Leaderboard event={event} />
+          )}
           {event.type != "total-time" && <ExercisePointsView event={event} />}
           <YourWorkouts event={event} />
         </VStack>

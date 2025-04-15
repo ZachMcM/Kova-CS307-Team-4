@@ -20,12 +20,12 @@ export default function EventCard({ event }: { event: Tables<"groupEvent"> }) {
         <VStack>
           <Text className="capitalize" size="sm">
             {event.type == "competition"
-              ? "default competition"
+              ? "Points Race"
               : event.type == "total-time"
-              ? "total time competition"
-              : event.type == "personal-best"
-              ? "personal best competition"
-              : "collaboration"}
+              ? "Endurance Challenge"
+              : event.type == "single-workout"
+              ? "Single Session Showdown"
+              : "Team Challenge"}
           </Text>
           <Heading size="xl">{event.title}</Heading>
         </VStack>
@@ -38,13 +38,15 @@ export default function EventCard({ event }: { event: Tables<"groupEvent"> }) {
                 {new Date(event?.end_date!).toLocaleDateString()}
               </Text>
             </HStack>
-            <HStack space="md" className="items-center">
-              <Feather name="target" size={22} />
-              <Text size="md">
-                {event?.goal}{" "}
-                {event.type == "total-time" ? "Minutes" : "Points"}
-              </Text>
-            </HStack>
+            {event.goal && (
+              <HStack space="md" className="items-center">
+                <Feather name="target" size={22} />
+                <Text size="md">
+                  {event?.goal}{" "}
+                  {event.type == "total-time" ? "Minutes" : "Points"}
+                </Text>
+              </HStack>
+            )}
           </VStack>
         </VStack>
       </VStack>

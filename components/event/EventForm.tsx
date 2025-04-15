@@ -48,7 +48,7 @@ import {
   ModalContent,
   ModalHeader,
 } from "../ui/modal";
-import { View } from "react-native";
+import { Switch } from "../ui/switch";
 
 const schema = z
   .object({
@@ -79,8 +79,14 @@ const schema = z
       .number({ invalid_type_error: "Must be a valid number" })
       .min(1, { message: "Goal cannot be less than 1" })
       .nonnegative()
-      .nullish(),
-    type: z.enum(["competition", "collaboration", "total-time"]),
+      .nullish()
+      .optional(),
+    type: z.enum([
+      "competition",
+      "collaboration",
+      "total-time",
+      "single-workout",
+    ]),
   })
   .superRefine((data, ctx) => {
     // Validate that end_date is after start_date
@@ -115,6 +121,14 @@ const schema = z
             path: ["repMultiplier"],
           });
         }
+      }
+
+      if (data.type == "collaboration" && !data.goal) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Goal is required for Team Events",
+          path: ["goal"],
+        });
       }
     }
   });
@@ -183,6 +197,8 @@ export default function EventForm({ groupId }: { groupId: string }) {
 
   const [typeModal, setTypeModal] = useState(false);
 
+  const [goalOn, setGoalOn] = useState(true);
+
   const eventType = form.watch("type");
 
   return (
@@ -228,19 +244,25 @@ export default function EventForm({ groupId }: { groupId: string }) {
                   <RadioIndicator>
                     <RadioIcon as={CircleIcon} />
                   </RadioIndicator>
-                  <RadioLabel>Collaboration</RadioLabel>
+                  <RadioLabel>Team Challenge</RadioLabel>
                 </Radio>
                 <Radio value="competition" size="md">
                   <RadioIndicator>
                     <RadioIcon as={CircleIcon} />
                   </RadioIndicator>
-                  <RadioLabel>Default Competition</RadioLabel>
+                  <RadioLabel>Points Race</RadioLabel>
                 </Radio>
                 <Radio value="total-time" size="md">
                   <RadioIndicator>
                     <RadioIcon as={CircleIcon} />
                   </RadioIndicator>
-                  <RadioLabel>Total Time Competition</RadioLabel>
+                  <RadioLabel>Endurance Challenge</RadioLabel>
+                </Radio>
+                <Radio value="single-workout" size="md">
+                  <RadioIndicator>
+                    <RadioIcon as={CircleIcon} />
+                  </RadioIndicator>
+                  <RadioLabel>Single Session Showdown</RadioLabel>
                 </Radio>
               </RadioGroup>
             </VStack>
@@ -268,37 +290,42 @@ export default function EventForm({ groupId }: { groupId: string }) {
                 </ModalHeader>
                 <ModalBody className="mt-6">
                   <Text size="md" className="text-typography-700">
-                    <VStack space="sm">
+                    <VStack space="md">
                       <Text className="text-typography-950">
                         <Text className="font-bold text-typography-950">
-                          Collaboration
+                          Team Challenge
                         </Text>
-                        : Aggregate everyones' workout points together to work
-                        toward a common goal.
+                        : Work together, win together. In a Team Challenge,
+                        everyone’s workout points contribute to a shared goal.
+                        Hit the target as a group and celebrate the win with
+                        your crew. Every effort counts!
                       </Text>
                       <Text className="text-typography-950">
                         <Text className="font-bold text-typography-950">
-                          Default Competition
+                          Points Race
                         </Text>
-                        : Rank users based on an aggregation of their workout
-                        points percentage to the goal, and whoever reaches the
-                        goal first wins.
+                        : It’s all about consistency and grind. Earn points from
+                        every workout you log, and climb the leaderboard by
+                        outworking the competition. The more you move, the
+                        higher you score. Can you take the top spot?
                       </Text>
                       <Text className="text-typography-950">
                         <Text className="font-bold text-typography-950">
-                          Total Time Competition
+                          Endurance Challenge
                         </Text>
-                        : Rank users based on an aggregation of their workout
-                        times, and whoever reaches the goal first wins.
+                        : Who can stay active the longest? This challenge ranks
+                        users based on total workout time. Whether it’s yoga,
+                        lifting, or cardio, every minute you train brings you
+                        closer to victory.
                       </Text>
-
                       <Text className="text-typography-950">
                         <Text className="font-bold text-typography-950">
-                          Personal Best Competition
+                          Single Session Showdown
                         </Text>
-                        : Rank users based on singular workout point totals, and
-                        the user that had the singular workout with the most
-                        points by the end of the event wins.
+                        : Every workout is a chance to top the charts. In this
+                        event, workouts are ranked individually — not by total
+                        points per user. You can have multiple workouts on the
+                        leaderboard, so bring your A-game every session.
                       </Text>
                     </VStack>
                   </Text>
@@ -313,21 +340,33 @@ export default function EventForm({ groupId }: { groupId: string }) {
         name="goal"
         render={({ field: { onChange, value }, fieldState }) => (
           <FormControl isInvalid={fieldState.invalid}>
-            <VStack space="sm">
-              <Heading size="md">
-                Goal{" "}
-                {eventType &&
-                  (eventType == "total-time"
-                    ? "(Number of minutes)"
-                    : "(Number of exercise points)")}
-              </Heading>
-              <Input>
-                <InputField
-                  onChangeText={onChange}
-                  value={value?.toString()}
-                  keyboardType="numeric"
+            <VStack space="md">
+              <HStack className="items-center">
+                <Heading size="md">
+                  Goal{" "}
+                  {eventType &&
+                    (eventType == "total-time"
+                      ? "(Number of minutes)"
+                      : "(Number of exercise points)")}
+                </Heading>
+                <Switch
+                  size="sm"
+                  value={goalOn}
+                  onToggle={() => {
+                    setGoalOn(!goalOn);
+                  }}
                 />
-              </Input>
+              </HStack>
+              {goalOn && (
+                <Input>
+                  <InputField
+                    onChangeText={onChange}
+                    value={value?.toString()}
+                    keyboardType="numeric"
+                    placeholder="10000"
+                  />
+                </Input>
+              )}
             </VStack>
             <FormControlError>
               <FormControlErrorText>

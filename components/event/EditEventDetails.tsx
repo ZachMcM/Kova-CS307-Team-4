@@ -35,7 +35,8 @@ export default function EditEventDetails({
         .number({ invalid_type_error: "Must be a valid number" })
         .min(1, { message: "Goal cannot be less than 1" })
         .nonnegative()
-        .nullish(),
+        .nullish()
+        .optional(),
       weightMultiplier: z.coerce
         .number({ invalid_type_error: "Must be a valid number" })
         .nullish(),
@@ -76,6 +77,14 @@ export default function EditEventDetails({
               path: ["repMultiplier"],
             });
           }
+        }
+
+        if (event.goal && !data.goal) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Goal is required",
+            path: ["goal"],
+          });
         }
       }
     });
@@ -162,32 +171,33 @@ export default function EditEventDetails({
           </FormControl>
         )}
       />
-      <Controller
-        control={form.control}
-        name="goal"
-        render={({ field: { onChange, value }, fieldState }) => (
-          <FormControl isInvalid={fieldState.invalid}>
-            <VStack space="sm">
-              <Heading size="md">Goal</Heading>
-              <Input>
-                <InputField
-                  onChangeText={onChange}
-                  value={value?.toString()}
-                  keyboardType="numeric"
-                />
-              </Input>
-            </VStack>
-            <FormControlError>
-              <FormControlErrorText>
-                {fieldState.error?.message || "Invalid goal"}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
+      {event.goal && (
+        <Controller
+          control={form.control}
+          name="goal"
+          render={({ field: { onChange, value }, fieldState }) => (
+            <FormControl isInvalid={fieldState.invalid}>
+              <VStack space="sm">
+                <Heading size="md">Goal</Heading>
+                <Input>
+                  <InputField
+                    onChangeText={onChange}
+                    value={value?.toString()}
+                    keyboardType="numeric"
+                  />
+                </Input>
+              </VStack>
+              <FormControlError>
+                <FormControlErrorText>
+                  {fieldState.error?.message || "Invalid goal"}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
+      )}
       {event.type != "total-time" && (
         <>
-          {" "}
           <Controller
             control={form.control}
             name="weightMultiplier"

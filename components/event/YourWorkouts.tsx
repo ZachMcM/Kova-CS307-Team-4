@@ -3,6 +3,7 @@ import {
   getExercisePoints,
   getProfileEventWorkouts,
   getWorkoutMinutes,
+  getWorkoutPoints,
 } from "@/services/groupEventServices";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -80,10 +81,9 @@ export default function YourWorkouts({ event }: { event: EventWithGroup }) {
                             workout.workoutData.startTime,
                             workout.workoutData.endTime!
                           ).toFixed(2)
-                        : workout.workoutData.exercises.reduce(
-                            (accum, curr) =>
-                              accum + getExercisePoints(event, curr),
-                            0
+                        : getWorkoutPoints(
+                            workout.workoutData.exercises,
+                            event
                           ).toFixed(2)}{" "}
                       {event.type == "total-time" ? "mins" : "pts"}
                     </Heading>

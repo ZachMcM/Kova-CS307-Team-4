@@ -186,6 +186,15 @@ export const getWorkoutMinutes = (start: number, end: number) => {
 
 // function to get the list of competitions the workout contributed to
 
+export const getWorkoutPoints = (exercises: ExerciseData[], event: Tables<'groupEvent'>) => {
+  let points = 0
+  for (const exercise of exercises) {
+    points += getExercisePoints(event, exercise)
+  }
+
+  return points
+}
+
 export const getWorkoutContributions = async (
   exercises: ExerciseData[],
   startTime: number,
@@ -206,9 +215,7 @@ export const getWorkoutContributions = async (
     if (event.type == "total-time") {
       value = getWorkoutMinutes(startTime, endTime);
     } else {
-      for (const exercise of exercises) {
-        value += getExercisePoints(event, exercise);
-      }
+      value = getWorkoutPoints(exercises, event)
     }
     contributions.push({
       competition: {
