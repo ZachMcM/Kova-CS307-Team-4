@@ -177,7 +177,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="tutorial-profile-1"
+        name="tutorial/tutorial-profile"
         options={{
           href: null
         }}

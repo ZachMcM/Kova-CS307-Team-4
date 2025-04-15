@@ -297,7 +297,7 @@ export default function FeedScreen() {
             Workout Feed
           </Text>
             <Button
-              onPress={() => router.replace("/tutorial-profile-1")}
+              onPress={() => router.replace("/tutorial/tutorial-profile")}
               className="w-0 h-0"
             >
               <Icon
