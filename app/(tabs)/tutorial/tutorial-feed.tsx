@@ -1,4 +1,5 @@
 import { Text } from "@/components/ui/text";
+import { Text as GText } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
@@ -9,7 +10,7 @@ import {
   HelpCircleIcon,
 } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { View, StyleSheet, ScrollView } from "react-native";
 import { useSession } from "@/components/SessionContext";
@@ -25,11 +26,13 @@ import {
   offset,
   shift,
 } from "react-native-spotlight-tour";
-import { TaggedFriend } from "@/components/WorkoutPost";
+import { TaggedFriend, workoutPostStyles } from "@/components/WorkoutPost";
 import { TutorialWorkoutPost } from "@/components/tutorial/TutorialWorkoutPost";
 import { Profile } from "@/types/profile-types";
 import { Modal, ModalBackdrop, ModalContent, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Heading } from "@/components/ui/heading";
+import { Avatar, AvatarFallbackText, AvatarImage } from "@/components/ui/avatar";
+import { Image } from "@/components/ui/image";
 
 
 export default function TutorialFeedScreen() {
@@ -164,7 +167,7 @@ export default function TutorialFeedScreen() {
     },
     {
       floatingProps: {
-        middleware: [offset(-100), shift(), flip()],
+        middleware: [offset(0), shift(), flip()],
       },
       render: ({previous, next, stop}) => {
         return (
@@ -368,20 +371,119 @@ export default function TutorialFeedScreen() {
                   taggedFriends={imageExercisePost.taggedFriends}
               />
             </AttachStep>
-            <AttachStep index={2} fill={true}>
-            <TutorialWorkoutPost
-                  username={imageThree.username || "Unknown user"}
-                  name={imageThree.name || "Unkown user"}
-                  avatar={imageThree.avatar}
-                  date={imageThree.date}
-                  title={imageThree.title || ""}
-                  description={imageThree.description || ""}
-                  exercises={imageThree.exercises}
-                  imageUrls={imageThree.images || undefined}
-                  isOwnPost={false}
-                  taggedFriends={imageThree.taggedFriends}
-              />
-            </AttachStep>
+
+                    <View style={workoutPostStyles.container}>
+                      {/* Header */}
+                      <View style={workoutPostStyles.header}>
+                          <View style={workoutPostStyles.userInfo}>
+                            <View style={workoutPostStyles.avatar}>
+                              <Avatar className="bg-indigo-600">
+                                {imageThree.avatar ? (
+                                  <AvatarImage source={{ uri: imageThree.avatar }}></AvatarImage>
+                                ) : (
+                                  <AvatarFallbackText className="text-white">
+                                    {imageThree.name}
+                                  </AvatarFallbackText>
+                                )}
+                              </Avatar>
+                            </View>
+                            <View>
+                              <HStack space="sm">
+                                <Heading>{imageThree.name}</Heading>
+                                <GText size="sm" className="mt-1">
+                                  (@{imageThree.username})
+                                </GText>
+                              </HStack>
+                              <Text style={workoutPostStyles.date}>{imageThree.date}</Text>
+                            </View>
+                          </View>
+                        <View style={workoutPostStyles.headerActions}>
+                        </View>
+                      </View>
+                      {/* Content */}
+                      <View style={workoutPostStyles.content}>
+                          <Text style={workoutPostStyles.title}>{imageThree.title}</Text>
+                          {imageThree.description.length > 0 ? (
+                            <Text
+                              style={[
+                                workoutPostStyles.description,
+                                false
+                                  ? workoutPostStyles.expandedDescription
+                                  : workoutPostStyles.collapsedDescription,
+                              ]}
+                              numberOfLines={false ? undefined : 2}
+                            >
+                              {imageThree.description}
+                            </Text>
+                          ) : (<></>)}
+                          {/* Exercise Tags */}
+                          <View style={workoutPostStyles.exerciseTags}>
+                            {imageThree.exercises.map((exercise, index) => (
+                              <View key={index} style={workoutPostStyles.tag}>
+                                <Text style={workoutPostStyles.tagText}>{exercise}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        {/* Workout Image */}
+                        {imageThree.images && imageThree.images.length > 0 ? (
+                          <ScrollView horizontal style={{ marginBottom: 12 }}>
+                            <HStack space = "md">
+                              {imageThree.images.map((url, index) => (
+                                <Image
+                                  key={index}
+                                  size = "2xl"
+                                  source={{ uri: url }}
+                                  className = "rounded-2xl"
+                                  alt = "false"
+                                />
+                              ))}
+                            </HStack>
+                          </ScrollView>
+                        ) : (
+                          <></>
+                        )}
+
+                        {/* Tagged Friends */}
+                        {imageThree.taggedFriends.length > 0 && (
+                          <View style={workoutPostStyles.taggedFriendsContainer}>
+                            <HStack className = "flex-wrap">
+                              <GText>With </GText>
+                              {imageThree.taggedFriends.map((friend, index) => (
+                                <Pressable
+                                  key={friend.name}>
+                                  <HStack space = "xs">
+                                    <Avatar size = "xs" className="bg-indigo-600">
+                                      {friend.avatar ? (
+                                        <AvatarImage source={{ uri: friend.avatar }}></AvatarImage>
+                                      ) : ( 
+                                        <AvatarFallbackText className="text-white">{friend.name}</AvatarFallbackText>
+                                      )}
+                                      </Avatar>
+                                    <GText className="font-bold text-blue-500">
+                                      {friend.name}
+                                      {index < imageThree.taggedFriends.length - 1 ? ", " : ""}
+                                    </GText>
+                                  </HStack>
+                                </Pressable>
+                              ))}
+                            </HStack>
+                          </View>
+                        )}
+
+                        {/* Engagement */}
+                        <AttachStep index={2} fill={true}>
+                        <View style={workoutPostStyles.engagement} className="w-1/3">
+                              <Text>
+                                {"♡ 0   "}
+                              </Text>
+                            <Text>
+                              💬 0
+                            </Text>
+                        </View>
+                        </AttachStep>
+                      </View>
+                    </View>
+              
             <TutorialWorkoutPost
                   username={imageFour.username || "Unknown user"}
                   name={imageFour.name || "Unkown user"}
@@ -414,6 +516,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     maxWidth: 300,
+    borderColor: "black",
+    borderWidth: 1
   },
   section: {
     marginTop: 30,

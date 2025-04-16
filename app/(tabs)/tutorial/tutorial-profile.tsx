@@ -50,6 +50,7 @@ import { TaggedFriend } from "@/components/WorkoutPost";
 import { TutorialWorkoutPost } from "@/components/tutorial/TutorialWorkoutPost";
 import { WorkoutHeader } from "@/components/WorkoutData";
 import { Profile } from "@/types/profile-types";
+import TutorialGroupCard from "@/components/tutorial/TutorialGroupCard";
 
 export default function TutorialProfileScreen() {
 
@@ -74,19 +75,19 @@ export default function TutorialProfileScreen() {
   } as Profile;
 
   const groups = [{
-    groupId: "",
-    icon: "",
+    groupId: "g1",
+    icon: "https://spntxjldrghjrhyhhncu.supabase.co/storage/v1/object/public/post-images/tutorial/John%20Kova.jpeg",
     goal: "Achieve a fraction of his majesty's power",
     title: "John Kova Cult",
   },
   {
-    groupId: "",
+    groupId: "g2",
     icon: "https://spntxjldrghjrhyhhncu.supabase.co/storage/v1/object/public/post-images/tutorial/Walter.jpeg",
     goal: "Jesse, we need to lift. I am the one who benches.",
     title: "Breaking Benches",
   },
   {
-    groupId: "",
+    groupId: "g3",
     icon: "",
     goal: "Getting huge together.",
     title: "Bar Brothers"
@@ -239,7 +240,7 @@ export default function TutorialProfileScreen() {
       render: ({ next, stop }) => (
         <View style={styles.stepContainer}>
           <HStack>
-            <Text style={styles.stepTitle}>This is your profile page</Text>
+            <Text style={styles.stepTitle}>This is Your Profile Page</Text>
           </HStack>
           <Text className="text-wrap mb-4">You can see a breakdown of your profile, edit your profile, and access your friends and followers by tapping on the friends, followers, or following numbers</Text>
           <Button onPress={next} action='kova'>
@@ -256,7 +257,7 @@ export default function TutorialProfileScreen() {
         return (
           <View style={styles.stepContainer}>
             <VStack>
-              <Text style={styles.stepTitle}>This is the bottom bar</Text>
+              <Text style={styles.stepTitle}>This is the Bottom Bar</Text>
               <Text className="text-wrap mb-4">Here, you can navigate between your profile, group page, feed, create a new post, or start a workout</Text>
             </VStack>
             <View style={styles.buttonContainer}>
@@ -278,7 +279,7 @@ export default function TutorialProfileScreen() {
     {
       render: ({ next, previous, stop }) => (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Access the settings page</Text>
+          <Text style={styles.stepTitle}>Access the Settings Page</Text>
           <Text className="text-wrap mb-4">You can log out and modify your account through this menu</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={previous} action='kova'>
@@ -298,7 +299,7 @@ export default function TutorialProfileScreen() {
     {
       render: ({ next, previous, stop }) => (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>View your groups</Text>
+          <Text style={styles.stepTitle}>View Your Groups</Text>
           <Text className="text-wrap mb-4">You can see a brief description of them here, and access them by tapping them or going through the groups tab</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={() => { previous(); scrollMore(-100); }} action='kova'>
@@ -321,7 +322,7 @@ export default function TutorialProfileScreen() {
       },
       render: ({ next, previous, stop }) => (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Breakdown of exercises you've favorited</Text>
+          <Text style={styles.stepTitle}>Breakdown of Exercises You've Favorited</Text>
           <Text className="text-wrap mb-4">Exercises can be favorited by tapping on the blue ribbon here, or when creating a template</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={() => { previous(); scrollMore(-600); }} action='kova'>
@@ -341,7 +342,7 @@ export default function TutorialProfileScreen() {
     {
       render: ({ next, previous, stop }) => (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Summary of your profile</Text>
+          <Text style={styles.stepTitle}>Summary of Your Profile</Text>
           <Text className="text-wrap mb-4">The summary includes workout statistics, most popular exercises, workout history, and post history.</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={() => { previous(); scrollMore(-600); }} action='kova'>
@@ -364,7 +365,7 @@ export default function TutorialProfileScreen() {
       },
       render: ({ next, previous, stop }) => (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>View workout data over different time periods</Text>
+          <Text style={styles.stepTitle}>View Workout Data Over Different Time Periods</Text>
           <Text className="text-wrap mb-4">Change what timeframe this graph data is displayed from by tapping the above icons</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={previous} action='kova'>
@@ -387,7 +388,7 @@ export default function TutorialProfileScreen() {
       },
       render: ({ next, previous, stop }) => (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>View most popular exercises</Text>
+          <Text style={styles.stepTitle}>View Most Popular Exercises</Text>
           <Text className="text-wrap mb-4">These exercises are the ones which you've performed the most sets on</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={() => { previous(); scrollMore(-600); }} action='kova'>
@@ -410,7 +411,7 @@ export default function TutorialProfileScreen() {
       },
       render: ({ next, previous, stop }) => (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>View workout history</Text>
+          <Text style={styles.stepTitle}>View Workout History</Text>
           <Text className="text-wrap mb-4">See all of your workouts that you've ever done! You can tap on one of the cards to see more details in your profile tab</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={() => { previous(); scrollMore(-600); }} action='kova'>
@@ -433,7 +434,7 @@ export default function TutorialProfileScreen() {
       },
       render: ({ next, previous, stop }) => (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>View post history</Text>
+          <Text style={styles.stepTitle}>View Post History</Text>
           <Text className="text-wrap mb-4">See all of your posts that you've ever made! You can enlarge the post in your profile view by tapping on it</Text>
           <View style={styles.buttonContainer}>
             <Button onPress={() => { previous(); scrollMore(-600); }} action='kova'>
@@ -460,7 +461,7 @@ export default function TutorialProfileScreen() {
               <ButtonText size='lg'>Previous</ButtonText>
             </Button>
             <View style={styles.buttonSpacer} />
-            <Button onPress={() => { stop(); router.replace("/tutorial/tutorial-feed"); }} action='kova'>
+            <Button onPress={() => { stop(); router.replace("/tutorial/tutorial-groups"); }} action='kova'>
               <ButtonText size='lg'>Next</ButtonText>
             </Button>
           </View>
@@ -705,22 +706,8 @@ export default function TutorialProfileScreen() {
                 <VStack space="sm">
                   <Heading>Your Groups</Heading>
                   <VStack space="md">
-                    {groups.map((group) => (    //inlining group component for the tutorial TODO fix text-wrapping issue
-                      <Card key={group.title} variant="outline">
-                        <HStack space="2xl">
-                          <Avatar className="bg-indigo-600" size="md">
-                            {group?.icon ? (
-                              <AvatarImage source={{ uri: group.icon }} />
-                            ) : (
-                              <AvatarFallbackText className="text-white">{group?.title![0]}</AvatarFallbackText>
-                            )}
-                          </Avatar>
-                          <VStack>
-                            <Heading size="md">{group.title}</Heading>
-                            <Text>{group.goal}</Text>
-                          </VStack>
-                        </HStack>
-                      </Card>
+                    {groups.map((group) => (
+                      <TutorialGroupCard key={group.groupId} group={group} />
                     ))}
                   </VStack>
                 </VStack>
@@ -969,6 +956,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     maxWidth: 300,
+    borderColor: "black",
+    borderWidth: 1
   },
   section: {
     marginTop: 30,

@@ -32,9 +32,9 @@ export default function GroupCard({ group }: { group: GroupOverview }) {
               <AvatarFallbackText className="text-white">{group.title[0]}</AvatarFallbackText>
             )}
           </Avatar>
-          <VStack>
-            <Heading size="md">{group.title}</Heading>
-            <Text>{group.goal}</Text>
+          <VStack className="flex-1">
+            <Heading className="flex-shrink flex-wrap" size="md">{group.title}</Heading>
+            <Text className="flex-shrink flex-wrap">{group.goal}</Text>
           </VStack>
         </HStack>
       </Card>
