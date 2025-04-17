@@ -95,6 +95,7 @@ export default function RootLayout() {
             <Stack.Screen name="change-email" options={{headerShown: false}} />
             <Stack.Screen name="change-username" options={{headerShown: false}} />
             <Stack.Screen name="privacy-editing" options={{headerShown: false}} />
+            <Stack.Screen name="delete-account" options={{headerShown: false}} />
           </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

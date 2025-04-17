@@ -5,7 +5,7 @@ import SettingsCard from "@/components/SettingsCard";
 import { HStack } from '@/components/ui/hstack';
 import { Button, ButtonText } from "@/components/ui/button";
 import { useRouter } from "expo-router";
-import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
+import { Icon, ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/icon';
 import { Heading } from "@/components/ui/heading";
 import { useState, useEffect } from "react";
 import { supabase } from '@/lib/supabase';
@@ -42,6 +42,11 @@ export default function SettingsScreen() {
       content: "/change-username"
     },
     {
+      attribute: "Delete Account",
+      type: "redirect",
+      content: "/delete-account"
+    },
+    {
       attribute: "Debug: Unit Testing",
       type: "banner"
     },
@@ -49,7 +54,7 @@ export default function SettingsScreen() {
       attribute: "Unit testing page",
       type: "redirect",
       content: "/unit-tests"
-    }
+    },
   ];
 
   useEffect(() => {
@@ -98,13 +103,17 @@ export default function SettingsScreen() {
         </HStack>
         <ScrollView className = "h-screen">
           <VStack>
+          <Button onPress={handleLogout} className = "mt-6 mb-3" action="kova">
+            <ButtonText className="text-white" size = "xl">Logout</ButtonText>
+            <Icon as={ChevronRightIcon} className = "m-0" color='white' size='xl'></Icon>
+          </Button>
             {settingsData.map((setting) => (
               <SettingsCard key={setting.attribute} setting={setting}></SettingsCard>
             ))}
-          </VStack>
-          <Button onPress={handleLogout} className = "mt-6 bg-red-500">
-            <ButtonText className="text-white" size = "xl">Logout</ButtonText>
+          <Button onPress={() => {router.replace("/delete-account")}} className = "mt-6 mb-3 bg-red-500">
+            <ButtonText className="text-white" size = "xl">Delete Account</ButtonText>
           </Button>
+          </VStack>
         </ScrollView>
       </VStack>
     </StaticContainer>

@@ -731,7 +731,7 @@ export const ProfileActivities = ({
                       <Button
                         onPress={() => { setFavoritesViewCount(favoritesViewCount + 4); }}
                       >
-                        <ButtonText>Render more Favorites</ButtonText>
+                        <ButtonText>Render more Exercises</ButtonText>
                       </Button>
                     )}
                   </Card>
