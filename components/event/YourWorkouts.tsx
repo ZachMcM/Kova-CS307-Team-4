@@ -2,6 +2,8 @@ import { calculateTime, formatCalculateTime } from "@/lib/calculateTime";
 import {
   getExercisePoints,
   getProfileEventWorkouts,
+  getWorkoutMinutes,
+  getWorkoutPoints,
 } from "@/services/groupEventServices";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -74,11 +76,16 @@ export default function YourWorkouts({ event }: { event: EventWithGroup }) {
                   </VStack>
                   <Box className="bg-secondary-400 rounded-full py-1 px-3">
                     <Heading size="sm">
-                      {workout.workoutData.exercises.reduce(
-                        (accum, curr) => accum + getExercisePoints(event, curr),
-                        0
-                      )}{" "}
-                      pts
+                      {event.type == "total-time"
+                        ? getWorkoutMinutes(
+                            workout.workoutData.startTime,
+                            workout.workoutData.endTime!
+                          ).toFixed(2)
+                        : getWorkoutPoints(
+                            workout.workoutData.exercises,
+                            event
+                          ).toFixed(2)}{" "}
+                      {event.type == "total-time" ? "mins" : "pts"}
                     </Heading>
                   </Box>
                 </HStack>

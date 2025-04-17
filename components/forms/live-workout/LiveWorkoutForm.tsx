@@ -112,6 +112,8 @@ export default function LiveWorkoutForm() {
       setValue("endTime", endTime);
       const contributions = await getWorkoutContributions(
         getValues("exercises"),
+        startTime,
+        endTime,
         session?.user.user_metadata.profileId
       );
       saveContributionsToStorage(contributions);
@@ -297,8 +299,8 @@ export default function LiveWorkoutForm() {
                         <Heading size="md">
                           {contribution.competition.title}
                         </Heading>
-                        <Heading size="lg">
-                          {contribution.points} Points
+                        <Heading size="lg" className="capitalize">
+                          {contribution.value.toFixed(2)} {contribution.type}
                         </Heading>
                       </HStack>
                     ))

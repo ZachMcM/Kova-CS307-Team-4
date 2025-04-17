@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Controller, FieldValues, useForm } from "react-hook-form";
+import { Controller, FieldValues, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import {
   AlertDialog,
@@ -22,7 +22,7 @@ import {
 } from "../ui/form-control";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
-import { CircleIcon } from "../ui/icon";
+import { CircleIcon, CloseIcon, Icon, InfoIcon } from "../ui/icon";
 import { Input, InputField } from "../ui/input";
 import {
   Radio,
@@ -39,6 +39,16 @@ import EditExercisePointsForm from "./ExercisePointsForm";
 import { Card } from "../ui/card";
 import { newEvent } from "@/services/groupEventServices";
 import { useRouter } from "expo-router";
+import { Pressable } from "../ui/pressable";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+} from "../ui/modal";
+import { Switch } from "../ui/switch";
 
 const schema = z
   .object({
@@ -55,13 +65,9 @@ const schema = z
       .array(),
     weightMultiplier: z.coerce
       .number({ invalid_type_error: "Must be a valid number" })
-      .min(1, { message: "Weight Multiplier cannot be less than 1" })
-      .nonnegative()
       .nullish(),
     repMultiplier: z.coerce
       .number({ invalid_type_error: "Must be a valid number" })
-      .min(1, { message: "Rep Multiplier cannot be less than 1" })
-      .nonnegative()
       .nullish(),
     title: z
       .string()
@@ -73,12 +79,58 @@ const schema = z
       .number({ invalid_type_error: "Must be a valid number" })
       .min(1, { message: "Goal cannot be less than 1" })
       .nonnegative()
-      .nullish(),
-    type: z.enum(["competition", "collaboration"]),
+      .nullish()
+      .optional(),
+    type: z.enum([
+      "competition",
+      "collaboration",
+      "total-time",
+      "single-workout",
+    ]),
   })
-  .refine((data) => data.start_date <= data.end_date, {
-    message: "End date must be after start date",
-    path: ["end_date"],
+  .superRefine((data, ctx) => {
+    // Validate that end_date is after start_date
+    if (data.start_date > data.end_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End date must be after start date",
+        path: ["end_date"],
+      });
+    }
+
+    // Only validate multipliers if type is not "total-time"
+    if (data.type !== "total-time") {
+      if (
+        data.weightMultiplier !== null &&
+        data.weightMultiplier !== undefined
+      ) {
+        if (data.weightMultiplier < 1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Weight Multiplier cannot be less than 1",
+            path: ["weightMultiplier"],
+          });
+        }
+      }
+
+      if (data.repMultiplier !== null && data.repMultiplier !== undefined) {
+        if (data.repMultiplier < 1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Rep Multiplier cannot be less than 1",
+            path: ["repMultiplier"],
+          });
+        }
+      }
+
+      if (data.type == "collaboration" && !data.goal) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Goal is required for Team Events",
+          path: ["goal"],
+        });
+      }
+    }
   });
 
 export type NewEventValues = z.infer<typeof schema>;
@@ -132,12 +184,22 @@ export default function EventForm({ groupId }: { groupId: string }) {
   const [showAlert, setShowAlert] = useState(false);
 
   function onSubmit(values: FieldValues) {
-    if ((values as NewEventValues).exercises.length != 0) {
+    if (eventType == "total-time") {
       createEvent(values as NewEventValues);
     } else {
-      setShowAlert(true);
+      if ((values as NewEventValues).exercises.length != 0) {
+        createEvent(values as NewEventValues);
+      } else {
+        setShowAlert(true);
+      }
     }
   }
+
+  const [typeModal, setTypeModal] = useState(false);
+
+  const [goalOn, setGoalOn] = useState(true);
+
+  const eventType = form.watch("type");
 
   return (
     // TODO need to add other fields to UI
@@ -171,19 +233,36 @@ export default function EventForm({ groupId }: { groupId: string }) {
         render={({ field: { onChange, value }, fieldState }) => (
           <FormControl isInvalid={fieldState.invalid}>
             <VStack space="sm">
-              <Heading size="md">Type</Heading>
+              <HStack space="sm" className="items-center">
+                <Heading size="md">Type</Heading>
+                <Pressable onPress={() => setTypeModal(true)}>
+                  <Icon size="md" as={InfoIcon} />
+                </Pressable>
+              </HStack>
               <RadioGroup value={value} onChange={onChange}>
-                <Radio value="competition" size="md">
-                  <RadioIndicator>
-                    <RadioIcon as={CircleIcon} />
-                  </RadioIndicator>
-                  <RadioLabel>Competition</RadioLabel>
-                </Radio>
                 <Radio value="collaboration" size="md">
                   <RadioIndicator>
                     <RadioIcon as={CircleIcon} />
                   </RadioIndicator>
-                  <RadioLabel>Collaboration</RadioLabel>
+                  <RadioLabel>Team Challenge</RadioLabel>
+                </Radio>
+                <Radio value="competition" size="md">
+                  <RadioIndicator>
+                    <RadioIcon as={CircleIcon} />
+                  </RadioIndicator>
+                  <RadioLabel>Points Race</RadioLabel>
+                </Radio>
+                <Radio value="total-time" size="md">
+                  <RadioIndicator>
+                    <RadioIcon as={CircleIcon} />
+                  </RadioIndicator>
+                  <RadioLabel>Endurance Challenge</RadioLabel>
+                </Radio>
+                <Radio value="single-workout" size="md">
+                  <RadioIndicator>
+                    <RadioIcon as={CircleIcon} />
+                  </RadioIndicator>
+                  <RadioLabel>Single Session Showdown</RadioLabel>
                 </Radio>
               </RadioGroup>
             </VStack>
@@ -192,6 +271,67 @@ export default function EventForm({ groupId }: { groupId: string }) {
                 {fieldState.error?.message}
               </FormControlErrorText>
             </FormControlError>
+            <Modal
+              isOpen={typeModal}
+              onClose={() => setTypeModal(false)}
+              size="md"
+              closeOnOverlayClick
+            >
+              <ModalBackdrop />
+              <ModalContent>
+                <ModalHeader>
+                  <Heading size="lg">About Event Types</Heading>
+                  <ModalCloseButton>
+                    <Icon
+                      as={CloseIcon}
+                      className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
+                    />
+                  </ModalCloseButton>
+                </ModalHeader>
+                <ModalBody className="mt-6">
+                  <Text size="md" className="text-typography-700">
+                    <VStack space="md">
+                      <Text className="text-typography-950">
+                        <Text className="font-bold text-typography-950">
+                          Team Challenge
+                        </Text>
+                        : Work together, win together. In a Team Challenge,
+                        everyone’s workout points contribute to a shared goal.
+                        Hit the target as a group and celebrate the win with
+                        your crew. Every effort counts!
+                      </Text>
+                      <Text className="text-typography-950">
+                        <Text className="font-bold text-typography-950">
+                          Points Race
+                        </Text>
+                        : It’s all about consistency and grind. Earn points from
+                        every workout you log, and climb the leaderboard by
+                        outworking the competition. The more you move, the
+                        higher you score. Can you take the top spot?
+                      </Text>
+                      <Text className="text-typography-950">
+                        <Text className="font-bold text-typography-950">
+                          Endurance Challenge
+                        </Text>
+                        : Who can stay active the longest? This challenge ranks
+                        users based on total workout time. Whether it’s yoga,
+                        lifting, or cardio, every minute you train brings you
+                        closer to victory.
+                      </Text>
+                      <Text className="text-typography-950">
+                        <Text className="font-bold text-typography-950">
+                          Single Session Showdown
+                        </Text>
+                        : Every workout is a chance to top the charts. In this
+                        event, workouts are ranked individually — not by total
+                        points per user. You can have multiple workouts on the
+                        leaderboard, so bring your A-game every session.
+                      </Text>
+                    </VStack>
+                  </Text>
+                </ModalBody>
+              </ModalContent>
+            </Modal>
           </FormControl>
         )}
       />
@@ -200,15 +340,33 @@ export default function EventForm({ groupId }: { groupId: string }) {
         name="goal"
         render={({ field: { onChange, value }, fieldState }) => (
           <FormControl isInvalid={fieldState.invalid}>
-            <VStack space="sm">
-              <Heading size="md">Goal</Heading>
-              <Input>
-                <InputField
-                  onChangeText={onChange}
-                  value={value?.toString()}
-                  keyboardType="numeric"
+            <VStack space="md">
+              <HStack className="items-center">
+                <Heading size="md">
+                  Goal{" "}
+                  {eventType &&
+                    (eventType == "total-time"
+                      ? "(Number of minutes)"
+                      : "(Number of exercise points)")}
+                </Heading>
+                <Switch
+                  size="sm"
+                  value={goalOn}
+                  onToggle={() => {
+                    setGoalOn(!goalOn);
+                  }}
                 />
-              </Input>
+              </HStack>
+              {goalOn && (
+                <Input>
+                  <InputField
+                    onChangeText={onChange}
+                    value={value?.toString()}
+                    keyboardType="numeric"
+                    placeholder="10000"
+                  />
+                </Input>
+              )}
             </VStack>
             <FormControlError>
               <FormControlErrorText>
@@ -273,60 +431,67 @@ export default function EventForm({ groupId }: { groupId: string }) {
           />
         </VStack>
       </Card>
-      <Controller
-        control={form.control}
-        name="weightMultiplier"
-        render={({ field: { onChange, value }, fieldState }) => (
-          <FormControl isInvalid={fieldState.invalid}>
-            <VStack space="sm">
-              <Heading size="md">Weight Multiplier</Heading>
-              <Input>
-                <InputField
-                  onChangeText={onChange}
-                  value={value?.toString()}
-                  keyboardType="numeric"
-                />
-              </Input>
-            </VStack>
-            <FormControlError>
-              <FormControlErrorText>
-                {fieldState.error?.message || "Invalid weight multiplier"}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="repMultiplier"
-        render={({ field: { onChange, value }, fieldState }) => (
-          <FormControl isInvalid={fieldState.invalid}>
-            <VStack space="sm">
-              <Heading size="md">Rep Multiplier</Heading>
-              <Input>
-                <InputField
-                  onChangeText={onChange}
-                  value={value?.toString()}
-                  keyboardType="numeric"
-                />
-              </Input>
-            </VStack>
-            <FormControlError>
-              <FormControlErrorText>
-                {fieldState.error?.message || "Invalid rep multiplier"}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
-      <VStack space="sm">
-        <Heading size="md">Edit Exercise Point Values</Heading>
-        {exercisesPending ? (
-          <Spinner />
-        ) : (
-          <EditExercisePointsForm form={form} allExercises={allExercises!} />
-        )}
-      </VStack>
+      {eventType != "total-time" && (
+        <>
+          <Controller
+            control={form.control}
+            name="weightMultiplier"
+            render={({ field: { onChange, value }, fieldState }) => (
+              <FormControl isInvalid={fieldState.invalid}>
+                <VStack space="sm">
+                  <Heading size="md">Weight Multiplier</Heading>
+                  <Input>
+                    <InputField
+                      onChangeText={onChange}
+                      value={value?.toString()}
+                      keyboardType="numeric"
+                    />
+                  </Input>
+                </VStack>
+                <FormControlError>
+                  <FormControlErrorText>
+                    {fieldState.error?.message || "Invalid weight multiplier"}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="repMultiplier"
+            render={({ field: { onChange, value }, fieldState }) => (
+              <FormControl isInvalid={fieldState.invalid}>
+                <VStack space="sm">
+                  <Heading size="md">Rep Multiplier</Heading>
+                  <Input>
+                    <InputField
+                      onChangeText={onChange}
+                      value={value?.toString()}
+                      keyboardType="numeric"
+                    />
+                  </Input>
+                </VStack>
+                <FormControlError>
+                  <FormControlErrorText>
+                    {fieldState.error?.message || "Invalid rep multiplier"}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
+          />
+          <VStack space="sm">
+            <Heading size="md">Edit Exercise Point Values</Heading>
+            {exercisesPending ? (
+              <Spinner />
+            ) : (
+              <EditExercisePointsForm
+                form={form}
+                allExercises={allExercises!}
+              />
+            )}
+          </VStack>
+        </>
+      )}
       <Button action="kova" size="lg" onPress={form.handleSubmit(onSubmit)}>
         <ButtonText>Save Event</ButtonText>
         {isPending && <ButtonSpinner color="#FFF" />}

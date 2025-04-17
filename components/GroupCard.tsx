@@ -15,7 +15,6 @@ export default function GroupCard({ group }: { group: GroupOverview }) {
   return (
     <Pressable
       onPress={() => {
-          console.log("Adding id: " + group.groupId)
           router.push({
             pathname: "/group/[id]",
             params: { id: group.groupId },
