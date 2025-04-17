@@ -37,25 +37,6 @@ import { Image } from "@/components/ui/image";
 
 export default function TutorialFeedScreen() {
 
-  const demoProfile = {  //Every empty string is an unused element for this tutorial page
-    id: "",
-    user_id: "",
-    username: "jkova",
-    name: "John Kova",
-    avatar: "https://spntxjldrghjrhyhhncu.supabase.co/storage/v1/object/public/post-images/tutorial/John%20Kova.jpeg",
-    private: "",
-    friends: 13,
-    following: 25,
-    followers: 1000,
-    age: 21,
-    gender: "Male",
-    weight: 280,
-    location: "Purdue University, West Lafayette",
-    goal: "Becoming the strongest man on the block",
-    bio: "The entire world shall know the name John Kova. Tremble from my almighty power.",
-    achievement: "Benching 350 lbs",
-    privacy_settings: "",
-  } as Profile;
 
   const exercisePost = {
     id: "p1",
@@ -256,9 +237,7 @@ export default function TutorialFeedScreen() {
   const { session, showTutorial, updateShowTutorial} = useSession();
 
   const leaveTutorial = () => {
-    if (showTutorial) {
-      updateShowTutorial(false);
-    }
+    updateShowTutorial(false);
     router.replace(`/profiles/${session?.user.id}`);
     setRenderPopover(false);
   }

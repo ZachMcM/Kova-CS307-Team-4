@@ -24,7 +24,7 @@ export default function RegisterScreen() {
 
   const toast = useToast();
   const router = useRouter();
-  const { createAccount, setSessionLoading, sessionLoading } = useSession();
+  const { createAccount, setSessionLoading, sessionLoading, showTutorial } = useSession();
 
   return (
     <Container>
@@ -113,10 +113,7 @@ export default function RegisterScreen() {
             onPress={() => {
               setSessionLoading(true)
               createAccount(email, password, confirmPassword, username, displayName).then((signUpData) => { 
-                router.replace({
-                  pathname: "/(tabs)/profiles/[id]",
-                  params: { id: signUpData.user.id}
-                });
+                router.replace("/tutorial/tutorial-profile");
                 setSessionLoading(false)
                 showSuccessToast(toast, "Welcome to Kova!")
               }).catch(error => {

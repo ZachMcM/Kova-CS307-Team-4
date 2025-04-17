@@ -487,9 +487,7 @@ export default function TutorialProfileScreen() {
   const { session, showTutorial, updateShowTutorial } = useSession();
 
   const leaveTutorial = () => {
-    if (showTutorial) {
-      updateShowTutorial(false);
-    }
+    updateShowTutorial(false);
     router.replace(`/profiles/${session?.user.id}`);
     setRenderPopover(false);
   }
