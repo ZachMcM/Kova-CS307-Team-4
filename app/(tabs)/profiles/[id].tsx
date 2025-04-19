@@ -173,6 +173,8 @@ export default function ProfileScreen() {
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       queryClient.invalidateQueries({ queryKey: ["weight", id] });
+      queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });
       if (profile && session?.user.id === id) {
         fetchOwnPosts();
         console.log("fetching user posts");
@@ -185,6 +187,8 @@ export default function ProfileScreen() {
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["privacy_data", id] });
     queryClient.invalidateQueries({ queryKey: ["weight", id] });
+    queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
+    queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });
   }, []);
 
   useEffect(() => {

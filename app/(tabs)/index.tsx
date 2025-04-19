@@ -4,6 +4,7 @@ import { Redirect } from "expo-router";
 import { useEffect, useState } from 'react';
 import { boolean } from 'zod';
 import { Text } from "@/components/ui/text";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function IndexScreen() {
@@ -18,7 +19,6 @@ export default function IndexScreen() {
       .select("show_tutorial")
       .eq('userId', session.user.id)
       .then(({data: tutorialData}) => {
-        console.log(JSON.stringify(tutorialData));
         if (tutorialData) setShowTutorial(tutorialData[0].show_tutorial);
       });
     } else {
