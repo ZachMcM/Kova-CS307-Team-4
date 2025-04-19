@@ -280,7 +280,7 @@ export const uploadProfilePicture = async (userId: string, file: File) => {
   }
 }
 
-export const updateProfileGoals = async (userId: string, goals: string) => {
+export const updateProfileGoals = async (userId: string, goals: JSON[]) => {
   console.log("Updating goals for userId:", userId, "with goals:", goals);
   const { error } = await supabase
     .from("profile")
@@ -290,6 +290,9 @@ export const updateProfileGoals = async (userId: string, goals: string) => {
     .eq("userId", userId);
 
   if (error) {
-    throw new Error(error.message);
+    return false;
+  }
+  else {
+    return true;
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, AlertIcon, AlertText } from "./ui/alert";
 import { Heading } from "./ui/heading";
 import { CheckCircleIcon, CircleIcon, CloseIcon, Icon, InfoIcon } from "./ui/icon";
@@ -11,36 +11,50 @@ import { formatDate } from "./CommentCard";
 import { Text } from "./ui/text";
 import { Button, ButtonText } from "./ui/button";
 import { updateProfileGoals } from "@/services/profileServices";
+import { useToast } from "./ui/toast";
+import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 
-export default function PersonalGoals({goals, userId, profileUserId} : {goals: string, userId: string, profileUserId: string}) {
-  console.log("User goals:", goals);
-
-  const stringifiedGoals = JSON.stringify(goals);
+export default function PersonalGoals({goals, userId, profileUserId} : {goals: JSON[], userId: string, profileUserId: string}) {
+  const toast = useToast();
+  const [isAdding, setIsAdding] = useState(false);
   
-  const [userGoals, setUserGoals] = useState<any[]>(() => {
-    try {
-      return JSON.parse(stringifiedGoals);
-    }
-    catch (error) {
-      console.error("Error parsing user goals:", error);
-      return [];
-    }
+  // Parse goals once during initial state setup
+  const [userGoals, setUserGoals] = useState<JSON[]>(() => {
+    return goals;
   });
 
-  const deleteGoal = (goal: any) => {
-    setUserGoals((prevGoals) => prevGoals.filter((g) => g !== goal));
+  useEffect(() => {
+    setUserGoals(goals);
+  }, [goals]);
+
+  const deleteGoal = (goal: JSON) => {
+    setUserGoals((prevGoals: JSON[]) => prevGoals.filter((g) => g !== goal));
   }
 
-  const handleGoalPress = (goal: any) => {
-    setUserGoals((prevGoals) => {
-      const updatedGoals = prevGoals.map((g) => {
-        if (g === goal) {
-          return { ...g, progress: g.progress === 100 ? 0 : 100 };
-        }
-        return g;
+  const handleGoalPress = (goal: JSON) => {
+    if (userId === profileUserId) {
+      setUserGoals((prevGoals: JSON[]) => {
+        const updatedGoals = prevGoals.map((g: any) => {
+          if (g === goal) {
+            return { ...g, progress: g.progress === 100 ? 0 : 100 };
+          }
+          return g;
+        });
+        return updatedGoals;
       });
-      return updatedGoals;
-    });
+    }
+  };
+
+  const handleSaveGoals = async () => {
+    // Pass userGoals directly, not as a parameter
+    const success = await updateProfileGoals(userId, userGoals)
+    
+    if (success) {
+      showSuccessToast(toast, "Goals saved successfully!");
+    }
+    else {
+      showErrorToast(toast, "Failed to save goals. Please try again.");
+    }
   };
 
   return (
@@ -50,8 +64,8 @@ export default function PersonalGoals({goals, userId, profileUserId} : {goals: s
         <Text size = "sm" className="text-gray-600">You can add up to 5 personal goals.</Text>
       )}
       {userGoals && userGoals.length > 0 ? (
-        <VStack space="md" className = "mt-3 mb-3">
-          {userGoals.map((goal) => (
+        <VStack space="md" className = "mt-3">
+          {userGoals.map((goal: any) => (
             <Card variant="outline" className="p-6" key = {goal.reps + goal.weight + goal.exercise}>
               {userId === profileUserId && (
                 <TouchableOpacity className = "absolute top-2 right-2" onPress = {() => deleteGoal(goal)}>
@@ -75,18 +89,24 @@ export default function PersonalGoals({goals, userId, profileUserId} : {goals: s
           ))}
         </VStack>
       ) : (
-        <Alert action="muted" variant="solid" className = "mt-3 mb-3">
+        <Alert action="muted" variant="solid" className = "mt-3">
           <AlertIcon as={InfoIcon} />
           <AlertText>No personal goals</AlertText>
         </Alert>
       )}
       {userId === profileUserId && goals.length < 5 && (
-        <VStack>
+        <VStack className = "mt-3">
           <HStack className="items-stretch justify-between flex-row">
-            <Button onPress = {() => {updateProfileGoals(userId, JSON.stringify(userGoals))}}>
-              <ButtonText>+ Add Goal</ButtonText>
-            </Button>
-            <Button className = "bg-[#397a2c]" onPress = {() => {updateProfileGoals(userId, JSON.stringify(userGoals))}}>
+            {!isAdding ? (
+              <Button onPress = {() => {}}>
+                <ButtonText>+ Add Goal</ButtonText>
+              </Button>
+            ) : (
+              <Button onPress = {() => {}}>
+                <ButtonText>Create Goal</ButtonText>
+              </Button>
+            )}
+            <Button className = "bg-[#397a2c]" onPress = {handleSaveGoals}>
               <ButtonText>Save</ButtonText>
             </Button>
           </HStack>

@@ -16,7 +16,7 @@ export type PrivateProfile = {
   bio: string;
   achievement: string;
   privacy_settings: any;
-  goals: string;
+  goals: JSON[];
 };
 
 export type PublicProfile = {
@@ -37,7 +37,7 @@ export type PublicProfile = {
   bio: string;
   achievement: string;
   privacy_settings: any;
-  goals: string;
+  goals: JSON[];
 };
 
 export type Profile = PublicProfile | PrivateProfile;

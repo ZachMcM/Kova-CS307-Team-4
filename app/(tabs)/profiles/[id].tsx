@@ -1202,7 +1202,7 @@ export default function ProfileScreen() {
               </VStack>
             </VStack>
           )}
-        {profile && (
+        {profile && typeof id === "string" && userId && (
           <>
             <FavoriteExercises />
             <PersonalGoals goals = {profile.goals} userId = {userId} profileUserId = {id}/>
