@@ -1,4 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import { deleteAllUserFavorites } from "@/services/exerciseServices";
+import { leaveAllUserGroups } from "@/services/groupServices";
+import { deleteAllUserLikes } from "@/services/likeServices";
 import { AuthAccountResponse } from "@/types/extended-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
@@ -60,6 +63,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("session ", session);
       setSession(session);
     });
 
@@ -85,7 +89,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       throw new Error("Password and confirmed password\nmust match");
     }
 
-    if (userUsername == "") {
+    if (userUsername == "" || userUsername == null) {
       throw new Error("Username cannot be blank");
     }
 
@@ -286,7 +290,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       throw new Error("Verification Password is not correct")
     }
 
-    if (newUsername == "") {
+    if (newUsername == "" || newUsername == null) {
       throw new Error("Username cannot be blank");
     }
 
@@ -318,22 +322,63 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }
 
   const deleteAccount = async (verifyPassword: string) => {
-    
-    const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
-      password: verifyPassword
-    });
 
-    if (verifyError || !verifyData) {
-      throw new Error("Verification Password is not correct")
-    }
+      //Verifying the password before making any changes on database side
+      const { data: verifyData, error: verifyError } = await supabase.rpc('verify_user_password', {
+        password: verifyPassword
+      });
 
-    //TODO check if these are the correct steps
-    signOutUser();
-    console.log("Delete account to be implemented");
-    AsyncStorage.clear();
-    setSession(null);
-    setSessionLoading(false);
-    setOTPSignIn(false);
+      if (verifyError || !verifyData) {
+        throw new Error("Verification Password is not correct")
+      }
+
+      let userId = session?.user.id;
+      let profileId = session?.user?.user_metadata.profileId;
+
+      if (userId === "" || userId === null || profileId === "" || profileId === null || !userId || !profileId) {
+        throw new Error("Could not fetch user identification. Please try logging back in.");
+      }
+
+      //Making sure the user isn't the sole owner of any group
+      //TODO (rpc)
+
+      try {
+      //Deleting any groups the user is the owner and only member of
+      //TODO (rpc)
+
+      //Deleting user's favorite exerices
+      await deleteAllUserFavorites(profileId);
+
+      //Deleting user's likes
+      await deleteAllUserLikes(userId);
+
+      //Deleting user's following and friend relations 
+      //TODO (rpc)
+
+      //Deleting all of user's group relations 
+      await leaveAllUserGroups(profileId);
+
+      //Deleting posts, and all associated likes and comments
+      //TODO (rpc)
+
+      //Setting user profile fields to deleted profile fields
+      //TODO (rpc)
+
+      //If everything else has succeeded, set deleted profile fields in the auth table
+      //TODO (rpc)
+      } catch (error) {
+        console.log("Delete account error: ", error);
+        throw new Error("Error in deleting user account. Try again later.")
+      }
+
+
+      //TODO check if these are the correct steps
+      //signOutUser();
+      //console.log("Delete account to be implemented");
+      //AsyncStorage.clear();
+      //setSession(null);
+      //setSessionLoading(false);
+      //setOTPSignIn(false);
   }
 
   const updateShowTutorial = async (updateTutorial: boolean) => {

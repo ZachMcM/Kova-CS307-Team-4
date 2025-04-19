@@ -144,6 +144,7 @@ export default function TabLayout() {
         name="index"
         options={{
           href: null, // Hide from navigation
+          headerShown: false
         }}
       />
       <Tabs.Screen

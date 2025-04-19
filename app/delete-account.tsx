@@ -112,16 +112,15 @@ export default function deleteAccountScreen() {
                         <ButtonText>Cancel</ButtonText>
                       </Button>
                       <Button size="sm" variant="solid" className="bg-red-500" onPress={() => {
-                        deleteAccount(verifyPassword)
+                        /*deleteAccount(verifyPassword)
                         .then(() => {
                             showSuccessToast(toast, "Successfully deleted Kova Account")
                             router.replace("/login")
                         }).catch((error) => {
-                            console.log(error)
                             showErrorToast(toast, error.message)
                         }).finally(() => {
                             setShowAlertDialog(false);
-                        })
+                        })*/
                       }}>
                         <ButtonText className="text-white">Delete</ButtonText>
                       </Button>

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Redirect } from "expo-router";
 import { useEffect, useState } from 'react';
 import { boolean } from 'zod';
+import { Text } from "@/components/ui/text";
 
 
 export default function IndexScreen() {
@@ -20,6 +21,8 @@ export default function IndexScreen() {
         console.log(JSON.stringify(tutorialData));
         if (tutorialData) setShowTutorial(tutorialData[0].show_tutorial);
       });
+    } else {
+      setShowTutorial(false);
     }
   }
 
@@ -27,7 +30,7 @@ export default function IndexScreen() {
     s2();
   }, [])
 
-  return showTutorial == null ? (<></>) : (
+  return showTutorial == null ? (<><Text>Loading</Text></>) : (
     session == null ? (
       <Redirect href={"/login"}></Redirect>
     ) : (showTutorial ? (

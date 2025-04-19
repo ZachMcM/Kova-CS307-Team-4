@@ -201,6 +201,13 @@ export async function leaveGroup(groupId: string, profileId: string) {
         .eq("profileId", profileId);
 }
 
+export async function leaveAllUserGroups(profileId: string) {
+  await supabase
+      .from("groupRel")
+      .delete()
+      .eq("profileId", profileId);
+}
+
 export async function joinGroup(groupId: string, profileId: string) {
     await supabase
         .from("groupRel")
