@@ -1205,7 +1205,7 @@ export default function ProfileScreen() {
         {profile && (
           <>
             <FavoriteExercises />
-            <PersonalGoals goals = {profile.goals}/>
+            <PersonalGoals goals = {profile.goals} userId = {userId} profileUserId = {id}/>
             <ProfileActivities
               posts={posts as Post[]}
               isLoading={postsIsLoading}

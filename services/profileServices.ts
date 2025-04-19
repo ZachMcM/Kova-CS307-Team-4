@@ -279,3 +279,17 @@ export const uploadProfilePicture = async (userId: string, file: File) => {
     throw new Error("Failed to upload profile picture");
   }
 }
+
+export const updateProfileGoals = async (userId: string, goals: string) => {
+  console.log("Updating goals for userId:", userId, "with goals:", goals);
+  const { error } = await supabase
+    .from("profile")
+    .update({
+      goals: goals,
+    })
+    .eq("userId", userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}

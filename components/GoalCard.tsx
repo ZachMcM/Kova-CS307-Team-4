@@ -2,34 +2,32 @@ import { Card } from "./ui/card";
 import { VStack } from "./ui/vstack";
 import { Heading } from "./ui/heading";
 import { HStack } from "./ui/hstack";
-import { CheckCircleIcon, CircleIcon, Icon } from "./ui/icon";
+import { CheckCircleIcon, CircleIcon, CloseIcon, Icon } from "./ui/icon";
 import { Progress, ProgressFilledTrack } from "./ui/progress";
 import { Text } from "./ui/text";
 import { formatDate } from "./CommentCard";
+import { TouchableOpacity } from "react-native";
 
 
-export default function GoalCard ({goal}: {goal: any}) {
+export default function GoalCard ({goal, removeFunction}: {goal: any, removeFunction: any}) {
   console.log(goal);
 
   return (
     <Card variant="outline" className="p-6">
-      <VStack>
-        <HStack className = "items-center justify-between mb-1">
+      <TouchableOpacity className = "absolute top-2 right-2" onPress={removeFunction(goal)}>
+        <Icon as={CloseIcon} className = "text-gray-400"></Icon>
+      </TouchableOpacity>
+      <HStack className = "justify-between flex-row">
+        <VStack>
           <Heading>{goal.reps} x {goal.exercise} @ {goal.weight}</Heading>
-          {goal.progress == 100 ? (
-            <Icon as={CheckCircleIcon} size="lg" className="ml-2 text-[#6FA8DC]" />
-          ) : (
-            <Icon as={CircleIcon} size="lg" className="ml-2 text-[#6FA8DC]" />
-          )}
-        </HStack>
-        <HStack className = "items-center justify-between mb-1">
           <Text>Set on: {formatDate(goal.created)}</Text>
-          <Text>{goal.progress}%</Text>
-        </HStack>
-        <Progress value = {goal.progress} size = "md" orientation = "horizontal">
-          <ProgressFilledTrack></ProgressFilledTrack>
-        </Progress>
-      </VStack>
+        </VStack>
+        {goal.progress > 10 ? (
+          <Icon as={CheckCircleIcon} className="ml-2 mt-2 text-[#6FA8DC] h-10 w-10" />
+        ) : (
+          <Icon as={CircleIcon} className="ml-2 mt-2 text-[#6FA8DC] h-10 w-10" />
+        )}
+      </HStack>
     </Card>
   );
 }
