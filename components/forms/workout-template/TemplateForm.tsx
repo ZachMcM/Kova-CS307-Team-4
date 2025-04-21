@@ -125,6 +125,7 @@ export default function TemplateForm() {
           {
             reps: 0,
             weight: 0,
+            cooldown: false,
           },
         ],
       });
@@ -141,6 +142,7 @@ export default function TemplateForm() {
           {
             distance: 0,
             time: 0,
+            cooldown: false,
           },
         ],
       });

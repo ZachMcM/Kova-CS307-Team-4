@@ -695,7 +695,9 @@ export const ProfileActivities = ({
                             <Icon as={InfoIcon} size="xl" />
                           </Pressable>
                         </HStack>
-                        <Heading size="md">Personal Best: {favorite.weight} {favorite.unit}</Heading>
+                        {favorite.weight > 0 && (  
+                          <Heading size="md">Personal Best: {favorite.weight} {favorite.unit}</Heading>
+                        )}
                         <Text size="md">You have done {favorite.count} sets of this exercise!</Text>
                         <Box className="flex flex-row flex-wrap gap-2">
                           {favorite.tags && favorite.tags.map((tag) => (

@@ -14,6 +14,7 @@ import { Controller, useFieldArray, useWatch } from "react-hook-form";
 import { TextInput } from "react-native";
 import { useLiveWorkout } from "./LiveWorkoutContext";
 import { TimeInput } from "../workout-template/ExerciseDataForm";
+import { useState } from "react";
 
 export default function LiveExerciseForm({
   exercise,
@@ -83,84 +84,109 @@ export default function LiveExerciseForm({
                 className: "grid-cols-8",
               }}
             >
+              {/* First column - Set number or Cooldown */}
               <GridItem
                 className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
                 _extra={{
                   className: "col-span-2",
                 }}
               >
-                <Text size="md" className="font-bold text-typography-900">
-                  {i + 1}
-                </Text>
-              </GridItem>
-              <GridItem
-                className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
-                _extra={{
-                  className: "col-span-2",
-                }}
-              >
-                {!exercise.info.type || exercise.info.type === "WEIGHTS" ? (
-                  <Controller
-                    control={control}
-                    name={`exercises.${index}.sets.${i}.weight`}
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        placeholder="0"
-                        id={`weight-${i}`}
-                        value={value?.toString() || ""}
-                        onChangeText={(text) => onChange(Number(text) || 0)}
-                        className="font-bold text-typography-900 w-full h-full text-center"
-                        keyboardType="numeric"
-                      />
-                    )}
-                  />
+                {set.cooldown ? (
+                  <Text size="md" className="font-bold text-typography-900">
+                    Cooldown
+                  </Text>
                 ) : (
-                  <Controller
-                    control={control}
-                    name={`exercises.${index}.sets.${i}.distance`}
-                    render={({ field: { onChange, value } }) => (
-                      <Box>
-                        <TextInput
-                          placeholder="0"
-                          id={`distance-${i}`}
-                          value={value?.toString() || ""}
-                          onChangeText={(text) => onChange(Number(text) || 0)}
-                          className="font-bold text-typography-900 w-full h-full text-center"
-                          keyboardType="numeric"
-                        />
-                        <Text className="absolute top-1/2 -translate-y-1/2 left-6">
-                          mi
-                        </Text>
-                      </Box>
-                    )}
-                  />
+                  <Text size="md" className="font-bold text-typography-900">
+                    {i + 1}
+                  </Text>
                 )}
               </GridItem>
+              
+              {/* Second column - Weight/Distance or empty for cooldown */}
               <GridItem
                 className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
                 _extra={{
                   className: "col-span-2",
                 }}
               >
-                {!exercise.info.type || exercise.info.type === "WEIGHTS" ? (
-                  <Controller
-                    control={control}
-                    name={`exercises.${index}.sets.${i}.reps`}
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        placeholder="0"
-                        id={`weight-${i}`}
-                        value={value?.toString() || ""}
-                        onChangeText={(text) => onChange(Number(text) || 0)}
-                        className="font-bold text-typography-900 w-full h-full text-center"
-                        keyboardType="numeric"
+                {!set.cooldown ? (
+                  <>
+                    {!exercise.info.type || exercise.info.type === "WEIGHTS" ? (
+                      <Controller
+                        control={control}
+                        name={`exercises.${index}.sets.${i}.weight`}
+                        render={({ field: { onChange, value } }) => (
+                          <TextInput
+                            placeholder="0"
+                            id={`weight-${i}`}
+                            value={value?.toString() || ""}
+                            onChangeText={(text) => onChange(Number(text) || 0)}
+                            className="font-bold text-typography-900 w-full h-full text-center"
+                            keyboardType="numeric"
+                          />
+                        )}
+                      />
+                    ) : (
+                      <Controller
+                        control={control}
+                        name={`exercises.${index}.sets.${i}.distance`}
+                        render={({ field: { onChange, value } }) => (
+                          <Box>
+                            <TextInput
+                              placeholder="0"
+                              id={`distance-${i}`}
+                              value={value?.toString() || ""}
+                              onChangeText={(text) => onChange(Number(text) || 0)}
+                              className="font-bold text-typography-900 w-full h-full text-center"
+                              keyboardType="numeric"
+                            />
+                            <Text className="absolute top-1/2 -translate-y-1/2 left-6">
+                              mi
+                            </Text>
+                          </Box>
+                        )}
                       />
                     )}
-                  />
+                  </>
                 ) : (
-                  <TimeInput control={control} index={index} i={i} />
+                  <Text>-</Text>
                 )}
               </GridItem>
+              
+              {/* Third column - Reps/Time */}
+              <GridItem
+                className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
+                _extra={{
+                  className: "col-span-2",
+                }}
+              >
+                {!set.cooldown ? (
+                  <>
+                    {!exercise.info.type || exercise.info.type === "WEIGHTS" ? (
+                      <Controller
+                        control={control}
+                        name={`exercises.${index}.sets.${i}.reps`}
+                        render={({ field: { onChange, value } }) => (
+                          <TextInput
+                            placeholder="0"
+                            id={`reps-${i}`}
+                            value={value?.toString() || ""}
+                            onChangeText={(text) => onChange(Number(text) || 0)}
+                            className="font-bold text-typography-900 w-full h-full text-center"
+                            keyboardType="numeric"
+                          />
+                        )}
+                      />
+                    ) : (
+                      <TimeInput control={control} name={`exercises.${index}.sets.${i}.time`} />
+                    )}
+                  </>
+                ) : (
+                  <TimeInput control={control} name={`exercises.${index}.sets.${i}.time`} />
+                )}
+              </GridItem>
+              
+              {/* Fourth column - Done checkbox */}
               <GridItem
                 className="flex flex-row justify-end"
                 _extra={{
@@ -188,6 +214,8 @@ export default function LiveExerciseForm({
                   )}
                 />
               </GridItem>
+              
+              {/* Fifth column - Delete button */}
               <GridItem
                 className="flex flex-row justify-end"
                 _extra={{
@@ -212,27 +240,45 @@ export default function LiveExerciseForm({
             </Grid>
           ))}
         </VStack>
+          {exercise.info.type && exercise.info.type !== "WEIGHTS" && (
+            <Button
+              variant="solid"
+              action="primary"
+              size="sm"
+              onPress={() => {
+                addSet({
+                  time: 0,
+                  done: false,
+                  cooldown: true,
+                })
+              }}
+            >
+              <ButtonText>Add Cooldown</ButtonText>
+              <ButtonIcon as={AddIcon} />
+            </Button>
+          )}
         <Button
-          variant="solid"
-          action="secondary"
-          size="sm"
-          onPress={() => {
-            if (!exercise.info.type || exercise.info.type === "WEIGHTS") {
-              addSet({
-                reps: 0,
-                weight: 0,
-                done: false,
-              })
-            }
-            else {
-              addSet({
-                distance: 0,
-                time: 0,
-                done: false,
-              })
-            }
-          }}
-        >
+            variant="solid"
+            action="secondary"
+            size="sm"
+            onPress={() => {
+              if (!exercise.info.type || exercise.info.type === "WEIGHTS") {
+                addSet({
+                  reps: 0,
+                  weight: 0,
+                  done: false,
+                })
+              }
+              else {
+                addSet({
+                  distance: 0,
+                  time: 0,
+                  done: false,
+                  cooldown: false,
+                })
+              }
+            }}
+          >
           <ButtonText>Add Set</ButtonText>
           <ButtonIcon as={AddIcon} />
         </Button>

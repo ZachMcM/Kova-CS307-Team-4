@@ -484,20 +484,33 @@ export default function PostDetails() {
                   {post.workoutData.exercises.reduce((rows: Exercise[][], exercise: any, index: number) => {
                     // Convert exercise to Exercise type first
                     let normalizedExercise: Exercise;
+                    console.log("Exercise: ", exercise);
                     
                     if ('info' in exercise) {
-                      normalizedExercise = {
-                        name: exercise.info?.name || 'Unknown Exercise',
-                        sets: exercise.sets?.length || 0,
-                        reps: exercise.sets?.reduce((acc: number, set: any) => acc + (set.reps || 0), 0) || 0,
-                        weight: exercise.sets?.length > 0 && exercise.sets[exercise.sets.length - 1].weight 
-                          ? `${exercise.sets[exercise.sets.length - 1].weight} lbs` 
-                          : undefined
-                      };
+                      if (exercise.info.type === "WEIGHTS") {
+                        normalizedExercise = {
+                          name: exercise.info?.name || 'Unknown Exercise',
+                          sets: exercise.sets?.length || 0,
+                          reps: exercise.sets?.reduce((acc: number, set: any) => acc + (set.reps || 0), 0) || 0,
+                          weight: exercise.sets?.length > 0 && exercise.sets[exercise.sets.length - 1].weight 
+                            ? `${exercise.sets[exercise.sets.length - 1].weight} lbs` 
+                            : undefined
+                        };
+                      }
+                      else {
+                        normalizedExercise = {
+                          name: exercise.info?.name || 'Unknown Exercise',
+                          sets: exercise.sets?.length || 0,
+                          distance: exercise.distance,
+                          time: exercise.time,
+                        };
+                      }
                     } else {
                       normalizedExercise = exercise as Exercise;
                     }
                     
+                    console.log("Normalized exercise: ", normalizedExercise);
+
                     // Now use the normalized exercise
                     if (index % 2 === 0) {
                       rows.push([normalizedExercise]);
@@ -527,6 +540,18 @@ export default function PostDetails() {
                               <Text>
                                 <Text>Weight: </Text>
                                 <Text>{exercise.weight}</Text>
+                              </Text>
+                            )}
+                            {exercise.distance && (
+                              <Text>
+                                <Text>Distance: </Text>
+                                <Text>{exercise.distance}</Text>
+                              </Text>
+                            )}
+                            {exercise.time && (
+                              <Text>
+                                <Text>Time: </Text>
+                                <Text>{exercise.time}</Text>
                               </Text>
                             )}
                           </View>

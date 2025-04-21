@@ -4,6 +4,7 @@ export type SetData = {
   distance?: number
   time?: number
   done?: boolean
+  cooldown?: boolean
 }
 
 export type ExerciseData = {

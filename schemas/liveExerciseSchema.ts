@@ -32,7 +32,8 @@ export const liveExerciseSchema = z
           .nonnegative()
           .nullish()
           .transform((x) => (x === null || x === undefined ? undefined : x)),
-        done: z.boolean().default(false)
+        done: z.boolean().default(false),
+        cooldown: z.boolean().default(false).optional(),
       })
       .array()
       .nonempty({ message: "You must have a set" }),

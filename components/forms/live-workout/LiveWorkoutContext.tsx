@@ -65,7 +65,8 @@ export function LiveWorkoutProvider({
                     weight: set?.weight || 0,
                     distance: set?.distance || 0,
                     time: set?.time || 0,
-                    done: set?.done
+                    done: set?.done,
+                    cooldown: set?.cooldown,
                   }))
                 : [],
             }))

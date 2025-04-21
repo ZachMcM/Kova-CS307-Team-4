@@ -32,6 +32,8 @@ export type Exercise = {
   name: string;
   reps?: number;
   sets?: number;
+  distance?: string;
+  time?: string;
   weight?: string;
 };
 
