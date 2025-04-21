@@ -2,8 +2,10 @@ import Container from "@/components/Container";
 import EventCard from "@/components/EventCard";
 import { useSession } from "@/components/SessionContext";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
+import { Button, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { InfoIcon } from "@/components/ui/icon";
+import { HStack } from "@/components/ui/hstack";
+import { ChevronLeftIcon, Icon, InfoIcon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
@@ -16,8 +18,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 export default function PastGroupEvents() {
   const { id: groupId } = useLocalSearchParams() as { id: string };
   const { session } = useSession();
-  const toast = useToast()
-  const queryClient = useQueryClient()
   const profileId = session?.user.user_metadata.profileId
 
   const { data: role, isPending: gettingRole } = useQuery({
@@ -45,6 +45,22 @@ export default function PastGroupEvents() {
     return <Container>
               { (!gettingEvents) ?
             <> <VStack space="md">
+              <Button
+                variant="outline"
+                size="md"
+                action="primary"
+                onPress={() =>
+                  router.push({
+                    pathname: "/group/[id]",
+                    params: { id: groupId },
+                  })
+                }
+                className="p-3">
+                <HStack>
+                  <Icon as={ChevronLeftIcon} className="mt-0"></Icon>
+                  <ButtonText>Back to Group</ButtonText>
+                </HStack>
+              </Button>
               <Heading size="lg">Competitions</Heading>
               <GroupEvents
                 events={

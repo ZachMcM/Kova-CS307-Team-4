@@ -3,7 +3,8 @@ import EventCard from "@/components/EventCard";
 import { useSession } from "@/components/SessionContext";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Heading } from "@/components/ui/heading";
-import { InfoIcon } from "@/components/ui/icon";
+import { HStack } from "@/components/ui/hstack";
+import { ChevronLeftIcon, Icon, InfoIcon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
@@ -12,6 +13,7 @@ import { getFutureEvents } from "@/services/simpleEventServices";
 import { Tables } from "@/types/database.types";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Button, ButtonText } from "@/components/ui/button";
 
 export default function FutureGroupEvents() {
   const { id: groupId } = useLocalSearchParams() as { id: string };
@@ -46,6 +48,22 @@ export default function FutureGroupEvents() {
   return <Container>
               { (!gettingEvents) ?
             <> <VStack space="md">
+              <Button
+                variant="outline"
+                size="md"
+                action="primary"
+                onPress={() =>
+                  router.push({
+                    pathname: "/group/[id]",
+                    params: { id: groupId },
+                  })
+                }
+                className="p-3">
+                <HStack>
+                  <Icon as={ChevronLeftIcon} className="mt-0"></Icon>
+                  <ButtonText>Back to Group</ButtonText>
+                </HStack>
+              </Button>
               <Heading size="lg">Competitions</Heading>
               <GroupEvents
                 events={

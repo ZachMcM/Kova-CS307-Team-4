@@ -67,6 +67,12 @@ export default function LiveWorkoutForm() {
   const templateName = watch("templateName");
 
   const isWorkoutFinished = endTime != null;
+  /*
+  const {minutes: pauseMin, seconds: pauseSec, setIsStopped: setIsPaused } = useElapsedTime(
+    pauseTime,
+    isWorkoutPaused
+  ) 
+  */
 
   const { minutes, seconds, setIsStopped } = useElapsedTime(
     startTime,
@@ -160,7 +166,7 @@ export default function LiveWorkoutForm() {
 
       const workoutStats = getWorkoutStats();
       const duration = formatCalculateTime(calculateTime(startTime, endTime!));
-
+      // const pauseDuration = formatCalculateTime(calculateTime(startPause, endPause))
       const postData = {
         templateId: workoutData.templateId,
         duration,
