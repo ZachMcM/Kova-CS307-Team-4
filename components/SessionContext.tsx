@@ -6,6 +6,11 @@ import { AuthAccountResponse } from "@/types/extended-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
 import {
+  GoogleSignin,
+  statusCodes,
+  User as GoogleUser,
+} from '@react-native-google-signin/google-signin';
+import {
   createContext,
   ReactNode,
   useContext,
@@ -30,6 +35,7 @@ type SessionContextValues = {
     userEmail: string,
     userPassword: string
   ) => Promise<boolean>;
+  signInWithGoogle: () => Promise<boolean>;
   signOutUser: () => Promise<void>;
   updatePassword: (
     oldPassword: string,
@@ -62,6 +68,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
+    // Configure GoogleSignin
+    GoogleSignin.configure({
+      iosClientId: '21969337941-mtq5gqmn3q0ef3gvvmf3to5sl5n9vcoo.apps.googleusercontent.com',
+      webClientId: '21969337941-n920peka8lj7fq4h40e31i9gceshig24.apps.googleusercontent.com', // Get this from Google Cloud Console
+      offlineAccess: true,
+    });
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("session ", session);
       setSession(session);
@@ -389,6 +402,83 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     .eq('userId', session?.user.id);
   }
 
+  const signInWithGoogle = async () => {
+    try {
+      // Check if device has Google Play Services installed
+      await GoogleSignin.hasPlayServices();
+      
+      // Sign in with Google
+      const userInfo = await GoogleSignin.signIn();
+      
+      // For Supabase integration, we need to use auth tokens
+      await GoogleSignin.getTokens();
+      const tokens = await GoogleSignin.getTokens();
+      
+      if (!tokens || !tokens.idToken) {
+        throw new Error('Google sign in failed - no ID token obtained');
+      }
+      
+      // Sign in to Supabase with Google token
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: tokens.idToken,
+      });
+      
+      if (error) throw error;
+      
+      // Check if this is a new user (first time sign-in)
+      const isNewUser = data.user?.app_metadata.provider === 'google' && 
+                        data.user?.created_at === data.user?.updated_at;
+      
+      if (isNewUser) {
+        // Create a profile for this new Google user
+        const { data: profileData, error: insertionError } = await supabase
+          .from("profile")
+          .insert({
+            userId: data.user?.id,
+            username: `user_${Math.floor(Math.random() * 10000)}`, // Generate a random username
+            name: data.user?.user_metadata.full_name || "Google User",
+          })
+          .select()
+          .single();
+          
+        if (insertionError) throw new Error(insertionError.message);
+        
+        // Update user metadata with profile ID
+        await supabase.auth.updateUser({
+          data: {
+            profileId: profileData?.id,
+          },
+        });
+        
+        setShowTutorial(true);
+      } else {
+        // Existing user, fetch tutorial status
+        const { data: profileData, error: fetchError } = await supabase
+          .from('profile')
+          .select("show_tutorial")
+          .eq('userId', data.user?.id);
+          
+        if (profileData && profileData.length > 0) {
+          setShowTutorial(profileData[0].show_tutorial);
+        }
+      }
+      
+      return isNewUser;
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        throw new Error('Google sign in was cancelled');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        throw new Error('Google sign in already in progress');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        throw new Error('Google Play Services not available');
+      } else {
+        console.error('Google sign in error:', error);
+        throw new Error('An error occurred during Google sign in');
+      }
+    }
+  };
+
   return (
     <SessionContext.Provider
       value={{
@@ -399,6 +489,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setSessionLoading,
         createAccount,
         signInUser,
+        signInWithGoogle,
         signOutUser,
         updatePassword,
         updateEmail,

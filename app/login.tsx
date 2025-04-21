@@ -16,6 +16,8 @@ import { HStack } from "@/components/ui/hstack";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import { View } from "react-native";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -23,7 +25,7 @@ export default function LoginScreen() {
 
   const toast = useToast();
   const router = useRouter();
-  const { signInUser, sessionLoading, setSessionLoading, showTutorial } = useSession();
+  const { signInUser, sessionLoading, setSessionLoading, showTutorial, signInWithGoogle } = useSession();
 
   return (
     <Container>
@@ -95,18 +97,29 @@ export default function LoginScreen() {
           
           <Text className="text-center my-2">OR</Text>
           
-          <Button
-            variant="outline"
-            size="xl"
-            className="mb-3"
-            onPress={() => {
-              // Google sign-in functionality will be added later
-            }}
-          >
-            <HStack space="sm" className="items-center justify-center">
-              <ButtonText>Sign In with Google</ButtonText>
-            </HStack>
-          </Button>
+          <View className="items-center justify-center mb-3">
+            <GoogleSigninButton
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Light}
+              onPress={() => {
+                setSessionLoading(true);
+                signInWithGoogle()
+                  .then((isNewUser) => {
+                    setSessionLoading(false);
+                    showSuccessToast(toast, "Successfully signed in with Google!");
+                    if (showTutorial) {
+                      router.replace("/tutorial/tutorial-profile");
+                    } else {
+                      router.replace("/(tabs)");
+                    }
+                  })
+                  .catch((error) => {
+                    setSessionLoading(false);
+                    showErrorToast(toast, error.message);
+                  });
+              }}
+            />
+          </View>
           
           <Link onPress={() => router.replace("/password-recovery")}>
             <LinkText>Forgot Password?</LinkText>

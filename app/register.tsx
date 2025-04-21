@@ -14,6 +14,8 @@ import { supabase } from "@/lib/supabase";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";
 import { useSession } from "@/components/SessionContext";
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import { View } from "react-native";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -24,7 +26,7 @@ export default function RegisterScreen() {
 
   const toast = useToast();
   const router = useRouter();
-  const { createAccount, setSessionLoading, sessionLoading, showTutorial } = useSession();
+  const { createAccount, setSessionLoading, sessionLoading, showTutorial, signInWithGoogle } = useSession();
 
   return (
     <Container>
@@ -129,18 +131,25 @@ export default function RegisterScreen() {
           
           <Text className="text-center my-2">OR</Text>
           
-          <Button
-            variant="outline"
-            size="xl"
-            className="mb-3"
-            onPress={() => {
-              // Google registration functionality will be added later
-            }}
-          >
-            <HStack space="sm" className="items-center justify-center">
-              <ButtonText>Register with Google</ButtonText>
-            </HStack>
-          </Button>
+          <View className="items-center justify-center mb-3">
+            <GoogleSigninButton
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Light}
+              onPress={() => {
+                setSessionLoading(true);
+                signInWithGoogle()
+                  .then((isNewUser) => {
+                    setSessionLoading(false);
+                    showSuccessToast(toast, "Google account connected successfully!");
+                    router.replace("/tutorial/tutorial-profile");
+                  })
+                  .catch((error) => {
+                    setSessionLoading(false);
+                    showErrorToast(toast, error.message);
+                  });
+              }}
+            />
+          </View>
         </VStack>
       </Card>
     </Container>
