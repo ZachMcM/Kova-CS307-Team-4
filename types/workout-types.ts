@@ -1,6 +1,8 @@
 export type SetData = {
   reps?: number 
   weight?: number
+  distance?: number
+  time?: number
   done?: boolean
 }
 

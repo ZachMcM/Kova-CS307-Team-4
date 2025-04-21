@@ -21,6 +21,16 @@ export const exerciseSchema = z
           .nonnegative()
           .nullish()
           .transform((x) => (x === null || x === undefined ? undefined : x)),
+        distance: z
+          .number({ required_error: "Must be a valid number" })
+          .nonnegative()
+          .nullish()
+          .transform((x) => (x === null || x === undefined ? undefined : x)),
+        time: z
+          .number({ required_error: "Must be a valid time" })
+          .nonnegative()
+          .nullish()
+          .transform((x) => (x === null || x === undefined ? undefined : x)),
       })
       .array()
       .nonempty({ message: "You must have a set" }),
