@@ -13,8 +13,6 @@ import { useTemplateForm } from "./TemplateFormContext";
 import { Box } from "@/components/ui/box";
 import { useEffect, useState } from "react";
 
-// exercise form to be used in live workout and template creation functions to update where data is stored are passed
-
 export default function ExerciseDataForm({ index, type }: { index: number, type: string }) {
   const { control } = useTemplateForm();
 
@@ -28,53 +26,6 @@ export default function ExerciseDataForm({ index, type }: { index: number, type:
   });
 
   const toast = useToast();
-
-  const formatTime = (totalSeconds: number) => {
-    if (!totalSeconds && totalSeconds !== 0) return '';
-    
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-    
-    if (minutes > 0) {
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-    
-    return `${seconds}`;
-  };
-
-  const parseTime = (timeString: string) => {
-    if (!timeString) return 0;
-    
-    let parts;
-    
-    if (timeString.includes(':')) {
-      parts = timeString.split(':');
-    } else {
-      return parseInt(timeString, 10) || 0;
-    }
-    
-    let hours = 0;
-    let minutes = 0;
-    let seconds = 0;
-    
-    if (parts.length === 3) {
-      hours = parseInt(parts[0], 10) || 0;
-      minutes = parseInt(parts[1], 10) || 0;
-      seconds = parseInt(parts[2], 10) || 0;
-    } else if (parts.length === 2) {
-      minutes = parseInt(parts[0], 10) || 0;
-      seconds = parseInt(parts[1], 10) || 0;
-    } else if (parts.length === 1) {
-      seconds = parseInt(parts[0], 10) || 0;
-    }
-    
-    return hours * 3600 + minutes * 60 + seconds;
-  };
 
   return (
     <VStack space="lg">
@@ -161,7 +112,7 @@ export default function ExerciseDataForm({ index, type }: { index: number, type:
                   render={({ field: { onChange, value } }) => (
                     <Box>
                       <TextInput
-                        placeholder="0 mi"
+                        placeholder="0"
                         id={`distance-${i}`}
                         value={value?.toString() || ""}
                         onChangeText={(text) => onChange(Number(text) || 0)}
@@ -174,7 +125,7 @@ export default function ExerciseDataForm({ index, type }: { index: number, type:
                     </Box>
                   )}
                 />
-                )}
+              )}
             </GridItem>
             <GridItem
               className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
@@ -198,56 +149,7 @@ export default function ExerciseDataForm({ index, type }: { index: number, type:
                   )}
                 />
               ) : (
-                <Controller
-                  control={control}
-                  name={`data.${index}.sets.${i}.time`}
-                  render={({ field: { onChange, value } }) => {
-                    // Local state to handle the formatted display
-                    const [displayValue, setDisplayValue] = useState(formatTime(value!));
-                    
-                    // When the form value changes, update the display
-                    useEffect(() => {
-                      setDisplayValue(formatTime(value!));
-                    }, [value]);
-                    
-                    return (
-                      <Box className="relative">
-                        <TextInput
-                          placeholder="h:mm:ss"
-                          id={`time-${i}`}
-                          value={displayValue}
-                          onChangeText={(text) => {
-                            // Update the display value immediately for feedback
-                            setDisplayValue(text);
-                            
-                            // Only clean and convert when we have a proper value
-                            if (text) {
-                              // Remove any non-numeric or non-colon characters
-                              const cleanText = text.replace(/[^0-9:]/g, '');
-                              // If the cleaned text is different, update the display
-                              if (cleanText !== text) {
-                                setDisplayValue(cleanText);
-                              }
-                              
-                              // Convert to seconds and update the form data
-                              const seconds = parseTime(cleanText);
-                              onChange(seconds);
-                            } else {
-                              // If the field is cleared, set to 0 or undefined based on your needs
-                              onChange(0);
-                            }
-                          }}
-                          onBlur={() => {
-                            // When user leaves the field, format properly
-                            setDisplayValue(formatTime(value!));
-                          }}
-                          className="font-bold text-typography-900 w-full h-full text-center"
-                          keyboardType="number-pad"
-                        />
-                      </Box>
-                    );
-                  }}
-                />
+                <TimeInput control={control} index={index} i={i} />
               )}
             </GridItem>
             <GridItem
@@ -291,3 +193,111 @@ export default function ExerciseDataForm({ index, type }: { index: number, type:
     </VStack>
   );
 }
+
+export const TimeInput = ({ control, index, i }: { control: any; index: number; i: number }) => {
+  const MAX_TIME_SECONDS = 359999;
+
+  const formatTime = (totalSeconds: number) => {
+    if (!totalSeconds && totalSeconds !== 0) return '';
+    
+    const limitedSeconds = Math.min(totalSeconds, MAX_TIME_SECONDS);
+    
+    const hours = Math.floor(limitedSeconds / 3600);
+    const minutes = Math.floor((limitedSeconds % 3600) / 60);
+    const seconds = limitedSeconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    if (minutes > 0) {
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    return `${seconds}`;
+  };
+  
+  return (
+    <Controller
+      control={control}
+      name={`data.${index}.sets.${i}.time`}
+      render={({ field: { onChange, value } }) => {
+        const [rawDigits, setRawDigits] = useState('');
+        
+        useEffect(() => {
+          if (value !== undefined && value !== null) {
+            setRawDigits(formatTime(value).replace(/:/g, ''));
+          }
+        }, [value]);
+        
+        const formatRawDigits = (digits: string) => {
+          if (!digits) return '';
+          
+          const limitedDigits = digits.slice(0, 6);
+          
+          if (limitedDigits.length <= 2) {
+            return limitedDigits;
+          } else if (limitedDigits.length <= 4) {
+            const mins = limitedDigits.slice(0, limitedDigits.length - 2);
+            const secs = limitedDigits.slice(limitedDigits.length - 2);
+            return `${mins}:${secs}`;
+          } else {
+            const hours = limitedDigits.slice(0, limitedDigits.length - 4);
+            const mins = limitedDigits.slice(limitedDigits.length - 4, limitedDigits.length - 2);
+            const secs = limitedDigits.slice(limitedDigits.length - 2);
+            return `${hours}:${mins}:${secs}`;
+          }
+        };
+        
+        const digitsToSeconds = (digits: string) => {
+          if (!digits) return 0;
+          
+          const limitedDigits = digits.slice(0, 6);
+          
+          if (limitedDigits.length <= 2) {
+            return parseInt(limitedDigits, 10) || 0;
+          } else if (limitedDigits.length <= 4) {
+            const mins = limitedDigits.slice(0, limitedDigits.length - 2);
+            const secs = limitedDigits.slice(limitedDigits.length - 2);
+            return (parseInt(mins, 10) * 60 + parseInt(secs, 10)) || 0;
+          } else {
+            const hours = limitedDigits.slice(0, limitedDigits.length - 4);
+            const mins = limitedDigits.slice(limitedDigits.length - 4, limitedDigits.length - 2);
+            const secs = limitedDigits.slice(limitedDigits.length - 2);
+            return (parseInt(hours, 10) * 3600 + parseInt(mins, 10) * 60 + parseInt(secs, 10)) || 0;
+          }
+        };
+        
+        return (
+          <Box className="relative">
+            <TextInput
+              placeholder="h:mm:ss"
+              id={`time-${i}`}
+              value={formatRawDigits(rawDigits)}
+              onChangeText={(text) => {
+                const cleanText = text.replace(/[^0-9]/g, '');
+                
+                if (cleanText.length > 6) return;
+                
+                setRawDigits(cleanText);
+                
+                const seconds = digitsToSeconds(cleanText);
+                
+                const limitedSeconds = Math.min(seconds, MAX_TIME_SECONDS);
+                onChange(limitedSeconds);
+              }}
+              onBlur={() => {
+                if (value !== undefined && value !== null) {
+                  setRawDigits(formatTime(value).replace(/:/g, ''));
+                }
+              }}
+              selection={{ start: formatRawDigits(rawDigits).length, end: formatRawDigits(rawDigits).length }}
+              className="font-bold text-typography-900 w-full h-full text-center"
+              keyboardType="number-pad"
+            />
+          </Box>
+        );
+      }}
+    />
+  );
+};

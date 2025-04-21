@@ -6,6 +6,7 @@ export const exerciseSchema = z
     info: z.object({
       id: z.string(),
       name: z.string(),
+      type: z.string().optional(),
     }),
     // an array of sets
     sets: z

@@ -59,6 +59,7 @@ export default function TemplateForm() {
 
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
+      console.log("Saving template", values);
       if (values.id) {
         await updateTemplate(values, session?.user.user_metadata.profileId);
       } else {
@@ -118,6 +119,7 @@ export default function TemplateForm() {
         info: {
           name: exercise.name!,
           id: exercise.id,
+          type: exercise.type
         },
         sets: [
           {
@@ -133,6 +135,7 @@ export default function TemplateForm() {
         info: {
           name: exercise.name!,
           id: exercise.id,
+          type: exercise.type
         },
         sets: [
           {
@@ -222,7 +225,7 @@ export default function TemplateForm() {
                   <Icon as={TrashIcon} size="xl" color="red" />
                 </Pressable>
               </HStack>
-              <ExerciseDataForm key={exercise.info.id} index={i} type={exercise.type} />
+              <ExerciseDataForm key={exercise.info.id} index={i} type={exercise.info.type!} />
             </VStack>
           ))}
         </VStack>

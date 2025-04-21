@@ -9,7 +9,8 @@ export type SetData = {
 export type ExerciseData = {
   info: {
     id: string,
-    name: string
+    name: string,
+    type?: string
   }
   sets: SetData[]
 }

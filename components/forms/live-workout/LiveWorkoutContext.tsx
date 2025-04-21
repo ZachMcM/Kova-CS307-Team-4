@@ -57,11 +57,14 @@ export function LiveWorkoutProvider({
               info: {
                 id: exercise?.info?.id || "",
                 name: exercise?.info?.name || "",
+                type: exercise?.info?.type || "",
               },
               sets: exercise?.sets
                 ? exercise?.sets?.map((set) => ({
                     reps: set?.reps || 0,
                     weight: set?.weight || 0,
+                    distance: set?.distance || 0,
+                    time: set?.time || 0,
                     done: set?.done
                   }))
                 : [],
