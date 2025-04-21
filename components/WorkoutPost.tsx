@@ -35,6 +35,7 @@ export type Exercise = {
   distance?: string;
   time?: string;
   weight?: string;
+  cooldowns?: string;
 };
 
 export type TaggedFriend = {

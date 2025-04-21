@@ -554,6 +554,12 @@ export default function PostDetails() {
                                 <Text>{exercise.time}</Text>
                               </Text>
                             )}
+                            {exercise.cooldowns !== undefined && (
+                              <Text>
+                                <Text>Cooldown: </Text>
+                                <Text>{exercise.cooldowns}</Text>
+                              </Text>
+                            )}
                           </View>
                         </Box>
                       ))}

@@ -171,6 +171,7 @@ export default function PostScreen() {
               else {
                 let totalTime = 0;
                 let totalDistance = 0;
+                let totalCooldown = 0;
 
                 if (Array.isArray(exercise.sets)) {
                   totalTime = exercise.sets.reduce((acc: number, set: any) => {
@@ -189,13 +190,22 @@ export default function PostScreen() {
                       return acc;
                     }
                   }, 0);
+                  totalCooldown = exercise.sets.reduce((acc: number, set: any) => {
+                    if (set.cooldown) {
+                      return acc + (set.time || 0);
+                    }
+                    else {
+                      return acc;
+                    }
+                  }, 0);
                 }
-                
+
                 const totalSets = exercise.sets.filter((set: any) => !set.cooldown).length;
 
                 return {
                   name: exercise.info?.name || "Unknown Exercise",
                   sets: totalSets,
+                  cooldowns: `${formatTime(totalCooldown)}`,
                   time: `${formatTime(totalTime)}`,
                   distance: `${totalDistance} mi`,
                 };
