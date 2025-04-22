@@ -126,6 +126,21 @@ export default function RegisterScreen() {
             <ButtonText className="text-white">Register For Account</ButtonText>
             {sessionLoading && <ButtonSpinner color="#FFF" />}
           </Button>
+          
+          <Text className="text-center my-2">OR</Text>
+          
+          <Button
+            variant="outline"
+            size="xl"
+            className="mb-3"
+            onPress={() => {
+              // Google registration functionality will be added later
+            }}
+          >
+            <HStack space="sm" className="items-center justify-center">
+              <ButtonText>Register with Google</ButtonText>
+            </HStack>
+          </Button>
         </VStack>
       </Card>
     </Container>

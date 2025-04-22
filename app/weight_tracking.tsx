@@ -12,6 +12,10 @@ import {
   EditIcon,
   Icon,
   TrashIcon,
+  CheckIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  SlashIcon,
 } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import { Pressable } from "@/components/ui/pressable";
@@ -35,12 +39,20 @@ import {
   updateWeightEntry,
 } from "@/services/weightServices";
 import {
+  addWeightGoal,
+  checkGoalAchievement,
+  deleteWeightGoal,
+  getCurrentWeightGoal, 
+  getWeightGoals,
+  updateWeightGoal,
+} from "@/services/weightGoalServices";
+import {
   cancelNotification,
   getNotificationSettings,
   requestNotificationPermissions,
   scheduleDailyNotification,
 } from "@/services/notificationServices";
-import { WeightEntry } from "@/types/weight-types";
+import { WeightEntry, WeightGoal, GoalType } from "@/types/weight-types";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as FileSystem from "expo-file-system";
@@ -87,6 +99,16 @@ export default function WeightTrackingScreen() {
   });
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationTime, setNotificationTime] = useState(new Date());
+  
+  // Weight goal state
+  const [showGoalForm, setShowGoalForm] = useState(false);
+  const [goalFormData, setGoalFormData] = useState({
+    targetWeight: "",
+    goalType: "loss" as GoalType,
+    targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+  });
+  const [showGoalDatePicker, setShowGoalDatePicker] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<WeightGoal | null>(null);
 
   // Fetch user ID
   useEffect(() => {
@@ -112,6 +134,20 @@ export default function WeightTrackingScreen() {
     queryFn: async () => {
       if (!userId) return [];
       return await getWeightEntries(userId);
+    },
+    enabled: !!userId,
+  });
+
+  // Fetch current weight goal
+  const {
+    data: currentGoal,
+    isPending: isGoalPending,
+    refetch: refetchGoal,
+  } = useQuery({
+    queryKey: ["currentWeightGoal", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      return await getCurrentWeightGoal(userId);
     },
     enabled: !!userId,
   });
@@ -233,6 +269,30 @@ export default function WeightTrackingScreen() {
       highestWeight,
       lowestWeight,
     });
+    
+    // Check if goal has been achieved with latest weight
+    if (currentGoal && currentGoal.status === "in_progress") {
+      checkGoalAchievement(currentGoal.id, entries[0].weight)
+        .then(achieved => {
+          if (achieved) {
+            refetchGoal();
+            // Navigate to post creation with auto-filled content
+            const goalType = currentGoal.goal_type === 'loss' ? 'lost' : 
+                             currentGoal.goal_type === 'gain' ? 'gained' : 'maintained';
+            const goalAmount = Math.abs(currentGoal.start_weight - currentGoal.target_weight).toFixed(1);
+            const message = `I just reached my weight goal! I ${goalType} ${goalAmount} ${currentGoal.unit}!`;
+            
+            router.push({
+              pathname: "/post",
+              params: { 
+                auto_content: message,
+                category: "weightgoal"
+              }
+            });
+          }
+        })
+        .catch(error => console.error("Error checking goal achievement:", error));
+    }
   };
 
   // Filter entries by time period
@@ -265,6 +325,26 @@ export default function WeightTrackingScreen() {
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
+    const datasets = [
+      {
+        data: sortedEntries.map((entry) => entry.weight),
+        color: (opacity = 1) => `rgba(111, 168, 220, ${opacity})`,
+        strokeWidth: 2,
+      }
+    ];
+    
+    // Add target weight line if goal exists
+    if (currentGoal && currentGoal.status === "in_progress") {
+      const { target_weight } = currentGoal;
+      // Create a flat line at the target weight
+      datasets.push({
+        data: Array(sortedEntries.length).fill(target_weight),
+        color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`, // Green line for target
+        strokeWidth: 1,
+        // Note: strokeDasharray is not supported directly, will use withDots: false instead
+      });
+    }
+
     return {
       labels: sortedEntries.map((entry) =>
         new Date(entry.date).toLocaleDateString("en-US", {
@@ -272,11 +352,7 @@ export default function WeightTrackingScreen() {
           day: "numeric",
         })
       ),
-      datasets: [
-        {
-          data: sortedEntries.map((entry) => entry.weight),
-        },
-      ],
+      datasets: datasets,
     };
   };
 
@@ -367,6 +443,185 @@ export default function WeightTrackingScreen() {
       }
     } else {
       setShowTimePicker(true);
+    }
+  };
+
+  // Calculate goal progress
+  const calculateGoalProgress = () => {
+    if (!currentGoal || !weightEntries || weightEntries.length === 0) return null;
+    
+    const latestWeight = weightEntries[0].weight;
+    const { start_weight, target_weight, start_date, target_date, goal_type } = currentGoal;
+    
+    // Calculate weight progress
+    const totalWeightChange = target_weight - start_weight;
+    const currentWeightChange = latestWeight - start_weight;
+    const weightProgressPercent = Math.min(
+      100,
+      Math.max(0, (currentWeightChange / totalWeightChange) * 100)
+    );
+    
+    // Calculate time progress
+    const startTime = new Date(start_date).getTime();
+    const targetTime = new Date(target_date).getTime();
+    const currentTime = new Date().getTime();
+    const totalDuration = targetTime - startTime;
+    const elapsedDuration = currentTime - startTime;
+    const timeProgressPercent = Math.min(
+      100, 
+      Math.max(0, (elapsedDuration / totalDuration) * 100)
+    );
+    
+    // Days remaining
+    const daysRemaining = Math.max(
+      0,
+      Math.ceil((targetTime - currentTime) / (1000 * 60 * 60 * 24))
+    );
+    
+    // Weight remaining
+    const weightRemaining = Math.abs(latestWeight - target_weight);
+    
+    // Goal direction
+    let goalDirection: "ahead" | "behind" | "on-track" = "on-track";
+    if (goal_type === "loss") {
+      goalDirection = weightProgressPercent > timeProgressPercent ? "ahead" : 
+                      weightProgressPercent < timeProgressPercent ? "behind" : "on-track";
+    } else if (goal_type === "gain") {
+      goalDirection = weightProgressPercent > timeProgressPercent ? "ahead" : 
+                      weightProgressPercent < timeProgressPercent ? "behind" : "on-track";
+    }
+    
+    return {
+      weightProgressPercent,
+      timeProgressPercent,
+      daysRemaining,
+      weightRemaining,
+      goalDirection,
+    };
+  };
+
+  // Reset goal form
+  const resetGoalForm = () => {
+    setGoalFormData({
+      targetWeight: "",
+      goalType: "loss",
+      targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+    });
+    setEditingGoal(null);
+    setShowGoalForm(false);
+  };
+
+  // Handle goal date change
+  const onGoalDateChange = (event: any, selectedDate?: Date) => {
+    setShowGoalDatePicker(false);
+    if (selectedDate) {
+      setGoalFormData(prev => ({
+        ...prev,
+        targetDate: selectedDate
+      }));
+    }
+  };
+
+  // Handle goal edit
+  const handleEditGoal = (goal: WeightGoal) => {
+    setEditingGoal(goal);
+    setGoalFormData({
+      targetWeight: goal.target_weight.toString(),
+      goalType: goal.goal_type,
+      targetDate: new Date(goal.target_date),
+    });
+    setShowGoalForm(true);
+  };
+
+  // Handle goal delete
+  const handleDeleteGoal = async (id: string) => {
+    try {
+      await deleteWeightGoal(id);
+      showSuccessToast(toast, "Weight goal deleted");
+      refetchGoal();
+    } catch (error) {
+      console.error(error);
+      showErrorToast(toast, "Failed to delete weight goal");
+    }
+  };
+
+  // Confirm goal delete
+  const confirmDeleteGoal = (id: string) => {
+    Alert.alert(
+      "Delete Weight Goal",
+      "Are you sure you want to delete this weight goal?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          onPress: () => handleDeleteGoal(id),
+          style: "destructive",
+        },
+      ]
+    );
+  };
+
+  // Handle goal submission
+  const handleGoalSubmit = async () => {
+    try {
+      if (!userId) {
+        showErrorToast(toast, "You must be logged in to set a weight goal");
+        return;
+      }
+
+      if (!goalFormData.targetWeight || 
+          isNaN(Number(goalFormData.targetWeight)) || 
+          Number(goalFormData.targetWeight) <= 0) {
+        showErrorToast(toast, "Please enter a valid target weight");
+        return;
+      }
+
+      if (!weightEntries || weightEntries.length === 0) {
+        showErrorToast(toast, "You need at least one weight entry before setting a goal");
+        return;
+      }
+
+      const targetWeight = Number(goalFormData.targetWeight);
+      const currentWeight = weightEntries[0].weight;
+      const goalType = goalFormData.goalType;
+
+      // Validate goal type matches target weight
+      if (goalType === "loss" && targetWeight >= currentWeight) {
+        showErrorToast(toast, "For weight loss, target weight should be less than current weight");
+        return;
+      } else if (goalType === "gain" && targetWeight <= currentWeight) {
+        showErrorToast(toast, "For weight gain, target weight should be more than current weight");
+        return;
+      }
+
+      if (editingGoal) {
+        // Update existing goal
+        await updateWeightGoal(editingGoal.id, {
+          target_weight: targetWeight,
+          target_date: goalFormData.targetDate.toISOString(),
+          goal_type: goalFormData.goalType,
+        });
+        showSuccessToast(toast, "Weight goal updated");
+      } else {
+        // Add new goal
+        await addWeightGoal({
+          user_id: userId,
+          start_weight: currentWeight,
+          target_weight: targetWeight,
+          unit: unit,
+          start_date: new Date().toISOString(),
+          target_date: goalFormData.targetDate.toISOString(),
+          goal_type: goalFormData.goalType,
+        });
+        showSuccessToast(toast, "Weight goal added");
+      }
+
+      // Reset form and refetch data
+      resetGoalForm();
+      refetchGoal();
+    } catch (error) {
+      console.error(error);
+      showErrorToast(toast, "Failed to save weight goal");
     }
   };
 
@@ -485,6 +740,341 @@ export default function WeightTrackingScreen() {
             </VStack>
           </Box>
 
+          {/* Weight Goal Section */}
+          <Box className="border border-gray-300 rounded-lg p-4 mt-2">
+            <VStack space="md">
+              <HStack className="justify-between items-center">
+                <Heading size="md">Weight Goal</Heading>
+                {!showGoalForm && (
+                  <Button
+                    size="sm"
+                    variant="solid"
+                    action="primary"
+                    className="bg-[#6FA8DC]"
+                    onPress={() => setShowGoalForm(true)}
+                    disabled={!weightEntries || weightEntries.length === 0}
+                  >
+                    <ButtonText className="text-white">
+                      {currentGoal && currentGoal.status === "in_progress"
+                        ? "Change Goal"
+                        : "Set Goal"}
+                    </ButtonText>
+                  </Button>
+                )}
+              </HStack>
+
+              {showGoalForm ? (
+                <VStack space="md">
+                  <HStack space="md" className="items-center">
+                    <Text size="md" className="w-24">
+                      Target Weight:
+                    </Text>
+                    <Input className="flex-1">
+                      <InputField
+                        value={goalFormData.targetWeight}
+                        onChangeText={(value) =>
+                          setGoalFormData((prev) => ({
+                            ...prev,
+                            targetWeight: value,
+                          }))
+                        }
+                        keyboardType="numeric"
+                        placeholder="Enter target weight"
+                      />
+                    </Input>
+                  </HStack>
+
+                  <HStack space="md" className="items-center">
+                    <Text size="md" className="w-24">
+                      Goal Type:
+                    </Text>
+                    <RadioGroup
+                      value={goalFormData.goalType}
+                      onChange={(value) =>
+                        setGoalFormData((prev) => ({
+                          ...prev,
+                          goalType: value as GoalType,
+                        }))
+                      }
+                    >
+                      <VStack space="sm">
+                        <Radio value="loss" isInvalid={false} isDisabled={false}>
+                          <RadioIndicator>
+                            <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                          </RadioIndicator>
+                          <RadioLabel>Weight Loss</RadioLabel>
+                        </Radio>
+                        <Radio value="gain" isInvalid={false} isDisabled={false}>
+                          <RadioIndicator>
+                            <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                          </RadioIndicator>
+                          <RadioLabel>Weight Gain</RadioLabel>
+                        </Radio>
+                        <Radio
+                          value="maintain"
+                          isInvalid={false}
+                          isDisabled={false}
+                        >
+                          <RadioIndicator>
+                            <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                          </RadioIndicator>
+                          <RadioLabel>Maintain Weight</RadioLabel>
+                        </Radio>
+                      </VStack>
+                    </RadioGroup>
+                  </HStack>
+
+                  <HStack space="md" className="items-center">
+                    <Text size="md" className="w-24">
+                      Target Date:
+                    </Text>
+                    <Pressable
+                      onPress={() => setShowGoalDatePicker(true)}
+                      className="flex-1 h-10 border border-gray-300 rounded-md px-3 justify-center"
+                    >
+                      <Text>{goalFormData.targetDate.toLocaleDateString()}</Text>
+                    </Pressable>
+                    {showGoalDatePicker && (
+                      <DateTimePicker
+                        value={goalFormData.targetDate}
+                        mode="date"
+                        display="default"
+                        onChange={onGoalDateChange}
+                        minimumDate={new Date()}
+                      />
+                    )}
+                  </HStack>
+
+                  <HStack space="md">
+                    <Button
+                      size="md"
+                      variant="outline"
+                      action="secondary"
+                      className="flex-1"
+                      onPress={resetGoalForm}
+                    >
+                      <ButtonText>Cancel</ButtonText>
+                    </Button>
+                    <Button
+                      size="md"
+                      variant="solid"
+                      action="primary"
+                      className="flex-1 bg-[#6FA8DC]"
+                      onPress={handleGoalSubmit}
+                    >
+                      <ButtonText className="text-white">
+                        {editingGoal ? "Update Goal" : "Set Goal"}
+                      </ButtonText>
+                    </Button>
+                  </HStack>
+                </VStack>
+              ) : isGoalPending ? (
+                <Spinner />
+              ) : currentGoal && currentGoal.status === "in_progress" ? (
+                <VStack space="md">
+                  <HStack className="items-center">
+                    <Box
+                      className={
+                        currentGoal.goal_type === "loss"
+                          ? "bg-blue-100 p-2 rounded-full mr-2"
+                          : currentGoal.goal_type === "gain"
+                          ? "bg-green-100 p-2 rounded-full mr-2"
+                          : "bg-gray-100 p-2 rounded-full mr-2"
+                      }
+                    >
+                      <Icon
+                        as={
+                          currentGoal.goal_type === "loss"
+                            ? ArrowDownIcon
+                            : currentGoal.goal_type === "gain"
+                            ? ArrowUpIcon
+                            : SlashIcon
+                        }
+                        size="md"
+                        className={
+                          currentGoal.goal_type === "loss"
+                            ? "text-blue-500"
+                            : currentGoal.goal_type === "gain"
+                            ? "text-green-500"
+                            : "text-gray-500"
+                        }
+                      />
+                    </Box>
+                    <VStack>
+                      <Text size="sm" className="text-gray-600">
+                        {currentGoal.goal_type === "loss"
+                          ? "Weight Loss Goal"
+                          : currentGoal.goal_type === "gain"
+                          ? "Weight Gain Goal"
+                          : "Weight Maintenance Goal"}
+                      </Text>
+                      <Heading size="md">
+                        {currentGoal.target_weight} {currentGoal.unit} by{" "}
+                        {new Date(currentGoal.target_date).toLocaleDateString()}
+                      </Heading>
+                    </VStack>
+                  </HStack>
+
+                  {weightEntries && weightEntries.length > 0 && (
+                    <>
+                      {(() => {
+                        const progress = calculateGoalProgress();
+                        if (!progress) return null;
+
+                        return (
+                          <VStack space="sm" className="mt-2">
+                            <HStack className="justify-between items-center">
+                              <Text size="sm" className="text-gray-600">
+                                Weight Progress:
+                              </Text>
+                              <Text
+                                size="sm"
+                                className={
+                                  currentGoal.goal_type === "loss"
+                                    ? "text-blue-500 font-bold"
+                                    : currentGoal.goal_type === "gain"
+                                    ? "text-green-500 font-bold"
+                                    : "text-gray-500 font-bold"
+                                }
+                              >
+                                {progress.weightProgressPercent.toFixed(0)}%
+                              </Text>
+                            </HStack>
+                            <Box className="bg-gray-200 h-2 rounded-full overflow-hidden">
+                              <Box
+                                className={
+                                  currentGoal.goal_type === "loss"
+                                    ? "bg-blue-500 h-full"
+                                    : currentGoal.goal_type === "gain"
+                                    ? "bg-green-500 h-full"
+                                    : "bg-gray-500 h-full"
+                                }
+                                style={{
+                                  width: `${progress.weightProgressPercent}%`,
+                                }}
+                              />
+                            </Box>
+
+                            <HStack className="justify-between items-center mt-2">
+                              <Text size="sm" className="text-gray-600">
+                                Time Progress:
+                              </Text>
+                              <Text size="sm" className="text-orange-500 font-bold">
+                                {progress.timeProgressPercent.toFixed(0)}%
+                              </Text>
+                            </HStack>
+                            <Box className="bg-gray-200 h-2 rounded-full overflow-hidden">
+                              <Box
+                                className="bg-orange-500 h-full"
+                                style={{
+                                  width: `${progress.timeProgressPercent}%`,
+                                }}
+                              />
+                            </Box>
+
+                            <HStack className="justify-between mt-2">
+                              <Box className="bg-gray-100 p-2 rounded-lg flex-1 mr-1">
+                                <Text size="xs" className="text-gray-600">
+                                  Remaining:
+                                </Text>
+                                <HStack className="items-baseline">
+                                  <Heading size="sm">
+                                    {progress.weightRemaining.toFixed(1)}{" "}
+                                  </Heading>
+                                  <Text size="xs">{currentGoal.unit}</Text>
+                                </HStack>
+                              </Box>
+                              <Box className="bg-gray-100 p-2 rounded-lg flex-1 ml-1">
+                                <Text size="xs" className="text-gray-600">
+                                  Days Left:
+                                </Text>
+                                <Heading size="sm">
+                                  {progress.daysRemaining}
+                                </Heading>
+                              </Box>
+                            </HStack>
+
+                            <HStack className="items-center mt-2">
+                              <Icon
+                                as={
+                                  progress.goalDirection === "ahead"
+                                    ? CheckIcon
+                                    : progress.goalDirection === "behind"
+                                    ? ArrowDownIcon
+                                    : SlashIcon
+                                }
+                                size="sm"
+                                className={
+                                  progress.goalDirection === "ahead"
+                                    ? "text-green-500 mr-1"
+                                    : progress.goalDirection === "behind"
+                                    ? "text-red-500 mr-1"
+                                    : "text-gray-500 mr-1"
+                                }
+                              />
+                              <Text
+                                size="sm"
+                                className={
+                                  progress.goalDirection === "ahead"
+                                    ? "text-green-500"
+                                    : progress.goalDirection === "behind"
+                                    ? "text-red-500"
+                                    : "text-gray-500"
+                                }
+                              >
+                                {progress.goalDirection === "ahead"
+                                  ? "You're ahead of schedule!"
+                                  : progress.goalDirection === "behind"
+                                  ? "You're a bit behind schedule."
+                                  : "You're right on track!"}
+                              </Text>
+                            </HStack>
+                          </VStack>
+                        );
+                      })()}
+
+                      <HStack space="md" className="mt-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          action="secondary"
+                          className="flex-1 border-[#6FA8DC]"
+                          onPress={() => handleEditGoal(currentGoal)}
+                        >
+                          <ButtonIcon as={EditIcon} className="text-[#6FA8DC]" />
+                          <ButtonText className="text-[#6FA8DC]">
+                            Edit Goal
+                          </ButtonText>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          action="secondary"
+                          className="flex-1 border-red-500"
+                          onPress={() => confirmDeleteGoal(currentGoal.id)}
+                        >
+                          <ButtonIcon as={TrashIcon} className="text-red-500" />
+                          <ButtonText className="text-red-500">
+                            Delete Goal
+                          </ButtonText>
+                        </Button>
+                      </HStack>
+                    </>
+                  )}
+                </VStack>
+              ) : (
+                <VStack space="md" className="items-center py-4">
+                  <Text className="text-center text-gray-500">
+                    You don't have an active weight goal.
+                  </Text>
+                  <Text className="text-center text-gray-500 mb-2">
+                    Set a goal to track your progress!
+                  </Text>
+                </VStack>
+              )}
+            </VStack>
+          </Box>
+
           {/* Add notification settings section */}
           <Box className="border border-gray-300 rounded-lg p-4 mt-2">
             <VStack space="md">
@@ -590,11 +1180,45 @@ export default function WeightTrackingScreen() {
                     style: {
                       borderRadius: 16,
                     },
+                    propsForDots: {
+                      r: "4",
+                    },
+                    propsForBackgroundLines: {
+                      strokeDasharray: "",
+                    },
                   }}
+                  withShadow={false}
+                  withDots
+                  withVerticalLines={false}
                   bezier
                   style={{
                     marginVertical: 8,
                     borderRadius: 16,
+                  }}
+                  
+                  // Add a custom legend if needed
+                  decorator={() => {
+                    return (
+                      currentGoal && currentGoal.status === "in_progress" ? (
+                        <Box
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            backgroundColor: "rgba(255, 255, 255, 0.9)",
+                            borderRadius: 4,
+                            padding: 4,
+                          }}
+                        >
+                          <HStack space="md" className="items-center">
+                            <Box style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#6FA8DC" }} />
+                            <Text size="xs">Current Weight</Text>
+                            <Box style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#4CAF50" }} />
+                            <Text size="xs">Goal Weight</Text>
+                          </HStack>
+                        </Box>
+                      ) : null
+                    );
                   }}
                 />
 
@@ -641,6 +1265,39 @@ export default function WeightTrackingScreen() {
                         {stats.lowestWeight.toFixed(1)} {unit}
                       </Heading>
                     </Box>
+                    
+                    {currentGoal && currentGoal.status === "in_progress" && (
+                      <Box className="w-full bg-blue-50 p-3 rounded-lg mt-2 border border-blue-200">
+                        <HStack className="justify-between items-center">
+                          <VStack>
+                            <Text size="sm" className="text-gray-600">
+                              Goal Progress
+                            </Text>
+                            <Heading size="md">
+                              {currentGoal.target_weight} {currentGoal.unit} by{" "}
+                              {new Date(currentGoal.target_date).toLocaleDateString()}
+                            </Heading>
+                          </VStack>
+                          <Icon 
+                            as={
+                              currentGoal.goal_type === "loss"
+                                ? ArrowDownIcon
+                                : currentGoal.goal_type === "gain"
+                                ? ArrowUpIcon
+                                : SlashIcon
+                            }
+                            size="lg"
+                            className={
+                              currentGoal.goal_type === "loss"
+                                ? "text-blue-500"
+                                : currentGoal.goal_type === "gain"
+                                ? "text-green-500"
+                                : "text-gray-500"
+                            }
+                          />
+                        </HStack>
+                      </Box>
+                    )}
                   </HStack>
                 </VStack>
               </Box>
