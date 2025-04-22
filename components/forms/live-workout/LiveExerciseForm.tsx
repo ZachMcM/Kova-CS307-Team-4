@@ -13,7 +13,7 @@ import clsx from "clsx";
 import { Controller, useFieldArray, useWatch } from "react-hook-form";
 import { TextInput } from "react-native";
 import { useLiveWorkout } from "./LiveWorkoutContext";
-import { TimeInput } from "../workout-template/ExerciseDataForm";
+import { DistanceInput, TimeInput } from "../workout-template/ExerciseDataForm";
 import { useState } from "react";
 
 export default function LiveExerciseForm({
@@ -127,25 +127,7 @@ export default function LiveExerciseForm({
                         )}
                       />
                     ) : (
-                      <Controller
-                        control={control}
-                        name={`exercises.${index}.sets.${i}.distance`}
-                        render={({ field: { onChange, value } }) => (
-                          <Box>
-                            <TextInput
-                              placeholder="0"
-                              id={`distance-${i}`}
-                              value={value?.toString() || ""}
-                              onChangeText={(text) => onChange(Number(text) || 0)}
-                              className="font-bold text-typography-900 w-full h-full text-center"
-                              keyboardType="numeric"
-                            />
-                            <Text className="absolute top-1/2 -translate-y-1/2 left-6">
-                              mi
-                            </Text>
-                          </Box>
-                        )}
-                      />
+                      <DistanceInput control={control} name={`exercises.${index}.sets.${i}.distance`} />
                     )}
                   </>
                 ) : (

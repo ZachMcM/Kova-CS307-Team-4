@@ -119,25 +119,7 @@ export default function ExerciseDataForm({ index, type }: { index: number, type:
                       )}
                     />
                   ) : (
-                    <Controller
-                      control={control}
-                      name={`data.${index}.sets.${i}.distance`}
-                      render={({ field: { onChange, value } }) => (
-                        <Box>
-                          <TextInput
-                            placeholder="0"
-                            id={`distance-${i}`}
-                            value={value?.toString() || ""}
-                            onChangeText={(text) => onChange(Number(text) || 0)}
-                            className="font-bold text-typography-900 w-full h-full text-center"
-                            keyboardType="numeric"
-                          />
-                          <Text className="absolute top-1/2 -translate-y-1/2 left-6">
-                            mi
-                          </Text>
-                        </Box>
-                      )}
-                    />
+                    <DistanceInput control={control} name={`data.${index}.sets.${i}.distance`} />
                   )}
                 </>
               ) : (
@@ -202,115 +184,6 @@ export default function ExerciseDataForm({ index, type }: { index: number, type:
             </GridItem>
           </Grid>
         ))}
-        {/*{sets.map((set, i) => (
-          <Grid
-            key={set.id}
-            className="items-center gap-4"
-            _extra={{
-              className: "grid-cols-8",
-            }}
-          >
-            <GridItem
-              className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
-              _extra={{
-                className: "col-span-2",
-              }}
-            >
-              <Text size="md" className="font-bold text-typography-900">
-                {i + 1}
-              </Text>
-            </GridItem>
-            <GridItem
-              className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
-              _extra={{
-                className: "col-span-2",
-              }}
-            >
-              {type === "WEIGHTS" ? (
-                <Controller
-                  control={control}
-                  name={`data.${index}.sets.${i}.weight`}
-                  render={({ field: { onChange, value } }) => (
-                    <TextInput
-                      placeholder="0"
-                      id={`weight-${i}`}
-                      value={value?.toString() || ""}
-                      onChangeText={(text) => onChange(Number(text) || 0)}
-                      className="font-bold text-typography-900 w-full h-full text-center"
-                      keyboardType="numeric"
-                    />
-                  )}
-                />
-              ) : (
-                <Controller
-                  control={control}
-                  name={`data.${index}.sets.${i}.distance`}
-                  render={({ field: { onChange, value } }) => (
-                    <Box>
-                      <TextInput
-                        placeholder="0"
-                        id={`distance-${i}`}
-                        value={value?.toString() || ""}
-                        onChangeText={(text) => onChange(Number(text) || 0)}
-                        className="font-bold text-typography-900 w-full h-full text-center"
-                        keyboardType="numeric"
-                      />
-                      <Text className="absolute top-1/2 -translate-y-1/2 left-6">
-                        mi
-                      </Text>
-                    </Box>
-                  )}
-                />
-              )}
-            </GridItem>
-            <GridItem
-              className="rounded-md h-8 flex justify-center items-center bg-secondary-500"
-              _extra={{
-                className: "col-span-2",
-              }}
-            >
-              {type === "WEIGHTS" ? (
-                <Controller
-                  control={control}
-                  name={`data.${index}.sets.${i}.reps`}
-                  render={({ field: { onChange, value } }) => (
-                    <TextInput
-                      placeholder="0"
-                      id={`weight-${i}`}
-                      value={value?.toString() || ""}
-                      onChangeText={(text) => onChange(Number(text) || 0)}
-                      className="font-bold text-typography-900 w-full h-full text-center"
-                      keyboardType="numeric"
-                    />
-                  )}
-                />
-              ) : (
-                <TimeInput control={control} name={`data.${index}.sets.${i}.time`} />
-              )}
-            </GridItem>
-            <GridItem
-              className="flex flex-row justify-end"
-              _extra={{
-                className: "col-span-2",
-              }}
-            >
-              <Pressable
-                onPress={() => {
-                  if (sets.length == 1) {
-                    showErrorToast(
-                      toast,
-                      "You must have one set in an exercise"
-                    );
-                  } else {
-                    removeSet(i);
-                  }
-                }}
-              >
-                <Icon as={TrashIcon} size="xl" color="red" />
-              </Pressable>
-            </GridItem>
-          </Grid>
-        ))}*/}
       </VStack>
       {type && type !== "WEIGHTS" && (
         <Button
@@ -473,6 +346,54 @@ export const TimeInput = ({ control, name }: { control: Control<any>, name: stri
           </Box>
         );
       }}
+    />
+  );
+};
+
+export const DistanceInput = ({ control, name }: { control: Control<any>; name: string }) => {
+  const [displayValue, setDisplayValue] = useState('');
+
+  const normalizeValue = (text: any) => {
+    if (!text) return '0';
+    
+    if ((text.match(/\./g) || []).length > 1) {
+      return '0';
+    }
+    
+    if (text.startsWith('.')) {
+      return `0${text}`;
+    }
+    
+    if (text.endsWith('.')) {
+      return text.slice(0, -1);
+    }
+    
+    return text;
+  };
+
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field: { onChange, value } }) => (
+        <Box className="relative">
+          <TextInput
+            placeholder="0"
+            value={displayValue || value?.toString() || ""}
+            onChangeText={(text) => {
+              setDisplayValue(text);
+              onChange(Number(text) || 0);
+            }}
+            onBlur={() => {
+              const normalizedText = normalizeValue(displayValue);
+              setDisplayValue(normalizedText);
+              onChange(Number(normalizedText) || 0);
+            }}
+            className="font-bold text-typography-900 w-full h-full text-center pr-8"
+            keyboardType="numeric"
+          />
+        </Box>
+      )}
     />
   );
 };
