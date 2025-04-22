@@ -426,9 +426,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      // Check if this is a new user (first time sign-in)
-      const isNewUser = data.user?.app_metadata.provider === 'google' && 
-                        data.user?.created_at === data.user?.updated_at;
+      // Check if this user already has a profile in our database
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profile')
+        .select('userId')
+        .eq('userId', data.user?.id)
+        .single();
+      
+      // User is new if no profile exists
+      const isNewUser = !existingProfile;
       
       if (isNewUser) {
         // Create a profile for this new Google user
