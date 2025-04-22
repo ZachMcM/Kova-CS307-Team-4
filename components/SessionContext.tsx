@@ -362,7 +362,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
       if (groupError || !groupData) {
         console.log("group error: ", groupError);
-        throw new Error("Something went wrong! Try again later.");
+        throw new Error("You must have at least one other member as an owner in all \nmulti-user groups you own before you can delete your account");
       }
       if (groupData !== true) {
         console.log("Need to promote in groups");
@@ -402,7 +402,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         {"age": "PRIVATE", "bio": "PRIVATE", "goal": "PRIVATE", "posts": "PRIVATE", "gender": "PRIVATE", "weight": "PRIVATE", "location": "PRIVATE", "achievement": "PRIVATE", "friends_following": "PRIVATE"});
         const {error: usernameError} = await supabase
           .from('profile')
-          .update({username: ""})
+          .update({username: "deleteduser"})
           .eq('userId', userId);
         if (usernameError) {
           console.log("username error: ", usernameError);
