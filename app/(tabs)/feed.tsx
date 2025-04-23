@@ -25,6 +25,7 @@ export type Post = {
   workoutData: {
     calories?: string;
     duration?: string;
+    pauseTime?: string;
     exercises: Array<
         {
           name: string;
@@ -322,6 +323,7 @@ export default function FeedScreen() {
               : []
             }
             workoutDuration={post.workoutData?.duration || undefined}
+            pauseTime={post.workoutData?.pauseTime || "0:00"}
             workoutCalories={post.workoutData?.calories || undefined}
             userId={userId!}
             comments={post.comments}

@@ -77,8 +77,40 @@ export default function Group() {
               <Text>Goal: "{group?.goal}"</Text>
             </VStack>
           </HStack>
-          { !gettingRole && role === "owner" ?
-            <Button
+          {
+            (!gettingEvents) ? (
+            <HStack className="justify-between items-center">
+              <Button
+                  variant="solid"
+                  action="secondary"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/group/past/[id]",
+                      params: { id: groupId },
+                    })
+                  }
+                  size="lg"
+                >
+                <ButtonText>View Past Events</ButtonText>
+              </Button>
+              <Button
+                  variant="solid"
+                  action="secondary"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/group/future/[id]",
+                      params: { id: groupId },
+                    })
+                  }
+                  size="lg"
+                >
+                <ButtonText>View Future Events</ButtonText>
+              </Button>
+            </HStack>) : (<></>)
+          }
+
+          { (!gettingRole && role === "owner") ?
+            (<Button
               variant="solid"
               action="secondary"
               onPress={() =>
@@ -90,25 +122,25 @@ export default function Group() {
               size="lg"
             >
               <ButtonText>Edit Group</ButtonText>
-            </Button>:
-            <></>
+            </Button>):
+            (<></>)
 
           }
           <Button
-            variant="solid"
-            action="secondary"
-            onPress={() =>
-              router.push({
-                pathname: "/(tabs)/group/members/[id]",
-                params: { id: groupId },
-              })
-            }
-            size="lg"
-          >
-            <ButtonText>View Members</ButtonText>
+              variant="solid"
+              action="secondary"
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/group/members/[id]",
+                  params: { id: groupId },
+                })
+              }
+              size="lg"
+            >
+              <ButtonText>View Members</ButtonText>
           </Button>
           { (!gettingEvents) ?
-            <> <VStack space="md">
+            (<><VStack space="md">
               <Heading size="lg">Competitions</Heading>
               <GroupEvents
                 events={
@@ -124,8 +156,9 @@ export default function Group() {
                   currentEvents?.filter((event) => event.type == "collaboration")!
                 } 
                 type="collaborations"
-              />
-            </VStack> </>: <Spinner/>
+                />
+            </VStack></>): 
+              (<Spinner/>)
           }
           {
             (!gettingRole)?
@@ -183,8 +216,8 @@ export default function Group() {
                   size="lg"
                 >
                   <ButtonText>Leave Group</ButtonText>
-                </Button>) :<></>
-              : <></>}
+                </Button>) :(<></>)
+              : (<></>)}
         </VStack>
       )}
     </Container>

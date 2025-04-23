@@ -44,7 +44,7 @@ export default function PastGroupEvents() {
   const router = useRouter();
     return <Container>
               { (!gettingEvents) ?
-            <> <VStack space="md">
+            <><VStack space="md">
               <Button
                 variant="outline"
                 size="md"
@@ -77,7 +77,7 @@ export default function PastGroupEvents() {
                 } 
                 type="collaborations"
               />
-            </VStack> </>: <Spinner/>
+            </VStack></>: <Spinner/>
           }
   </Container>
 }

@@ -145,10 +145,15 @@ export const SummaryWorkoutData = ({
           <Text size="sm" bold>{workoutData.duration}</Text>
         </VStack>
         <VStack style={postStyles.summaryItem}>
+          <Text size="xs">Rest Time:</Text>
+          <Text size="sm" bold>{workoutData.pauseTime}</Text>
+        </VStack>
+        <VStack style={postStyles.summaryItem}>
           <Text size="xs">Calories</Text>
           <Text size="sm" bold>{workoutData.calories}</Text>
         </VStack>
       </HStack>
+
 
       <Text size="sm" bold style={postStyles.exercisesTitle}>Exercises</Text>
       {workoutData.exercises.map((exercise: { name: string; sets: number; reps: number; weight: string }, index: number) => (

@@ -33,7 +33,8 @@ export async function getAllEvents(groupId: string): Promise<GroupEvent[]> {
 }
 
 export async function getCurrentEvents(groupId: string): Promise<EventWithGroup[]> {
-  const time = Date.now()
+  const time = new Date(Date.now()).toISOString()
+  console.log("date: " + time)
   const {data, error} = await supabase
     .from("groupEvent")
     .select(
@@ -50,7 +51,7 @@ export async function getCurrentEvents(groupId: string): Promise<EventWithGroup[
 }
 
 export async function getFutureEvents(groupId: string): Promise<EventWithGroup[]> {
-  const time = Date.now()
+  const time = new Date(Date.now()).toISOString()
   const {data, error} = await supabase
     .from("groupEvent")
     .select(
@@ -66,7 +67,7 @@ export async function getFutureEvents(groupId: string): Promise<EventWithGroup[]
 }
 
 export async function getPastEvents(groupId: string): Promise<EventWithGroup[]> {
-  const time = Date.now()
+  const time = new Date(Date.now()).toISOString()
   const {data, error} = await supabase
     .from("groupEvent")
     .select(

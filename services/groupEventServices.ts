@@ -64,6 +64,35 @@ export const getEvent = async (id: string): Promise<ExtendedEventWithGroup> => {
   return event;
 };
 
+export const getCurrentUserEvents = async (
+  profileId: string
+): Promise<EventWithGroup[]> => {
+  const groups = await getUserGroups(profileId);
+
+  const allEvents: EventWithGroup[] = [];
+  const currentTime = new Date(Date.now()).toISOString()
+  // add each competition associated with the group into the array
+  for (const groupId of groups) {
+    const { data: events, error } = await supabase
+      .from("groupEvent")
+      .select(
+        `
+        *,
+        group:groupId(title, id)`
+      )
+      .eq("groupId", groupId)
+      .lte("start_date", currentTime)
+      .gte("end_date", currentTime);
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    events.forEach((event) => allEvents.push(event));
+  }
+
+  return allEvents;
+};
+
 export const getUserEvents = async (
   profileId: string
 ): Promise<EventWithGroup[]> => {
@@ -113,12 +142,15 @@ export const getProfileEventWorkouts = async (
   eventId: string,
   profileId: string
 ): Promise<EventWorkoutWithProfile[]> => {
+  const event = await getEvent(eventId)
   const { data, error } = await supabase
     .from("eventWorkout")
     .select()
     .order("created_at", { ascending: false })
     .eq("groupEventId", eventId)
-    .eq("profileId", profileId);
+    .eq("profileId", profileId)
+    .gte("created_at", event.start_date)
+    .lte("created_at", event.end_date);;
 
   if (error) {
     throw new Error(error.message);
@@ -179,7 +211,7 @@ export const getWorkoutContributions = async (
   exercises: ExerciseData[],
   profileId: string
 ): Promise<WorkoutContribution[]> => {
-  const events = await getUserEvents(profileId);
+  const events = await getCurrentUserEvents(profileId);
   const contributions: WorkoutContribution[] = [];
 
   for (const event of events) {

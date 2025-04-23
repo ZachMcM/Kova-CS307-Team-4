@@ -16,6 +16,7 @@ const liveWorkoutSchema = z.object({
   templateName: z.string().nonempty(),
   startTime: z.number(),
   endTime: z.number().nullable(),
+  pauseTime: z.string().nullable(),
   exercises: liveExerciseSchema,
 });
 
@@ -36,6 +37,7 @@ export function LiveWorkoutProvider({
       templateName: initWorkout.templateName,
       startTime: initWorkout.startTime,
       endTime: initWorkout.endTime,
+      pauseTime: initWorkout.pauseTime,
       exercises: initWorkout.exercises
     },
   });
@@ -52,6 +54,7 @@ export function LiveWorkoutProvider({
         templateName: updatedValues.templateName!,
         startTime: updatedValues.startTime!,
         endTime: updatedValues.endTime || null,
+        pauseTime: updatedValues.pauseTime || null,
         exercises: updatedValues.exercises
           ? updatedValues.exercises?.map((exercise) => ({
               info: {

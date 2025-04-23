@@ -461,6 +461,14 @@ export default function PostDetails() {
                         </HStack>
                       </Box>
                     )}
+                    {post.workoutData?.pauseTime && (
+                      <Box className="flex-1 h-full justify-center items-center">
+                        <Text size="md">Rest Time</Text>
+                        <HStack>
+                          <Text size = "lg" bold>{post.workoutData.pauseTime}</Text>
+                        </HStack>
+                      </Box>
+                    )}
                     {post.workoutData?.calories && (
                       <Box className="flex-1 h-full justify-center items-center">
                         <Text size="md">Calories</Text>

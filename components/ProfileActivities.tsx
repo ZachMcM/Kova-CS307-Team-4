@@ -812,6 +812,7 @@ export const ProfileActivities = ({
                             }
                             workoutDuration={post.workoutData?.duration || undefined}
                             workoutCalories={post.workoutData?.calories || undefined}
+                            pauseTime={post.workoutData?.pauseTime || undefined}
                             userId={session?.user.id!}
                             comments={post.comments}
                             imageUrls={post.images || undefined}

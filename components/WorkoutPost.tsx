@@ -54,6 +54,7 @@ type WorkoutPostProps = {
   comments: number;
   imageUrls?: string[];
   workoutDuration?: string;
+  pauseTime?: string;
   workoutCalories?: string;
   isOwnPost?: boolean;
   postId?: string;
@@ -79,6 +80,7 @@ export const WorkoutPost = ({
   comments,
   imageUrls,
   workoutDuration,
+  pauseTime,
   workoutCalories,
   isOwnPost = false,
   postId,
@@ -296,7 +298,7 @@ export const WorkoutPost = ({
             style={[styles.expandedDetails, { maxHeight: expandedHeight }]}
           >
             {/* Workout Summary */}
-            {(workoutDuration || workoutCalories) && (
+            {(workoutDuration || workoutCalories ) && (
               <View style={styles.detailsSection}>
                 <Text style={styles.sectionTitle}>Workout Summary</Text>
                 <View style={styles.summaryContainer}>
@@ -310,6 +312,11 @@ export const WorkoutPost = ({
                         />
                       </View>
                       <Text style={styles.summaryText}>{workoutDuration}</Text>
+                    </View>
+                  )}
+                  {pauseTime && (
+                    <View style={styles.summaryItem}>
+                      <Text style={styles.summaryText}>{pauseTime}</Text>
                     </View>
                   )}
                   {workoutCalories && (

@@ -47,7 +47,7 @@ export default function FutureGroupEvents() {
 
   return <Container>
               { (!gettingEvents) ?
-            <> <VStack space="md">
+            <><VStack space="md">
               <Button
                 variant="outline"
                 size="md"
@@ -80,7 +80,7 @@ export default function FutureGroupEvents() {
                 } 
                 type="collaborations"
               />
-            </VStack> </>: <Spinner/>
+            </VStack></>: <Spinner/>
           }
   </Container>
 }

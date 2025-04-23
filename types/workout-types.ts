@@ -17,12 +17,14 @@ export type Workout = {
   templateName: string,
   startTime: number,
   endTime: number | null,
+  pauseTime: string | null,
   exercises: ExerciseData[]
 }
 
 export type WorkoutData = {
   calories?: string;
   duration?: string;
+  pauseTime: string;
   exercises: Array<{
       name: string;
       reps?: number;

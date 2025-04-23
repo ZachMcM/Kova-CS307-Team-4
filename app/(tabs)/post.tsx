@@ -53,6 +53,7 @@ import {
 const defaultWorkoutData = {
   duration: "0 minutes",
   calories: "0 kcal",
+  pauseTime: "0:00",
   exercises: [],
 };
 
@@ -113,6 +114,7 @@ export default function PostScreen() {
         const processedWorkoutData = {
           duration: parsedData.duration || "0 minutes",
           calories: "0 kcal",
+          pauseTime: parsedData.pauseTime,
           exercises: [],
           templateId: parsedData.templateId || null, // Store template ID if present
         };
