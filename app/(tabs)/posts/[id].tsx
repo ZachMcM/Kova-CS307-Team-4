@@ -102,6 +102,7 @@ export default function PostDetails() {
         .eq("id", postId)
         .single();
 
+      
       // If post has a template_id, check if it's a copy
       if (data.template_id) {
         const { data: templateCheck } = await supabase
@@ -113,9 +114,6 @@ export default function PostDetails() {
         if (templateCheck?.originalTemplateId) {
           // If it's a copy, use the original template id
           data.workoutData.originalTemplateId = templateCheck.originalTemplateId;
-        } else {
-          // If it's an original template, use its own id
-          data.workoutData.originalTemplateId = data.template_id;
         }
       }
 
@@ -143,7 +141,6 @@ export default function PostDetails() {
         profile: data.profile || null,
         comments: data.comments
       };
-
 
       const postWithTaggedFriends = async (post: Post) => {
         if (post.taggedFriends && post.taggedFriends.length > 0) {
@@ -484,7 +481,6 @@ export default function PostDetails() {
                   {post.workoutData.exercises.reduce((rows: Exercise[][], exercise: any, index: number) => {
                     // Convert exercise to Exercise type first
                     let normalizedExercise: Exercise;
-                    console.log("Exercise: ", exercise);
                     
                     if ('info' in exercise) {
                       if (exercise.info.type === "WEIGHTS") {
