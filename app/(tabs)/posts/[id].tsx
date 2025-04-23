@@ -24,6 +24,7 @@ import CommentCard from "@/components/CommentCard";
 import { DetailedWorkoutData } from "@/components/WorkoutData";
 import { LogBox } from 'react-native';
 import { Comment, getComments, pushComment } from "@/services/commentServices";
+import { useQueryClient } from "@tanstack/react-query";
 
 type ReducedProfile = {
   username: string;
@@ -36,6 +37,7 @@ const PAGE_SIZE = 3;
 export default function PostDetails() {
   const router = useRouter();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { id: postId } = useLocalSearchParams();
   const [post, setPost] = useState<Post>();
   const [isLoading, setIsLoading] = useState(true);
@@ -305,6 +307,10 @@ export default function PostDetails() {
         [
           {
             text: "No",
+            onPress: () => {
+              queryClient.invalidateQueries({ queryKey: ["templates"] });
+              router.back();
+            },
             style: "cancel"
           },
           {
