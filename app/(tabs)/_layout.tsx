@@ -144,6 +144,7 @@ export default function TabLayout() {
         name="index"
         options={{
           href: null, // Hide from navigation
+          headerShown: false
         }}
       />
       <Tabs.Screen
@@ -172,6 +173,36 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="exercises"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="tutorial/tutorial-profile"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="tutorial/tutorial-feed"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="tutorial/tutorial-workout"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="tutorial/tutorial-post"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="tutorial/tutorial-groups"
         options={{
           href: null
         }}

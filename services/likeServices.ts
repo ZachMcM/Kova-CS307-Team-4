@@ -51,7 +51,11 @@ export function doesUserLike(userId: string, likeRelations: LikeRelation[]): boo
 export async function addUserLike(postId: string, userId: string) {
     let {data, error} = await supabase.from('likeRel')
         .insert({post_id: postId, user_id: userId});
-    console.log(error);
+
+    if (error) {
+        console.log(error);
+        throw new Error(error.message);
+    }
 }
 
 export async function removeUserLike(postId: string, userId: string) {
@@ -59,6 +63,21 @@ export async function removeUserLike(postId: string, userId: string) {
         .delete()
         .eq('post_id', postId)
         .eq('user_id', userId);
-    console.log(error);
+        
+    if (error) {
+        console.log(error);
+        throw new Error(error.message);
+    }
+}
+
+export async function deleteAllUserLikes(userId: string) {
+    let {data, error} = await supabase.from('likeRel')
+        .delete()
+        .eq('user_id', userId);
+    
+    if (error) {
+        console.log(error);
+        throw new Error(error.message);
+    }
 }
 

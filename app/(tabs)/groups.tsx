@@ -48,10 +48,9 @@ export default function Groups() {
           <Text>View all of your groups</Text>
         </VStack>
         <Button
-          size="xl"
+          size="lg"
           action="kova"
           variant="solid"
-          className="ml-[38px] mr-[38px]"
           onPress={() => router.replace("./create-group")}
         >
           <ButtonText className="text-white">Create Group</ButtonText>

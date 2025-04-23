@@ -93,6 +93,15 @@ export const getFavoriteExercises = async (profileId: string): Promise<ExtendedE
   return exercises
 }
 
+export const deleteAllUserFavorites = async (profileId: string) => {
+  const { error } = await supabase.from("favoriteRel").delete().eq("profileId", profileId)
+
+  if (error) {
+    console.log(error)
+    throw new Error(error.message)
+  }
+}
+
 export const removeFavorite = async (profileId: string, exerciseId: string) => {
   const { error } = await supabase.from("favoriteRel").delete().eq("profileId", profileId).eq("exerciseId", exerciseId)
 

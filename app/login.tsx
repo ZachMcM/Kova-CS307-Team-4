@@ -12,6 +12,7 @@ import { Link, LinkText } from "@/components/ui/link";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { HStack } from "@/components/ui/hstack";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -22,7 +23,7 @@ export default function LoginScreen() {
 
   const toast = useToast();
   const router = useRouter();
-  const { signInUser, sessionLoading, setSessionLoading } = useSession();
+  const { signInUser, sessionLoading, setSessionLoading, showTutorial } = useSession();
 
   return (
     <Container>
@@ -67,9 +68,14 @@ export default function LoginScreen() {
               signInUser(email, password)
                 .then((OTPSignIn: boolean) => {
                   if (!OTPSignIn) {
-                    showSuccessToast(toast, "Welcome Back to Kova")
-                    router.replace("/(tabs)");
-                    setSessionLoading(false);
+                    showSuccessToast(toast, "Welcome Back to Kova");
+                    if (showTutorial) {
+                      router.replace("/tutorial/tutorial-profile");
+                      setSessionLoading(false);
+                    } else {
+                      router.replace("/(tabs)");
+                      setSessionLoading(false);
+                    }
                   } else {
                     showSuccessToast(toast, "OTP sign in success, redirecting to password reset");
                     setSessionLoading(false);
@@ -86,6 +92,22 @@ export default function LoginScreen() {
             <ButtonText className="text-white">Sign In</ButtonText>
             {sessionLoading && <ButtonSpinner color="#FFF" />}
           </Button>
+          
+          <Text className="text-center my-2">OR</Text>
+          
+          <Button
+            variant="outline"
+            size="xl"
+            className="mb-3"
+            onPress={() => {
+              // Google sign-in functionality will be added later
+            }}
+          >
+            <HStack space="sm" className="items-center justify-center">
+              <ButtonText>Sign In with Google</ButtonText>
+            </HStack>
+          </Button>
+          
           <Link onPress={() => router.replace("/password-recovery")}>
             <LinkText>Forgot Password?</LinkText>
           </Link>
