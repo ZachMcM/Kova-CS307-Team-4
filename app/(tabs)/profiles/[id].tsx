@@ -1218,7 +1218,9 @@ export default function ProfileScreen() {
         {profile && typeof id === "string" && userId && (
           <>
             <FavoriteExercises />
-            <PersonalGoals goals = {profile.goals} userId = {userId} profileUserId = {id} exercises={exercises}/>
+            {hasSpecificAccess("personal_goals") && (
+              <PersonalGoals goals = {profile.goals} userId = {userId} profileUserId = {id} exercises={exercises}/>
+            )}
             <ProfileActivities
               posts={posts as Post[]}
               isLoading={postsIsLoading}
