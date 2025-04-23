@@ -419,8 +419,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
          throw new Error("Something went wrong! Try again later.")
         }
         //Email update is done with an edge function, code for it is on supabase API
+        let randNum = Math.floor(Math.random() * (999_999_999 + 1)).toString();
+        let newEmail = `deleted${randNum}@deleted.com`;
         const { error: emailUpdateError } = await supabase.functions.invoke('swift-api', {
-          body: {userId, newEmail: "deleted@deleted.com"}
+          body: {userId, newEmail: newEmail}
         })
         if (emailUpdateError) {
           console.log("email update error: ", emailUpdateError);

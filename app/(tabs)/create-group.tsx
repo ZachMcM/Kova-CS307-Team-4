@@ -111,7 +111,7 @@ export default function CreateGroup() {
                     queryClient.invalidateQueries({queryKey: ["groupRel"],})
                     queryClient.invalidateQueries({queryKey: ["group profile"]})
                     queryClient.invalidateQueries({queryKey: ["groupRel profile"]})
-                    showSuccessToast(toast, "Welcome to Kova!")
+                    showSuccessToast(toast, "Successfully created group!")
                 }).catch(error => {
                     console.log(error);
                     showErrorToast(toast, error.message);
