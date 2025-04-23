@@ -70,6 +70,8 @@ import { getAllGroups, getUserGroups } from "@/services/groupServices";
 import GroupCard from "@/components/GroupCard";
 import FavoriteExercises from "@/components/FavoriteExercises";
 import PersonalGoals from "@/components/PersonalGoals";
+import { ExtendedExercise } from "@/types/extended-types";
+import { getExercisesFromStorage } from "@/services/asyncStorageServices";
 
 export default function ProfileScreen() {
   // General states
@@ -130,11 +132,14 @@ export default function ProfileScreen() {
   const [postError, setPostError] = useState<Error | null>(null);
   const [postsIsLoading, setPostsIsLoading] = useState(true);
 
+  const [exercises, setExercises] = useState<ExtendedExercise[]>([]);
+
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
       const profile = await getProfile(id as string);
+      getExercises();
       return profile;
     },
   });
@@ -642,6 +647,10 @@ export default function ProfileScreen() {
       throw error;
     }
   };
+
+  const getExercises = async () => {
+    setExercises(await getExercisesFromStorage() || []);
+  }
 
   return (
     <Container className="flex px-6 py-16">
@@ -1205,7 +1214,7 @@ export default function ProfileScreen() {
         {profile && typeof id === "string" && userId && (
           <>
             <FavoriteExercises />
-            <PersonalGoals goals = {profile.goals} userId = {userId} profileUserId = {id}/>
+            <PersonalGoals goals = {profile.goals} userId = {userId} profileUserId = {id} exercises={exercises}/>
             <ProfileActivities
               posts={posts as Post[]}
               isLoading={postsIsLoading}

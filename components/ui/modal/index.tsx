@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { createModal } from '@gluestack-ui/modal';
-import { Pressable, View, ScrollView } from 'react-native';
+import { Pressable, View } from 'react-native';
 import {
   Motion,
   AnimatePresence,
@@ -22,7 +22,7 @@ const UIModal = createModal({
   Root: withStyleContext(View, SCOPE),
   Backdrop: AnimatedPressable,
   Content: Motion.View,
-  Body: ScrollView,
+  Body: View,
   CloseButton: Pressable,
   Footer: View,
   Header: View,

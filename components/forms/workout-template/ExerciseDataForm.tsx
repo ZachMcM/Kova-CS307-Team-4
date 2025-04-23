@@ -389,7 +389,7 @@ export const DistanceInput = ({ control, name }: { control: Control<any>; name: 
               setDisplayValue(normalizedText);
               onChange(Number(normalizedText) || 0);
             }}
-            className="font-bold text-typography-900 w-full h-full text-center pr-8"
+            className="font-bold text-typography-900 w-full h-full text-center"
             keyboardType="numeric"
           />
         </Box>

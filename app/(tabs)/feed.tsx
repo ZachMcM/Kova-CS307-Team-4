@@ -12,6 +12,8 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { getFollowing, getFriends } from "@/services/profileServices";
+import { getExercises } from "@/services/exerciseServices";
+import { asyncExercises } from "@/services/asyncStorageServices";
 
 export type Post = {
   id: string;
@@ -271,6 +273,14 @@ export default function FeedScreen() {
   const isOwnPost = (post: Post) => {
     return post.profile?.userId === userId;
   };
+
+  const asyncStoreExercises = async () => {
+    await getExercises().then((exercises) => {
+      asyncExercises(exercises);
+    });
+  }
+
+  asyncStoreExercises();
 
   return (
     <ScrollView
