@@ -59,6 +59,7 @@ export default function TemplateForm() {
 
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
+      console.log("Saving template", values);
       if (values.id) {
         await updateTemplate(values, session?.user.user_metadata.profileId);
       } else {
@@ -106,6 +107,48 @@ export default function TemplateForm() {
       searchIdToIndex.set(searchItems[i].id, i);
     }
   }
+
+  const handleExerciseSubmit = (exercise: any) => {
+    setExerciseQuery("");
+
+    console.log(exercise);
+
+    if (exercise.type === "WEIGHTS") {
+      console.log("Weights exercise");
+      addExercise({
+        info: {
+          name: exercise.name!,
+          id: exercise.id,
+          type: exercise.type
+        },
+        sets: [
+          {
+            reps: 0,
+            weight: 0,
+            cooldown: false,
+          },
+        ],
+      });
+    }
+    else {
+      console.log("Cardio exercise");
+      addExercise({
+        info: {
+          name: exercise.name!,
+          id: exercise.id,
+          type: exercise.type
+        },
+        sets: [
+          {
+            distance: 0,
+            time: 0,
+            cooldown: false,
+          },
+        ],
+      });
+    }
+  }
+
 
   return !exercisesLoading ? (
     allExercises && (
@@ -165,19 +208,7 @@ export default function TemplateForm() {
               <Pressable
                 key={exercise.id}
                 onPress={() => {
-                  setExerciseQuery("");
-                  addExercise({
-                    info: {
-                      name: exercise.name!,
-                      id: exercise.id,
-                    },
-                    sets: [
-                      {
-                        reps: 0,
-                        weight: 0,
-                      },
-                    ],
-                  });
+                  handleExerciseSubmit(exercise);
                 }}
                 className="flex flex-1"
               >
@@ -196,7 +227,7 @@ export default function TemplateForm() {
                   <Icon as={TrashIcon} size="xl" color="red" />
                 </Pressable>
               </HStack>
-              <ExerciseDataForm key={exercise.info.id} index={i} />
+              <ExerciseDataForm key={exercise.info.id} index={i} type={exercise.info.type!} />
             </VStack>
           ))}
         </VStack>

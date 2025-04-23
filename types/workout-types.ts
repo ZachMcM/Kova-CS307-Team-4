@@ -1,13 +1,17 @@
 export type SetData = {
   reps?: number 
   weight?: number
+  distance?: number
+  time?: number
   done?: boolean
+  cooldown?: boolean
 }
 
 export type ExerciseData = {
   info: {
     id: string,
-    name: string
+    name: string,
+    type?: string
   }
   sets: SetData[]
 }

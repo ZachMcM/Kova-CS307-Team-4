@@ -2,6 +2,7 @@ import {
   getEventWorkouts,
   getProfileMinutes,
   getProfilePoints,
+  getWorkoutPoints,
 } from "@/services/groupEventServices";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -25,50 +26,25 @@ import { Alert, AlertIcon, AlertText } from "../ui/alert";
 import { Icon, InfoIcon } from "../ui/icon";
 import { getUserIdFromProfile } from "@/services/profileServices";
 import { Trophy } from "lucide-react-native";
+import { calculateTime, formatCalculateTime } from "@/lib/calculateTime";
 
-export default function Leaderboard({ event }: { event: EventWithGroup }) {
+export default function SingleSessionLeaderboard({
+  event,
+}: {
+  event: EventWithGroup;
+}) {
   const { data: leaderboard, isPending } = useQuery({
     queryKey: ["event-leaderboard", { id: event.id }],
     queryFn: async () => {
       const eventWorkouts = await getEventWorkouts(event.id);
 
-      console.log("Event workouts", eventWorkouts);
+      eventWorkouts.sort(
+        (a, b) =>
+          getWorkoutPoints(b.workoutData.exercises, event) -
+          getWorkoutPoints(a.workoutData.exercises, event)
+      );
 
-      // creating the map
-      const profileTable = new Map<string, EventWorkoutWithProfile[]>();
-      for (const eventWorkout of eventWorkouts) {
-        // Get the existing array or create a new one if it doesn't exist
-        const workoutArr = profileTable.get(eventWorkout.profileId) || [];
-
-        // Check if the current workout already exists in the array
-        const workoutExists = workoutArr.some(
-          (workout) => workout.id === eventWorkout.id
-        );
-
-        // Only add the workout if it doesn't already exist
-        if (!workoutExists) {
-          workoutArr.push(eventWorkout);
-          // Update the map with the modified array
-          profileTable.set(eventWorkout.profileId, workoutArr);
-        }
-      }
-
-      const leaderboard = Array.from(profileTable.keys()).map((key) => {
-        const workouts = profileTable.get(key)!;
-        const totalValue =
-          event.type == "total-time"
-            ? getProfileMinutes(workouts)
-            : getProfilePoints(event, workouts);
-        console.log(totalValue);
-        return {
-          profile: workouts[0].profile,
-          totalValue,
-        };
-      });
-
-      leaderboard.sort((a, b) => b.totalValue - a.totalValue);
-
-      return leaderboard;
+      return eventWorkouts;
     },
   });
 
@@ -89,47 +65,47 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
         <Spinner />
       ) : leaderboard && leaderboard.length > 0 ? (
         <VStack space="md">
-          {leaderboard.map(({ totalValue, profile }, i) => (
+          {leaderboard.map((workout, i) => (
             <Card
-              key={profile.id}
+              key={workout.id}
               variant="outline"
-              className={clsx(
-                "p-0",
-                session?.user.user_metadata.profileId == profile.id &&
+              className={clsx("p-0",
+                session?.user.user_metadata.profileId == workout.profile.id &&
                   "bg-secondary-100"
               )}
             >
               <VStack space="md">
-                <HStack
-                  space="lg"
-                  className={clsx("items-center justify-between p-4", event.goal && "border-b border-outline-200")}
-                >
+                <HStack space="lg" className="items-center justify-between p-4 border-b border-outline-200">
                   <HStack space="lg" className="items-center">
                     <Heading size="xl">{i + 1}.</Heading>
                     <Pressable
                       onPress={() => {
-                        getUserIdFromProfile(profile.id).then((userId) => {
-                          router.push({
-                            pathname: "/(tabs)/profiles/[id]",
-                            params: { id: userId },
-                          });
-                        });
+                        getUserIdFromProfile(workout.profile.id).then(
+                          (userId) => {
+                            router.push({
+                              pathname: "/(tabs)/profiles/[id]",
+                              params: { id: userId },
+                            });
+                          }
+                        );
                       }}
                     >
                       <HStack space="md" className="items-center">
                         <Avatar className="bg-indigo-600" size="md">
-                          {profile.avatar ? (
-                            <AvatarImage source={{ uri: profile.avatar }} />
+                          {workout.profile.avatar ? (
+                            <AvatarImage
+                              source={{ uri: workout.profile.avatar }}
+                            />
                           ) : (
                             <AvatarFallbackText>
-                              {profile.username}
+                              {workout.profile.username}
                             </AvatarFallbackText>
                           )}
                         </Avatar>
 
                         <VStack>
-                          <Heading>{profile.name}</Heading>
-                          <Text>@{profile.username}</Text>
+                          <Heading>{workout.profile.name}</Heading>
+                          <Text>@{workout.profile.username}</Text>
                         </VStack>
                       </HStack>
                     </Pressable>
@@ -137,26 +113,38 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
                   <HStack space="md" className="items-center">
                     <Box className="bg-secondary-400 rounded-full py-1 px-3">
                       <Heading size="xs">
-                        {totalValue.toFixed(2)}{" "}
-                        {event.type == "total-time" ? "mins" : "pts"}
+                        {getWorkoutPoints(workout.workoutData.exercises, event).toFixed(2)}{" "}
+                        pts
                       </Heading>
                     </Box>
                     {i == 0 && <Icon as={Trophy} className="text-yellow-400" />}
                   </HStack>
                 </HStack>
-                {event.goal && (
+                {event.goal ? (
                   <VStack space="md" className="p-4">
                     <HStack className="items-center justify-between">
                       <Text>Progress torwards goal</Text>
                       <Text>
-                        {Math.round((totalValue / event.goal!) * 100).toFixed(
-                          2
-                        )}
+                        {Math.round(
+                          (getWorkoutPoints(
+                            workout.workoutData.exercises,
+                            event
+                          ) /
+                            event.goal!) *
+                            100
+                        ).toFixed(2)}
                         %
                       </Text>
                     </HStack>
                     <Progress
-                      value={Math.round((totalValue / event.goal!) * 100)}
+                      value={Math.round(
+                        (getWorkoutPoints(
+                          workout.workoutData.exercises,
+                          event
+                        ) /
+                          event.goal!) *
+                          100
+                      )}
                       size="lg"
                       orientation="horizontal"
                     >
@@ -164,11 +152,26 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
                     </Progress>
                     <HStack className="items-center justify-between">
                       <Text>
-                        {totalValue.toFixed(2)} / {event.goal?.toFixed(2)}
+                        {getWorkoutPoints(
+                          workout.workoutData.exercises,
+                          event
+                        ).toFixed(2)}{" "}
+                        / {event.goal?.toFixed(2)}
                       </Text>
-                      {event.goal! - totalValue >= 0 ? (
+                      {event.goal! -
+                        getWorkoutPoints(
+                          workout.workoutData.exercises,
+                          event
+                        ) >=
+                      0 ? (
                         <Text>
-                          {(event.goal! - totalValue).toFixed(2)}{" "}
+                          {(
+                            event.goal! -
+                            getWorkoutPoints(
+                              workout.workoutData.exercises,
+                              event
+                            )
+                          ).toFixed(2)}{" "}
                           {event.type == "total-time" ? "mins" : "pts"}{" "}
                           remaining
                         </Text>
@@ -181,6 +184,34 @@ export default function Leaderboard({ event }: { event: EventWithGroup }) {
                       )}
                     </HStack>
                   </VStack>
+                ) : (
+                  <HStack className="justify-between items-center p-4">
+                    <VStack>
+                      <Heading size="md">
+                        {workout.workoutData.templateName}
+                      </Heading>
+                      <Text>
+                        {Math.round(
+                          (Date.now() -
+                            new Date(workout.created_at).getTime()) /
+                            86_400_000
+                        )}{" "}
+                        Days ago · Duration:{" "}
+                        {formatCalculateTime(
+                          calculateTime(
+                            workout.workoutData.startTime,
+                            workout.workoutData.endTime!
+                          )
+                        )}
+                      </Text>
+                    </VStack>
+                    <Box className="bg-secondary-400 rounded-full py-1 px-3">
+                      <Heading size="sm">
+                        {getWorkoutPoints(workout.workoutData.exercises, event).toFixed(2)}{" "}
+                        {event.type == "total-time" ? "mins" : "pts"}
+                      </Heading>
+                    </Box>
+                  </HStack>
                 )}
               </VStack>
             </Card>

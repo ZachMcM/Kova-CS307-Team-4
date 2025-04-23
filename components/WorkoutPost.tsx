@@ -32,7 +32,10 @@ export type Exercise = {
   name: string;
   reps?: number;
   sets?: number;
+  distance?: string;
+  time?: string;
   weight?: string;
+  cooldowns?: string;
 };
 
 export type TaggedFriend = {
@@ -172,16 +175,16 @@ export const WorkoutPost = ({
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={workoutPostStyles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={workoutPostStyles.header}>
           <TouchableOpacity
             onPress={() => {
               router.replace(`/profiles/${id}`);
             }}
           >
-            <View style={styles.userInfo}>
-              <View style={styles.avatar}>
+            <View style={workoutPostStyles.userInfo}>
+              <View style={workoutPostStyles.avatar}>
                 <Avatar className="bg-indigo-600">
                   {avatar ? (
                     <AvatarImage source={{ uri: avatar }}></AvatarImage>
@@ -199,18 +202,18 @@ export const WorkoutPost = ({
                     (@{username})
                   </GText>
                 </HStack>
-                <Text style={styles.date}>{date}</Text>
+                <Text style={workoutPostStyles.date}>{date}</Text>
               </View>
             </View>
           </TouchableOpacity>
-          <View style={styles.headerActions}>
+          <View style={workoutPostStyles.headerActions}>
             {isOwnPost && (
               <TouchableOpacity
                 onPress={(e) => {
                   e.stopPropagation();
                   handleEdit();
                 }}
-                style={styles.editButton}
+                style={workoutPostStyles.editButton}
               >
                 <Ionicons name="pencil" size={18} color="#007AFF" />
               </TouchableOpacity>
@@ -218,16 +221,16 @@ export const WorkoutPost = ({
           </View>
         </View>
         {/* Content */}
-        <View style={styles.content}>
+        <View style={workoutPostStyles.content}>
           <Pressable onPress = {() => {router.replace(`/posts/${postId}`)}}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={workoutPostStyles.title}>{title}</Text>
             {description.length > 0 ? (
               <Text
                 style={[
-                  styles.description,
+                  workoutPostStyles.description,
                   expanded
-                    ? styles.expandedDescription
-                    : styles.collapsedDescription,
+                    ? workoutPostStyles.expandedDescription
+                    : workoutPostStyles.collapsedDescription,
                 ]}
                 numberOfLines={expanded ? undefined : 2}
               >
@@ -235,10 +238,10 @@ export const WorkoutPost = ({
               </Text>
             ) : (<></>)}
             {/* Exercise Tags */}
-            <View style={styles.exerciseTags}>
+            <View style={workoutPostStyles.exerciseTags}>
               {exercises.map((exercise, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{exercise.name}</Text>
+                <View key={index} style={workoutPostStyles.tag}>
+                  <Text style={workoutPostStyles.tagText}>{exercise.name}</Text>
                 </View>
               ))}
             </View>
@@ -264,7 +267,7 @@ export const WorkoutPost = ({
 
           {/* Tagged Friends */}
           {taggedFriends.length > 0 && (
-            <View style={styles.taggedFriendsContainer}>
+            <View style={workoutPostStyles.taggedFriendsContainer}>
               <HStack className = "flex-wrap">
                 <GText>With </GText>
                 {taggedFriends.map((friend, index) => (
@@ -295,15 +298,15 @@ export const WorkoutPost = ({
 
           {/* Expanded Details */}
           <Animated.View
-            style={[styles.expandedDetails, { maxHeight: expandedHeight }]}
+            style={[workoutPostStyles.expandedDetails, { maxHeight: expandedHeight }]}
           >
             {/* Workout Summary */}
-            {(workoutDuration || workoutCalories ) && (
-              <View style={styles.detailsSection}>
-                <Text style={styles.sectionTitle}>Workout Summary</Text>
-                <View style={styles.summaryContainer}>
+            {(workoutDuration || workoutCalories) && (
+              <View style={workoutPostStyles.detailsSection}>
+                <Text style={workoutPostStyles.sectionTitle}>Workout Summary</Text>
+                <View style={workoutPostStyles.summaryContainer}>
                   {workoutDuration && (
-                    <View style={styles.summaryItem}>
+                    <View style={workoutPostStyles.summaryItem}>
                       <View>
                         <Ionicons
                           name="time-outline"
@@ -311,16 +314,16 @@ export const WorkoutPost = ({
                           color="#007AFF"
                         />
                       </View>
-                      <Text style={styles.summaryText}>{workoutDuration}</Text>
+                      <Text style={workoutPostStyles.summaryText}>{workoutDuration}</Text>
                     </View>
                   )}
                   {pauseTime && (
-                    <View style={styles.summaryItem}>
-                      <Text style={styles.summaryText}>{pauseTime}</Text>
+                    <View style={workoutPostStyles.summaryItem}>
+                      <Text style={workoutPostStyles.summaryText}>{pauseTime}</Text>
                     </View>
                   )}
                   {workoutCalories && (
-                    <View style={styles.summaryItem}>
+                    <View style={workoutPostStyles.summaryItem}>
                       <View>
                         <Ionicons
                           name="flame-outline"
@@ -328,7 +331,7 @@ export const WorkoutPost = ({
                           color="#FF9500"
                         />
                       </View>
-                      <Text style={styles.summaryText}>{workoutCalories}</Text>
+                      <Text style={workoutPostStyles.summaryText}>{workoutCalories}</Text>
                     </View>
                   )}
                 </View>
@@ -337,9 +340,9 @@ export const WorkoutPost = ({
 
             {/* Tagged Friends Details (in expanded view) */}
             {taggedFriends.length > 0 && (
-              <View style={styles.detailsSection}>
-                <Text style={styles.sectionTitle}>Workout Partners</Text>
-                <View style={styles.taggedFriendsDetails}>
+              <View style={workoutPostStyles.detailsSection}>
+                <Text style={workoutPostStyles.sectionTitle}>Workout Partners</Text>
+                <View style={workoutPostStyles.taggedFriendsDetails}>
                   {taggedFriends.map((friend) => (
                     <Pressable
                       key={friend.userId}
@@ -347,7 +350,7 @@ export const WorkoutPost = ({
                         router.replace(`/profiles/${friend.userId}`);
                       }}
                     >
-                      <View style={styles.taggedFriendDetail}>
+                      <View style={workoutPostStyles.taggedFriendDetail}>
                         <Avatar size="sm" className="mr-2">
                           {friend.avatar ? (
                             <AvatarImage
@@ -369,27 +372,27 @@ export const WorkoutPost = ({
 
             {/* Exercise Details */}
             {exercises.length > 0 && (
-              <View style={styles.detailsSection}>
-                <Text style={styles.sectionTitle}>Exercise Details</Text>
+              <View style={workoutPostStyles.detailsSection}>
+                <Text style={workoutPostStyles.sectionTitle}>Exercise Details</Text>
                 {exercises.map((exercise, index) => (
-                  <View key={index} style={styles.exerciseDetail}>
-                    <Text style={styles.exerciseName}>{exercise.name}</Text>
-                    <View style={styles.exerciseStats}>
+                  <View key={index} style={workoutPostStyles.exerciseDetail}>
+                    <Text style={workoutPostStyles.exerciseName}>{exercise.name}</Text>
+                    <View style={workoutPostStyles.exerciseStats}>
                       {exercise.sets !== undefined && (
-                        <Text style={styles.exerciseStat}>
-                          <Text style={styles.statLabel}>Sets: </Text>
+                        <Text style={workoutPostStyles.exerciseStat}>
+                          <Text style={workoutPostStyles.statLabel}>Sets: </Text>
                           <Text>{String(exercise.sets)}</Text>
                         </Text>
                       )}
                       {exercise.reps !== undefined && (
-                        <Text style={styles.exerciseStat}>
-                          <Text style={styles.statLabel}>Reps: </Text>
+                        <Text style={workoutPostStyles.exerciseStat}>
+                          <Text style={workoutPostStyles.statLabel}>Reps: </Text>
                           <Text>{String(exercise.reps)}</Text>
                         </Text>
                       )}
                       {exercise.weight && (
-                        <Text style={styles.exerciseStat}>
-                          <Text style={styles.statLabel}>Weight: </Text>
+                        <Text style={workoutPostStyles.exerciseStat}>
+                          <Text style={workoutPostStyles.statLabel}>Weight: </Text>
                           <Text>{exercise.weight}</Text>
                         </Text>
                       )}
@@ -401,9 +404,9 @@ export const WorkoutPost = ({
           </Animated.View>
 
           {/* Engagement */}
-          <View style={styles.engagement}>
+          <View style={workoutPostStyles.engagement}>
             <TouchableOpacity
-              style={styles.engagementItem}
+              style={workoutPostStyles.engagementItem}
               onPress={(event) => {
                 changeLikeStatus();
               }}
@@ -417,7 +420,7 @@ export const WorkoutPost = ({
                 </Text>
               )}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.engagementItem}>
+            <TouchableOpacity style={workoutPostStyles.engagementItem}>
               <Text>
                 💬 <Text>{comments}</Text>
               </Text>
@@ -446,21 +449,21 @@ export const WorkoutPost = ({
         visible={editModalVisible}
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Post</Text>
+        <View style={workoutPostStyles.modalOverlay}>
+          <View style={workoutPostStyles.modalContent}>
+            <Text style={workoutPostStyles.modalTitle}>Edit Post</Text>
 
-            <Text style={styles.inputLabel}>Title</Text>
+            <Text style={workoutPostStyles.inputLabel}>Title</Text>
             <TextInput
-              style={styles.input}
+              style={workoutPostStyles.input}
               value={editedTitle}
               onChangeText={setEditedTitle}
               placeholder="Enter post title"
             />
 
-            <Text style={styles.inputLabel}>Description</Text>
+            <Text style={workoutPostStyles.inputLabel}>Description</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[workoutPostStyles.input, workoutPostStyles.textArea]}
               value={editedDescription}
               onChangeText={setEditedDescription}
               placeholder="Enter post description"
@@ -468,23 +471,23 @@ export const WorkoutPost = ({
               numberOfLines={4}
             />
 
-            <View style={styles.modalButtons}>
+            <View style={workoutPostStyles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[workoutPostStyles.modalButton, workoutPostStyles.cancelButton]}
                 onPress={() => setEditModalVisible(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={workoutPostStyles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.modalButton,
-                  styles.saveButton,
-                  isSubmitting && styles.disabledButton,
+                  workoutPostStyles.modalButton,
+                  workoutPostStyles.saveButton,
+                  isSubmitting && workoutPostStyles.disabledButton,
                 ]}
                 onPress={handleSaveEdit}
                 disabled={isSubmitting}
               >
-                <Text style={styles.saveButtonText}>
+                <Text style={workoutPostStyles.saveButtonText}>
                   {isSubmitting ? "Saving..." : "Save"}
                 </Text>
               </TouchableOpacity>
@@ -496,7 +499,7 @@ export const WorkoutPost = ({
   );
 };
 
-const styles = StyleSheet.create({
+export const workoutPostStyles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
     borderRadius: 12,

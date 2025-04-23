@@ -21,7 +21,7 @@ import { useNavigation } from "@react-navigation/native";
 import { WorkoutData } from "@/types/workout-types";
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio";
-import { Icon, TrashIcon, EditIcon, AddIcon, ChevronLeftIcon, DownloadIcon, CloseIcon, InfoIcon } from "@/components/ui/icon";
+import { Icon, TrashIcon, EditIcon, AddIcon, ChevronLeftIcon, DownloadIcon, CloseIcon, InfoIcon, BellIcon, CheckIcon } from "@/components/ui/icon";
 import { Box } from "./ui/box";
 import { Accordion, AccordionContent, AccordionContentText, AccordionHeader, AccordionTitleText } from "./ui/accordion";
 import { getTagsAndDetails } from "@/services/exerciseServices";
@@ -33,13 +33,18 @@ import {
   ModalCloseButton,
   ModalContent,
   ModalHeader,
+  ModalFooter
 } from "@/components/ui/modal";
 import { Pressable } from "./ui/pressable";
+import { Switch } from "./ui/switch";
+import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ProfileActivitiesProps = {
     posts: Post[];
     isLoading: boolean;
     updatePostFunc: (postId: string, title: string, description: string) => Promise<any[]>;
+    userId: string;
 }
 
 export type PopularExercise = {
@@ -55,15 +60,31 @@ export const ProfileActivities = ({
     posts,
     isLoading,
     updatePostFunc,
+    userId
 }: ProfileActivitiesProps) => {
 
     const { session } = useSession();
     const navigation = useNavigation();
     const toast = useToast();
+    const queryClient = useQueryClient();
+
+    // Notification preferences state
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [notificationFrequency, setNotificationFrequency] = useState("weekly");
+    const [showNotificationModal, setShowNotificationModal] = useState(false);
+    
+    // Summary popup state
+    const [showSummaryModal, setShowSummaryModal] = useState(false);
+    const [summaryData, setSummaryData] = useState({
+      frequency: "weekly",
+      workoutCount: 0,
+      totalMinutes: 0,
+      mostPopularExercise: "None"
+    });
 
     const [detailsModal, setDetailsModal] = useState("");
 
-    const [postViewCount, setPostViewCount] = useState(4); //Initially only view 4 posts
+    const [postViewCount, setPostViewCount] = useState(4);
     const [visiblePosts, setVisiblePosts] = useState(posts.length > 4 ? posts.slice(0, 4) : posts.slice());
     const [hasMorePosts, setHasMorePosts] = useState(posts.length > 0 ? true : false);
 
@@ -102,6 +123,194 @@ export const ProfileActivities = ({
       workoutsWeek: [] as Post[],
     })
 
+    // Load notification preferences from storage
+    useEffect(() => {
+      const loadNotificationPreferences = async () => {
+        try {
+          const storedEnabled = await AsyncStorage.getItem('notificationsEnabled');
+          const storedFrequency = await AsyncStorage.getItem('notificationFrequency');
+          
+          if (storedEnabled !== null) {
+            setNotificationsEnabled(storedEnabled === 'true');
+          }
+          
+          if (storedFrequency !== null) {
+            setNotificationFrequency(storedFrequency);
+          }
+        } catch (error) {
+          console.error('Error loading notification preferences:', error);
+        }
+      };
+      
+      loadNotificationPreferences();
+    }, []);
+
+    // Save notification preferences
+    const saveNotificationPreferences = async () => {
+      try {
+        await AsyncStorage.setItem('notificationsEnabled', notificationsEnabled.toString());
+        await AsyncStorage.setItem('notificationFrequency', notificationFrequency);
+        
+        if (notificationsEnabled) {
+          await registerForPushNotifications();
+          scheduleWorkoutSummaryNotification();
+          showSuccessToast(toast, `Workout summary notifications set to ${notificationFrequency}`);
+        } else {
+          await cancelAllScheduledNotifications();
+          showSuccessToast(toast, "Workout summary notifications disabled");
+        }
+        
+        setShowNotificationModal(false);
+      } catch (error) {
+        console.error('Error saving notification preferences:', error);
+        showErrorToast(toast, "Failed to save notification preferences");
+      }
+    };
+
+    // Request notification permissions
+    const registerForPushNotifications = async () => {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        showErrorToast(toast, "Failed to get notification permissions");
+        setNotificationsEnabled(false);
+        return false;
+      }
+      
+      return true;
+    };
+
+    // Cancel all notifications
+    const cancelAllScheduledNotifications = async () => {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    };
+
+    // Generate notification summary text based on frequency
+    const generateSummaryText = (frequency = notificationFrequency) => {
+      let summaryStats = {
+        frequency,
+        workoutCount: 0,
+        totalMinutes: 0,
+        mostPopularExercise: popularExercises.length > 0 ? popularExercises[0].name : "None",
+      };
+      
+      switch (frequency) {
+        case 'daily':
+          summaryStats.workoutCount = workoutData.workoutsWeek.filter(
+            workout => new Date(workout.createdAt).toDateString() === new Date().toDateString()
+          ).length;
+          
+          // Calculate daily minutes
+          workoutData.workoutsWeek.forEach(workout => {
+            if (new Date(workout.createdAt).toDateString() === new Date().toDateString() && 
+                workout.workoutData?.duration) {
+              summaryStats.totalMinutes += parseInt(workout.workoutData.duration.split(':')[0]);
+            }
+          });
+          break;
+        case 'weekly':
+          summaryStats.workoutCount = totalWorkouts.totalWorkoutsWeek;
+          summaryStats.totalMinutes = totalMinutes.totalMinutesWeek;
+          break;
+        case 'monthly':
+          summaryStats.workoutCount = totalWorkouts.totalWorkoutsMonth;
+          summaryStats.totalMinutes = totalMinutes.totalMinutesMonth;
+          break;
+      }
+      
+      return summaryStats;
+    };
+
+    // Schedule workout summary notification based on frequency
+    const scheduleWorkoutSummaryNotification = async () => {
+      // Cancel any existing notifications first
+      await cancelAllScheduledNotifications();
+      
+      if (!notificationsEnabled) return;
+      
+      let trigger: any;
+      
+      switch (notificationFrequency) {
+        case 'daily':
+          // Schedule for 8 PM every day
+          trigger = {
+            hour: 20,
+            minute: 0,
+            repeats: true,
+          };
+          break;
+        case 'weekly':
+          // Schedule for Sunday at 8 PM
+          trigger = {
+            weekday: 1, // Monday is 1, Sunday is 7 in this API
+            hour: 20,
+            minute: 0,
+            repeats: true,
+          };
+          break;
+        case 'monthly':
+          // Schedule for 1st day of month at 8 PM
+          const now = new Date();
+          const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 20, 0, 0);
+          trigger = nextMonth;
+          // We'll need to reschedule this monthly since we can't set a simple repeat
+          break;
+      }
+      
+      if (trigger) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Workout Summary",
+            body: `Your ${notificationFrequency} workout summary is ready!`,
+            data: { frequency: notificationFrequency },
+          },
+          trigger,
+        });
+      }
+    };
+
+    // Show the summary immediately for testing
+    const showSummaryNow = () => {
+      const stats = generateSummaryText();
+      setSummaryData(stats);
+      setShowSummaryModal(true);
+    };
+
+    // Set up notification handler
+    useEffect(() => {
+      // Set up notification received handler
+      const subscription = Notifications.addNotificationReceivedListener(notification => {
+        const frequency = notification.request.content.data?.frequency;
+        if (frequency) {
+          console.log(`Received ${frequency} summary notification`);
+        }
+      });
+      
+      // Set up notification response handler (when user taps notification)
+      const responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+        const frequency = response.notification.request.content.data?.frequency;
+        if (frequency) {
+          // Navigate to profile activities and focus on the relevant time period
+          setTimePeriod(frequency === 'monthly' ? 'month' : frequency.replace('ly', ''));
+          
+          // Generate summary data and show the modal
+          const stats = generateSummaryText(frequency);
+          setSummaryData(stats);
+          setShowSummaryModal(true);
+        }
+      });
+      
+      return () => {
+        subscription.remove();
+        responseSubscription.remove();
+      };
+    }, [workoutData, totalWorkouts, totalMinutes, popularExercises]);
 
     const { mutate, isPending: isTagsPending } = useMutation({
       mutationFn: async (popularExercises: PopularExercise[]) => {
@@ -533,7 +742,143 @@ export const ProfileActivities = ({
         <View className="mb-10">
             <VStack space="2xl">
               <VStack space="sm">
-                <Heading size="2xl">Profile Summary</Heading>
+                <HStack className="justify-between">
+                  <Heading size="2xl">Profile Summary</Heading>
+                  <HStack space="md">
+                    <Pressable onPress={showSummaryNow}>
+                      <Icon as={CheckIcon} size="xl" />
+                    </Pressable>
+                    <Pressable onPress={() => setShowNotificationModal(true)}>
+                      <Icon as={BellIcon} size="xl" />
+                    </Pressable>
+                  </HStack>
+                </HStack>
+                
+                {/* Notification Preferences Modal */}
+                <Modal
+                  isOpen={showNotificationModal}
+                  onClose={() => setShowNotificationModal(false)}
+                  size="md"
+                  closeOnOverlayClick
+                >
+                  <ModalBackdrop />
+                  <ModalContent>
+                    <ModalHeader>
+                      <Heading size="lg">Workout Summary Notifications</Heading>
+                      <ModalCloseButton>
+                        <Icon
+                          as={CloseIcon}
+                          className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
+                        />
+                      </ModalCloseButton>
+                    </ModalHeader>
+                    <ModalBody>
+                      <VStack space="md" className="py-2">
+                        <HStack space="md" className="items-center justify-between">
+                          <Text size="lg">Enable Notifications</Text>
+                          <Switch
+                            value={notificationsEnabled}
+                            onValueChange={setNotificationsEnabled}
+                            size="md"
+                          />
+                        </HStack>
+                        
+                        {notificationsEnabled && (
+                          <VStack space="md" className="mt-2">
+                            <Text size="lg">Notification Frequency</Text>
+                            <RadioGroup value={notificationFrequency} onChange={setNotificationFrequency as (value: string) => void}>
+                              <VStack space="sm">
+                                <Radio value="daily" isInvalid={false} isDisabled={false}>
+                                  <RadioIndicator>
+                                    <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                                  </RadioIndicator>
+                                  <RadioLabel>Daily</RadioLabel>
+                                </Radio>
+                                <Radio value="weekly" isInvalid={false} isDisabled={false}>
+                                  <RadioIndicator>
+                                    <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                                  </RadioIndicator>
+                                  <RadioLabel>Weekly</RadioLabel>
+                                </Radio>
+                                <Radio value="monthly" isInvalid={false} isDisabled={false}>
+                                  <RadioIndicator>
+                                    <RadioIcon as={ChevronLeftIcon}></RadioIcon>
+                                  </RadioIndicator>
+                                  <RadioLabel>Monthly</RadioLabel>
+                                </Radio>
+                              </VStack>
+                            </RadioGroup>
+                            
+                            <Text size="md" className="mt-2">
+                              You'll receive a notification with your {notificationFrequency} workout summary,
+                              including total workouts, time spent, and most popular exercises.
+                            </Text>
+                          </VStack>
+                        )}
+                        
+                        <Button
+                          className="mt-4"
+                          onPress={saveNotificationPreferences}
+                        >
+                          <ButtonText>Save Preferences</ButtonText>
+                        </Button>
+                      </VStack>
+                    </ModalBody>
+                  </ModalContent>
+                </Modal>
+                
+                {/* Workout Summary Modal */}
+                <Modal
+                  isOpen={showSummaryModal}
+                  onClose={() => setShowSummaryModal(false)}
+                  size="md"
+                  closeOnOverlayClick
+                >
+                  <ModalBackdrop />
+                  <ModalContent>
+                    <ModalHeader>
+                      <Heading size="lg">
+                        {summaryData.frequency.charAt(0).toUpperCase() + summaryData.frequency.slice(1)} Workout Summary
+                      </Heading>
+                      <ModalCloseButton>
+                        <Icon
+                          as={CloseIcon}
+                          className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
+                        />
+                      </ModalCloseButton>
+                    </ModalHeader>
+                    <ModalBody>
+                      <VStack space="lg" className="py-2">
+                        <Card variant="outline" className="p-3">
+                          <Heading size="md">Total Workouts</Heading>
+                          <Heading size="2xl" className="text-center">
+                            {summaryData.workoutCount}
+                          </Heading>
+                        </Card>
+                        
+                        <Card variant="outline" className="p-3">
+                          <Heading size="md">Total Minutes</Heading>
+                          <Heading size="2xl" className="text-center">
+                            {summaryData.totalMinutes}
+                          </Heading>
+                        </Card>
+                        
+                        <Card variant="outline" className="p-3">
+                          <Heading size="md">Most Popular Exercise</Heading>
+                          <Heading size="lg" className="text-center">
+                            {summaryData.mostPopularExercise}
+                          </Heading>
+                        </Card>
+                      </VStack>
+                    </ModalBody>
+                    <ModalFooter>
+                      <Button onPress={() => setShowSummaryModal(false)}>
+                        <ButtonText>Close</ButtonText>
+                      </Button>
+                    </ModalFooter>
+                  </ModalContent>
+                </Modal>
+                
                 <Card variant="outline">
                   <HStack className="justify-between mb-4">
                     <RadioGroup value={timePeriod} onChange={setTimePeriod as (value: string) => void}>
@@ -693,7 +1038,9 @@ export const ProfileActivities = ({
                             <Icon as={InfoIcon} size="xl" />
                           </Pressable>
                         </HStack>
-                        <Heading size="md">Personal Best: {favorite.weight} {favorite.unit}</Heading>
+                        {favorite.weight > 0 && (  
+                          <Heading size="md">Personal Best: {favorite.weight} {favorite.unit}</Heading>
+                        )}
                         <Text size="md">You have done {favorite.count} sets of this exercise!</Text>
                         <Box className="flex flex-row flex-wrap gap-2">
                           {favorite.tags && favorite.tags.map((tag) => (
@@ -731,7 +1078,7 @@ export const ProfileActivities = ({
                       <Button
                         onPress={() => { setFavoritesViewCount(favoritesViewCount + 4); }}
                       >
-                        <ButtonText>Render more Favorites</ButtonText>
+                        <ButtonText>Render more Exercises</ButtonText>
                       </Button>
                     )}
                   </Card>
@@ -789,7 +1136,7 @@ export const ProfileActivities = ({
 
                     {visiblePosts && visiblePosts.map((post) => (
                         <WorkoutPost
-                            id={post.profile?.userId || ""}
+                            id={userId || ""}
                             key={post.id}
                             postId={post.id}
                             username={post.profile?.username || "Unknown user"}

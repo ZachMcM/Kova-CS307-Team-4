@@ -123,7 +123,12 @@ export const getUserEvents = async (
 // function to add competitionWorkout to competition
 
 export const addEventWorkout = async (workout: Workout, profileId: string) => {
-  const events = await getUserEvents(profileId);
+  let events = await getUserEvents(profileId);
+  events = events.filter(
+    (event) =>
+      new Date(event.start_date!).getTime() <= Date.now() &&
+      new Date(event.end_date!).getTime() >= Date.now()
+  );
 
   for (const event of events) {
     const { error: insertErr } = await supabase.from("eventWorkout").insert({
@@ -162,7 +167,6 @@ export const getProfileEventWorkouts = async (
 export const getEventWorkouts = async (
   eventId: string
 ): Promise<EventWorkoutWithProfile[]> => {
-  const event = await getEvent(eventId)
   const { data, error } = await supabase
     .from("eventWorkout")
     .select(
@@ -170,9 +174,7 @@ export const getEventWorkouts = async (
       *,
       profile:profileId(id, name, username, avatar)`
     )
-    .eq("groupEventId", eventId)
-    .gte("created_at", event.start_date)
-    .lte("created_at", event.end_date);
+    .eq("groupEventId", eventId);
   if (error) {
     throw new Error(error.message);
   }
@@ -205,30 +207,65 @@ export const getExercisePoints = (
   return totalPoints * baseValue;
 };
 
+export const getWorkoutMinutes = (start: number, end: number) => {
+  const diffInMilliseconds = end - start;
+
+  let totalSeconds = Math.floor(diffInMilliseconds / 1000);
+  let minutes = totalSeconds / 60;
+
+  return minutes;
+};
+
 // function to get the list of competitions the workout contributed to
+
+export const getWorkoutPoints = (exercises: ExerciseData[], event: Tables<'groupEvent'>) => {
+  let points = 0
+  for (const exercise of exercises) {
+    points += getExercisePoints(event, exercise)
+  }
+
+  return points
+}
 
 export const getWorkoutContributions = async (
   exercises: ExerciseData[],
+  startTime: number,
+  endTime: number,
   profileId: string
 ): Promise<WorkoutContribution[]> => {
   const events = await getCurrentUserEvents(profileId);
   const contributions: WorkoutContribution[] = [];
 
   for (const event of events) {
-    let points = 0;
-    for (const exercise of exercises) {
-      points += getExercisePoints(event, exercise);
+    let value = 0;
+    if (event.type == "total-time") {
+      value = getWorkoutMinutes(startTime, endTime);
+    } else {
+      value = getWorkoutPoints(exercises, event)
     }
     contributions.push({
       competition: {
         id: event.id,
         title: event.title!,
       },
-      points,
+      value,
+      type: event.type == "total-time" ? "minutes" : "points",
     });
   }
 
   return contributions;
+};
+
+export const getProfileMinutes = (workouts: EventWorkoutWithProfile[]) => {
+  let mintues = 0;
+  for (const workout of workouts) {
+    mintues += getWorkoutMinutes(
+      workout.workoutData.startTime,
+      workout.workoutData.endTime!
+    );
+  }
+
+  return mintues;
 };
 
 export const getProfilePoints = (
@@ -276,17 +313,21 @@ export const editEventDetails = async (
   return data;
 };
 
-export const editTitle = async (title: string, eventId: string ) => {
-  const { data, error } = await supabase.from("groupEvent").update({
-    title
-  }).eq("id", eventId).select()
+export const editTitle = async (title: string, eventId: string) => {
+  const { data, error } = await supabase
+    .from("groupEvent")
+    .update({
+      title,
+    })
+    .eq("id", eventId)
+    .select();
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return data
-}
+  return data;
+};
 
 export const editExercisePointValues = async (
   pointValues: ExercisePoints[],

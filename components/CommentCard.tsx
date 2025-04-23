@@ -10,7 +10,7 @@ import { Comment } from "@/services/commentServices";
 import { Button, ButtonText } from "./ui/button";
 import { useState } from "react";
 
-function formatDate(date: string) {
+export function formatDate(date: string) {
   const now = new Date();
   const inputDate = new Date(date);
 

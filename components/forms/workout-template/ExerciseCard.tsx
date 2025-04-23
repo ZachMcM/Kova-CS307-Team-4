@@ -32,8 +32,10 @@ import { useState } from "react";
 
 export default function ExerciseCard({
   exercise,
+  displayDetails = true,
 }: {
   exercise: ExtendedExercise;
+  displayDetails?: boolean;
 }) {
   const { session } = useSession();
   const { data: favorited, isPending: isFavoritedPending } = useQuery({
@@ -55,16 +57,18 @@ export default function ExerciseCard({
         <HStack className="items-center justify-between">
           <Heading size="md">{exercise.name}</Heading>
           <HStack space="md" className="justify-center">
-            {isFavoritedPending ? (
+            {isFavoritedPending && displayDetails ? (
               <Spinner />
-            ) : (
+            ) : displayDetails && (
               favorited != undefined && (
                 <Favorite exercise={exercise} initFavorited={favorited} />
               )
             )}
-            <Pressable onPress={() => setDetailsModal(true)}>
-              <Icon as={InfoIcon} size="xl" />
-            </Pressable>
+            {displayDetails && (
+              <Pressable onPress={() => setDetailsModal(true)}>
+                <Icon as={InfoIcon} size="xl" />
+              </Pressable>
+            )}
           </HStack>
         </HStack>
         <Box className="flex flex-row flex-wrap gap-2">
@@ -73,30 +77,32 @@ export default function ExerciseCard({
           ))}
         </Box>
       </VStack>
-      <Modal
-        isOpen={detailsModal}
-        onClose={() => setDetailsModal(false)}
-        size="md"
-        closeOnOverlayClick
-      >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Heading size="lg">Details</Heading>
-            <ModalCloseButton>
-              <Icon
-                as={CloseIcon}
-                className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
-              />
-            </ModalCloseButton>
-          </ModalHeader>
-          <ModalBody>
-            <Text size="md" className="text-typography-700">
-              {exercise.details}
-            </Text>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+      {displayDetails && (
+        <Modal
+          isOpen={detailsModal}
+          onClose={() => setDetailsModal(false)}
+          size="md"
+          closeOnOverlayClick
+        >
+          <ModalBackdrop />
+          <ModalContent>
+            <ModalHeader>
+              <Heading size="lg">Details</Heading>
+              <ModalCloseButton>
+                <Icon
+                  as={CloseIcon}
+                  className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
+                />
+              </ModalCloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <Text size="md" className="text-typography-700">
+                {exercise.details}
+              </Text>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      )}
     </Card>
   );
 }

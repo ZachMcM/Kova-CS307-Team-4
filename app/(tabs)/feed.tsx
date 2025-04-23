@@ -12,6 +12,19 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { getFollowing, getFriends } from "@/services/profileServices";
+import { getExercises } from "@/services/exerciseServices";
+import { asyncExercises } from "@/services/asyncStorageServices";
+import { HStack } from "@/components/ui/hstack";
+import {
+  Icon,
+  MenuIcon,
+  TrashIcon,
+  CheckCircleIcon,
+  CircleIcon,
+  AlertCircleIcon,
+  EditIcon,
+  HelpCircleIcon
+} from "@/components/ui/icon";
 
 export type Post = {
   id: string;
@@ -273,30 +286,50 @@ export default function FeedScreen() {
     return post.profile?.userId === userId;
   };
 
+  const asyncStoreExercises = async () => {
+    await getExercises().then((exercises) => {
+      asyncExercises(exercises);
+    });
+  }
+
+  asyncStoreExercises();
+
   return (
     <ScrollView
-      style={styles.scrollView}
+      style={feedStyles.scrollView}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
       <Container>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle} size="xl" bold>
+        <View style={feedStyles.header}>
+          <HStack className="justify-between">
+          <Text style={feedStyles.headerTitle} size="xl" bold>
             Workout Feed
           </Text>
+            <Button
+              onPress={() => {router.push("/feed"); router.push("/tutorial/tutorial-profile")}}
+              className="w-0 h-0"
+            >
+              <Icon
+                as={HelpCircleIcon}
+                size="xl"
+                className="mt-8 ml-8 w-8 h-8"
+              ></Icon>
+            </Button>
+          </HStack>
         </View>
 
         {isLoading && !refreshing && (
-          <Text style={styles.statusMessage}>Loading posts...</Text>
+          <Text style={feedStyles.statusMessage}>Loading posts...</Text>
         )}
 
         {error && (
-          <Text style={styles.statusMessage}>Error loading posts. Pull down to refresh.</Text>
+          <Text style={feedStyles.statusMessage}>Error loading posts. Pull down to refresh.</Text>
         )}
 
         {posts && posts.length === 0 && !isLoading && (
-          <Text style={styles.statusMessage}>No posts found. Follow some users to see their posts!</Text>
+          <Text style={feedStyles.statusMessage}>No posts found. Follow some users to see their posts!</Text>
         )}
 
         {posts && posts.map((post) => (
@@ -339,7 +372,7 @@ export default function FeedScreen() {
         {posts && posts.length > 0 && hasMore && (
           <Button
             onPress={loadMorePosts}
-            style={styles.loadMoreButton}
+            style={feedStyles.loadMoreButton}
             disabled={loadingMore}
           >
             <ButtonText>{loadingMore ? 'Loading...' : 'Load more posts'}</ButtonText>
@@ -351,7 +384,7 @@ export default function FeedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+export const feedStyles = StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: "#f5f5f5",

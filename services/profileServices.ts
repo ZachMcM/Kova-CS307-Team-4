@@ -84,7 +84,8 @@ export const getProfile = async (id: string): Promise<Profile> => {
     goal: profile.goal,
     bio: profile.bio,
     achievement: profile.achievement,
-    privacy_settings: profile.privacy_settings
+    privacy_settings: profile.privacy_settings,
+    goals: profile.goals,
   } as PublicProfile;
 }
 
@@ -276,5 +277,22 @@ export const uploadProfilePicture = async (userId: string, file: File) => {
     return publicURL;
   } catch (error) {
     throw new Error("Failed to upload profile picture");
+  }
+}
+
+export const updateProfileGoals = async (userId: string, goals: JSON[]) => {
+  console.log("Updating goals for userId:", userId, "with goals:", goals);
+  const { error } = await supabase
+    .from("profile")
+    .update({
+      goals: goals,
+    })
+    .eq("userId", userId);
+
+  if (error) {
+    return false;
+  }
+  else {
+    return true;
   }
 }

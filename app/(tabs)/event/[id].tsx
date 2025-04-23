@@ -3,6 +3,7 @@ import CollaborationProgress from "@/components/event/CollaborationProgress";
 import EditEventDetails from "@/components/event/EditEventDetails";
 import ExercisePointsView from "@/components/event/ExercisePointsView";
 import Leaderboard from "@/components/event/Leaderboard";
+import SingleSessionLeaderboard from "@/components/event/SingleSessionLeaderboard";
 import YourWorkouts from "@/components/event/YourWorkouts";
 import { useSession } from "@/components/SessionContext";
 import {
@@ -79,7 +80,7 @@ export default function Event() {
           ) : (
             <HStack className="items-center justify-between">
               <VStack space="sm">
-                <Heading className="text-4xl lg:text-5xl xl:text-[56px]">
+                <Heading className="text-4xl lg:text-5xl xl:text-[56px] w-96">
                   {event.title}
                 </Heading>
                 <HStack space="md" className="items-center">
@@ -111,7 +112,15 @@ export default function Event() {
               <VStack>
                 <Heading size="xl">Details</Heading>
                 <Text>
-                  {editDetails ? "Edit" : "View"} {event.type} details
+                  {editDetails ? "Edit" : "View"}{" "}
+                  {event.type == "competition"
+                    ? "point race"
+                    : event.type == "total-time"
+                    ? "endurance challenge"
+                    : event.type == "single-workout"
+                    ? "single session showdown"
+                    : "team challenge"}{" "}
+                  details
                 </Text>
               </VStack>
               {!editDetails && groupRel?.role == "owner" && (
@@ -142,27 +151,38 @@ export default function Event() {
                       </Text>
                     </VStack>
                   </HStack>
-                  <HStack space="md" className="items-center">
-                    <Feather name="target" size={24} />
-                    <VStack>
-                      <Heading size="md">Goal</Heading>
-                      <Text size="md">{event?.goal} Points</Text>
-                    </VStack>
-                  </HStack>
-                  <HStack space="md" className="items-center">
-                    <Ionicons name="barbell" size={24} />
-                    <VStack>
-                      <Heading size="md">Weight Multiplier</Heading>
-                      <Text size="md">x{event.weight_multiplier} Points</Text>
-                    </VStack>
-                  </HStack>
-                  <HStack space="md" className="items-center">
-                    <Ionicons name="arrow-up" size={24} />
-                    <VStack>
-                      <Heading size="md">Rep Multiplier</Heading>
-                      <Text size="md">x{event.rep_multiplier} Points</Text>
-                    </VStack>
-                  </HStack>
+                  {event.goal && (
+                    <HStack space="md" className="items-center">
+                      <Feather name="target" size={24} />
+                      <VStack>
+                        <Heading size="md">Goal</Heading>
+                        <Text size="md">
+                          {event?.goal}{" "}
+                          {event.type == "total-time" ? "Minutes" : "Points"}
+                        </Text>
+                      </VStack>
+                    </HStack>
+                  )}
+                  {event.type != "total-time" && (
+                    <>
+                      <HStack space="md" className="items-center">
+                        <Ionicons name="barbell" size={24} />
+                        <VStack>
+                          <Heading size="md">Weight Multiplier</Heading>
+                          <Text size="md">
+                            x{event.weight_multiplier} Points
+                          </Text>
+                        </VStack>
+                      </HStack>
+                      <HStack space="md" className="items-center">
+                        <Ionicons name="arrow-up" size={24} />
+                        <VStack>
+                          <Heading size="md">Rep Multiplier</Heading>
+                          <Text size="md">x{event.rep_multiplier} Points</Text>
+                        </VStack>
+                      </HStack>
+                    </>
+                  )}
                 </VStack>
               )}
             </Card>
@@ -170,8 +190,12 @@ export default function Event() {
           {event.type == "collaboration" && (
             <CollaborationProgress event={event} />
           )}
-          <Leaderboard event={event} />
-          <ExercisePointsView event={event} />
+          {event.type == "single-workout" ? (
+            <SingleSessionLeaderboard event={event} />
+          ) : (
+            <Leaderboard event={event} />
+          )}
+          {event.type != "total-time" && <ExercisePointsView event={event} />}
           <YourWorkouts event={event} />
         </VStack>
       )}
@@ -196,8 +220,8 @@ function EditTile({
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      title: event.title || ""
-    }
+      title: event.title || "",
+    },
   });
 
   function onSubmit(values: FieldValues) {
@@ -215,12 +239,12 @@ function EditTile({
       showErrorToast(toast, err.message);
     },
     onSuccess: (data) => {
-      const groupId = event.groupId
+      const groupId = event.groupId;
       queryClient.invalidateQueries({ queryKey: ["event", { id: event.id }] });
       queryClient.invalidateQueries({
         queryKey: ["group", { id: event.groupId }],
       });
-      queryClient.invalidateQueries({queryKey: ["group", {groupId}],});
+      queryClient.invalidateQueries({ queryKey: ["group", { groupId }] });
       queryClient.invalidateQueries({
         queryKey: ["groupEv", { id: event.groupId }],
       });

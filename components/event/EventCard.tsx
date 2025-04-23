@@ -1,28 +1,32 @@
 import { Ionicons } from "@expo/vector-icons";
 import Feather from "@expo/vector-icons/Feather";
 import { Link, useRouter } from "expo-router";
-import { Button, ButtonIcon, ButtonText } from "./ui/button";
-import { Card } from "./ui/card";
-import { Heading } from "./ui/heading";
-import { HStack } from "./ui/hstack";
-import { ArrowRightIcon } from "./ui/icon";
-import { Text } from "./ui/text";
-import { VStack } from "./ui/vstack";
+import { Button, ButtonIcon, ButtonText } from "../ui/button";
+import { Card } from "../ui/card";
+import { Heading } from "../ui/heading";
+import { HStack } from "../ui/hstack";
+import { ArrowRightIcon } from "../ui/icon";
+import { Text } from "../ui/text";
+import { VStack } from "../ui/vstack";
 import { EventWithGroup } from "@/types/extended-types";
 import { Tables } from "@/types/database.types";
 
-export default function EventCard({
-  event,
-}: {
-  event: Tables<'groupEvent'>;
-}) {
+export default function EventCard({ event }: { event: Tables<"groupEvent"> }) {
   const router = useRouter();
 
   return (
     <Card variant="outline">
       <VStack space="lg">
         <VStack>
-          <Text className="capitalize" size="sm">{event.type}</Text>
+          <Text className="capitalize" size="sm">
+            {event.type == "competition"
+              ? "Points Race"
+              : event.type == "total-time"
+              ? "Endurance Challenge"
+              : event.type == "single-workout"
+              ? "Single Session Showdown"
+              : "Team Challenge"}
+          </Text>
           <Heading size="xl">{event.title}</Heading>
         </VStack>
         <VStack space="2xl">
@@ -34,12 +38,15 @@ export default function EventCard({
                 {new Date(event?.end_date!).toLocaleDateString()}
               </Text>
             </HStack>
-            <HStack space="md" className="items-center">
-              <Feather name="target" size={22} />
-              <Text size="md">
-                {event?.goal} Points
-              </Text>
-            </HStack>
+            {event.goal && (
+              <HStack space="md" className="items-center">
+                <Feather name="target" size={22} />
+                <Text size="md">
+                  {event?.goal}{" "}
+                  {event.type == "total-time" ? "Minutes" : "Points"}
+                </Text>
+              </HStack>
+            )}
           </VStack>
         </VStack>
       </VStack>
