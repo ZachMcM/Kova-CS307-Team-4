@@ -24,7 +24,10 @@ import CommentCard from "@/components/CommentCard";
 import { DetailedWorkoutData } from "@/components/WorkoutData";
 import { LogBox } from 'react-native';
 import { Comment, getComments, pushComment } from "@/services/commentServices";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Body from "react-native-body-highlighter";
+import { getColors, getIntensities } from "@/services/intensityServices";
+import { ExtendedBodyPart } from "react-native-body-highlighter"
 
 type ReducedProfile = {
   username: string;
@@ -45,6 +48,7 @@ export default function PostDetails() {
   const [commentValue, setCommentValue] = useState("");
   const [isSubmitPending, setIsSubmitPending] = useState(false);
   const [userId, setUserId] = useState("");
+  const [intensities, setIntensities] = useState([] as ExtendedBodyPart[])
   const [userProfile, setUserProfile] = useState<ReducedProfile>();
   const [page, setPage] = useState(1);
   const [isCurrentUserPost, setIsCurrentUserPost] = useState(false);
@@ -160,6 +164,17 @@ export default function PostDetails() {
       };
 
       postWithTaggedFriends(fetchedPost);
+
+      const loadMuscleGroups = async (post: Post) => {
+        if (post?.workoutData?.exercises) {
+          console.log(post.workoutData.exercises)
+          console.log(post.workoutData.exercises.map((exercise) => exercise.name))
+          const muscleIntensities = await getIntensities(post.workoutData.exercises.map((exercise) => exercise.name), 4)
+          console.log("Res: " + muscleIntensities)
+          setIntensities(muscleIntensities)
+        }
+      }
+      loadMuscleGroups(fetchedPost)
 
       const { data: commentData } = await supabase
         .from('comment')
@@ -579,6 +594,24 @@ export default function PostDetails() {
                   ))}
                 </VStack>
               )}
+              {/*Muscle Matrix*/}
+              {
+                (post.workoutData?.exercises) ?
+                (<HStack className="flex items-center justify-between">
+                  <Body
+                    colors={getColors()}
+                    data={intensities}
+                    side="front"
+                    scale={0.9}>
+                  </Body>
+                  <Body
+                    colors={getColors()}
+                    data={intensities}
+                    side="back"
+                    scale={0.9}>
+                  </Body>
+                </HStack>) : <Spinner/>
+              }
             </VStack>
           )}
         </VStack>
