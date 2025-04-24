@@ -56,7 +56,6 @@ export default function LiveWorkoutForm() {
   const router = useRouter();
 
   const { session } = useSession();
-
   const { fields: exercises } = useFieldArray({
     control,
     name: "exercises",
@@ -125,6 +124,7 @@ export default function LiveWorkoutForm() {
     queryKey: ["contributions"],
     queryFn: async () => {
       const contributions = await getContributionsFromStorage();
+      console.log(contributions)
       return contributions;
     },
   });

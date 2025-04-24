@@ -11,8 +11,43 @@ export enum Areas {
   GLUTEAL
 }
 
-export async function getIntensities(exerciseData: Exercise[]) : Promise<ExtendedBodyPart[]> {
-  const exerciseNames = [] as string[]
+export function getAreasFromTags(tags: string[]) : ExtendedBodyPart[] {
+  const repsOfParts = {} as Record<Areas, number>
+  for (let j = 0; j < tags.length; j++) {
+    const areas = getAreas(tags[j])
+    for (let k = 0; k < areas.length; k++) {
+      if (isNaN(repsOfParts[areas[k]])) {
+        repsOfParts[areas[k]] = 1;
+      }
+      else {
+        repsOfParts[areas[k]]++;
+      }
+    }
+  }
+  const allParts = getParts()
+  const partsToReturn = [] as ExtendedBodyPart[]
+  const areas = [
+    Areas.TRAPEZIUS, Areas.TRICEPS, Areas.FOREARM, Areas.ADDUCTORS, Areas.CALVES,
+    Areas.NECK, Areas.DELTOIDS, Areas.HANDS, Areas.FEET, Areas.ANKLES,
+    Areas.TIBIALIS, Areas.OBLIQUES, Areas.CHEST, Areas.BICEPS, Areas.ABS,
+    Areas.QUADRICEPS, Areas.KNEES, Areas.UPPER_BACK, Areas.LOWER_BACK, Areas.HAMSTRING,
+    Areas.GLUTEAL
+  ]
+  // console.log(repsOfParts)
+  for (let i = 0; i < areas.length; i++) {
+    let intensity = repsOfParts[areas[i]]
+    if (!isNaN(intensity) && intensity != null) {
+      const part = allParts.get(areas[i])
+      // console.log(intensity)
+      part!.intensity = ((intensity + 6 > getRangeOfIntensities() + 1)?  getRangeOfIntensities() + 1: 6 + intensity)
+      partsToReturn.push(part!)
+    }
+  }
+  // console.log(partsToReturn)
+  return partsToReturn
+}
+
+export async function getIntensities(exerciseNames: string[], minIntensity: number) : Promise<ExtendedBodyPart[]> {
   /*
   let totalReps = 0
   for (let i = 0; i < exerciseData.length; i++) {
@@ -22,12 +57,19 @@ export async function getIntensities(exerciseData: Exercise[]) : Promise<Extende
   */
   const tagsOfExercises = (await getTagsAndDetails(exerciseNames)).tagMap
   const repsOfParts = {} as Record<Areas, number>
-  for (let i = 0; i < exerciseData.length; i++) {
-    const tags = tagsOfExercises[exerciseData[i].name]
-    for (let j = 0; j < tags.length; j++) {
-      const areas = getAreas(tags[j])
-      for (let k = 0; k < areas.length; k++) {
-        repsOfParts[areas[k]]++;
+  for (let i = 0; i < exerciseNames.length; i++) {
+    const tags = tagsOfExercises[exerciseNames[i]]
+    if (tags) {
+      for (let j = 0; j < tags.length; j++) {
+        const areas = getAreas(tags[j])
+        for (let k = 0; k < areas.length; k++) {
+          if (isNaN(repsOfParts[areas[k]])) {
+            repsOfParts[areas[k]] = 1;
+          }
+          else {
+            repsOfParts[areas[k]]++;
+          }
+        }
       }
     }
   }
@@ -42,9 +84,10 @@ export async function getIntensities(exerciseData: Exercise[]) : Promise<Extende
   ]
   for (let i = 0; i < areas.length; i++) {
     let intensity = repsOfParts[areas[i]]
-    if (intensity != 0) {
+    if (!isNaN(intensity) && intensity != null) {
       const part = allParts.get(areas[i])
-      part!.intensity = ((intensity > getRangeOfIntensities())?  getRangeOfIntensities(): intensity)
+      part!.intensity = ((intensity + minIntensity > getRangeOfIntensities() + 1)?
+        getRangeOfIntensities() + 1: intensity + minIntensity)
       partsToReturn.push(part!)
     }
   }
@@ -68,6 +111,7 @@ function getParts() : Map<Areas, ExtendedBodyPart> {
   parts.set(Areas.CHEST, {slug: "chest", intensity: 0})
   parts.set(Areas.BICEPS, {slug: "biceps", intensity: 0})
   parts.set(Areas.ABS, {slug: "abs", intensity: 0})
+  parts.set(Areas.QUADRICEPS, {slug: "quadriceps", intensity: 0})
   parts.set(Areas.KNEES, {slug: "knees", intensity: 0})
   parts.set(Areas.UPPER_BACK, {slug: "upper-back", intensity: 0})
   parts.set(Areas.LOWER_BACK, {slug: "lower-back", intensity: 0})
@@ -82,6 +126,7 @@ function getRangeOfIntensities() : number {
 
 export function getColors() : string[] {
   return [
+    "#002222",
     "#003535",
     "#014242",
     "#014f4f",
@@ -119,6 +164,7 @@ function getAreas(tag: string) : Areas[] {
       areas.push(Areas.OBLIQUES)
       areas.push(Areas.GLUTEAL)
       areas.push(Areas.LOWER_BACK)
+      areas.push(Areas.ABS)
       break;
     case "Calves":
       areas.push(Areas.CALVES)

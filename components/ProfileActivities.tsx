@@ -39,6 +39,9 @@ import { Pressable } from "./ui/pressable";
 import { Switch } from "./ui/switch";
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Spinner } from "./ui/spinner";
+import { getColors, getIntensities } from "@/services/intensityServices";
+import Body, { BodyPart, ExtendedBodyPart } from "react-native-body-highlighter";
 
 type ProfileActivitiesProps = {
     posts: Post[];
@@ -122,6 +125,49 @@ export const ProfileActivities = ({
       workoutsMonth: [] as Post[],
       workoutsWeek: [] as Post[],
     })
+
+    const [muscleGroups, setMuscleGroups] = useState({
+      muscleGroupsAll: [] as ExtendedBodyPart[],
+      muscleGroupsYear: [] as ExtendedBodyPart[],
+      muscleGroupsMonth: [] as ExtendedBodyPart[],
+      muscleGroupsWeek: [] as ExtendedBodyPart[],
+    })
+
+    const getExerciseNames = function (workoutPosts: Post[]) : string[] {
+      const exerciseNames = [] as string[]
+      for (let i = 0; i < workoutPosts.length; i++) {
+        const p = workoutPosts[i]
+        if (p.workoutData) {
+          for (let j = 0; j < p.workoutData.exercises.length; j++) {
+            exerciseNames.push(p.workoutData.exercises[j].name)
+          }
+        }
+      }
+      return exerciseNames
+    }
+
+      useQuery({
+        queryKey: ["gettingMuscleGroupsProfile", userId],
+        queryFn: async () => {
+          if (workoutData != null && workoutData.workouts.length != 0) {
+            console.log(getExerciseNames(workoutData.workouts))
+            const muscleGroupsAll = await getIntensities(getExerciseNames(workoutData.workouts), 0)
+            const muscleGroupsWeek = await getIntensities(getExerciseNames(workoutData.workoutsWeek), 0)
+            const muscleGroupsMonth = await getIntensities(getExerciseNames(workoutData.workoutsMonth), 0)
+            const muscleGroupsYear = await getIntensities(getExerciseNames(workoutData.workoutsYear), 0)
+  
+            setMuscleGroups({ 
+              muscleGroupsAll: muscleGroupsAll,
+              muscleGroupsWeek: muscleGroupsWeek,
+              muscleGroupsMonth: muscleGroupsMonth,
+              muscleGroupsYear: muscleGroupsYear
+            })
+          }
+          return "Complete"
+        },
+        enabled: workoutData.workouts.length != 0
+      })
+
 
     // Load notification preferences from storage
     useEffect(() => {
@@ -446,7 +492,6 @@ export const ProfileActivities = ({
       setPopularExercises(popularData);
       mutate(popularData);
     }
-
     // Prepare chart data
     const prepareWorkoutCountChart = () => {
       let labels: string[];
@@ -555,6 +600,18 @@ export const ProfileActivities = ({
       };
     };
 
+    const getMuscleGroup = () => {
+      switch (timePeriod) {
+        case 'week':
+          return muscleGroups.muscleGroupsWeek
+        case 'month':
+          return muscleGroups.muscleGroupsMonth
+        case 'year':
+          return muscleGroups.muscleGroupsYear
+        default:
+          return muscleGroups.muscleGroupsAll
+      }
+    }
     const prepareWorkoutMinuteChart = () => {
       let labels: string[];
       let data: number[] = [];
@@ -737,7 +794,7 @@ export const ProfileActivities = ({
     useEffect(() => {
       calculateStats();
     }, [workouts])
-
+    
     return (
         <View className="mb-10">
             <VStack space="2xl">
@@ -1024,6 +1081,24 @@ export const ProfileActivities = ({
                     }}
                   />
                   )}
+                  <Heading className="mb-5" size="xl">Muscles Exercised</Heading>
+                  { 
+                    <HStack className="flex items-center justify-between">
+                      <Body
+                        colors={getColors()}
+                        data={getMuscleGroup()}
+                        side="front"
+                        scale={0.8}>
+                      </Body>
+                      <Body
+                        colors={getColors()}
+                        data={getMuscleGroup()}
+                        side="back"
+                        scale={0.8}>
+                      </Body>
+                    </HStack>
+                  }
+
                   <Card variant="outline">
                     <Heading className="mb-5" size="xl">Most Popular Exercises ⭐</Heading>
                     {popularExercises.length === 0 && (

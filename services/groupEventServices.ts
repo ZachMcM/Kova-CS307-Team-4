@@ -9,6 +9,7 @@ import {
 } from "@/types/extended-types";
 import { ExerciseData, Workout } from "@/types/workout-types";
 import { getUserGroups } from "./groupServices";
+import { getCurrentEvents } from "./simpleEventServices";
 
 export const newEvent = async (
   groupId: string,
@@ -233,9 +234,14 @@ export const getWorkoutContributions = async (
   endTime: number,
   profileId: string
 ): Promise<WorkoutContribution[]> => {
-  const events = await getCurrentUserEvents(profileId);
+  let events = await getUserEvents(profileId);
+  events = events.filter(
+    (event) =>
+      new Date(event.start_date!).getTime() <= Date.now() &&
+      new Date(event.end_date!).getTime() >= Date.now()
+  );
+  console.log("Events -- " + events)
   const contributions: WorkoutContribution[] = [];
-
   for (const event of events) {
     let value = 0;
     if (event.type == "total-time") {
@@ -252,6 +258,7 @@ export const getWorkoutContributions = async (
       type: event.type == "total-time" ? "minutes" : "points",
     });
   }
+  console.log("Constributions -- " + contributions)
 
   return contributions;
 };

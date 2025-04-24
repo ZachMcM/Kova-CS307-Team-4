@@ -23,12 +23,14 @@ import {
   isExerciseFavorited,
   removeFavorite,
 } from "@/services/exerciseServices";
+import { getAreasFromTags, getColors } from "@/services/intensityServices";
 import { showErrorToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
 import { ExtendedExercise } from "@/types/extended-types";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import Body from "react-native-body-highlighter";
 
 export default function ExerciseCard({
   exercise,
@@ -99,6 +101,20 @@ export default function ExerciseCard({
               <Text size="md" className="text-typography-700">
                 {exercise.details}
               </Text>
+              <HStack className="flex items-center justify-between">
+                <Body
+                  colors={getColors()}
+                  data={getAreasFromTags(exercise.tags.map((tag) => tag.name!))}
+                  side="front"
+                  scale={0.7}>
+                </Body>
+                <Body
+                  colors={getColors()}
+                  data={getAreasFromTags(exercise.tags.map((tag) => tag.name!))}
+                  side="back"
+                  scale={0.7}>
+                </Body>
+              </HStack>
             </ModalBody>
           </ModalContent>
         </Modal>

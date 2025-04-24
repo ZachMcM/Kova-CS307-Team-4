@@ -40,7 +40,7 @@ export const getTagsAndDetails = async (exerciseNames: string[]): Promise<{tagMa
   if (error) {
     console.error('Error fetching exercise tags:', error)
     throw error
-  }
+  } 
 
   const exerciseTagsMap: Record<string, string[]> = {}
   const exerciseDetailsMap: Record<string, string> = {}

@@ -1,5 +1,5 @@
 import Container from "@/components/Container";
-import EventCard from "@/components/EventCard";
+import EventCard from "@/components/event/EventCard";
 import { useSession } from "@/components/SessionContext";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Button, ButtonText } from "@/components/ui/button";
@@ -61,22 +61,43 @@ export default function PastGroupEvents() {
                   <ButtonText>Back to Group</ButtonText>
                 </HStack>
               </Button>
-              <Heading size="lg">Competitions</Heading>
-              <GroupEvents
-                events={
-                  pastEvents?.filter((event) => event.type == "competition")!
-                }
-                type="competitions"
-              />
-            </VStack>
-            <VStack space="md">
-              <Heading size="lg">Collaborations</Heading>
-              <GroupEvents
-                events={
-                  pastEvents?.filter((event) => event.type == "collaboration")!
-                } 
-                type="collaborations"
-              />
+              <VStack space="md">
+                  <Heading size="lg">Team Challenges</Heading>
+                  <GroupEvents
+                    events={
+                      pastEvents?.filter((event) => event.type == "collaboration")!
+                    }
+                    type="team challenges"
+                  />
+                </VStack>
+                <VStack space="md">
+                  <Heading size="lg">Points Races</Heading>
+                  <GroupEvents
+                    events={
+                      pastEvents?.filter((event) => event.type == "competition")!
+                    }
+                    type="points races"
+                  />
+                </VStack>
+      
+                <VStack space="md">
+                  <Heading size="lg">Endurance Challenges</Heading>
+                  <GroupEvents
+                    events={
+                      pastEvents?.filter((event) => event.type == "total-time")!
+                    }
+                    type="endurance challenges"
+                  />
+                </VStack>
+                <VStack space="md">
+                  <Heading size="lg">Single Session Showdowns</Heading>
+                  <GroupEvents
+                    events={
+                      pastEvents?.filter((event) => event.type == "single-workout")!
+                    }
+                    type="single session showdowns"
+                  />
+                </VStack>
             </VStack></>: <Spinner/>
           }
   </Container>
@@ -98,3 +119,4 @@ export function GroupEvents({
     </Alert>
   );
 }
+

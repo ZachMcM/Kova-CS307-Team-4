@@ -1,5 +1,4 @@
 import Container from "@/components/Container";
-import EventCard from "@/components/EventCard";
 import { useSession } from "@/components/SessionContext";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Heading } from "@/components/ui/heading";
@@ -14,6 +13,7 @@ import { Tables } from "@/types/database.types";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Button, ButtonText } from "@/components/ui/button";
+import EventCard from "@/components/event/EventCard";
 
 export default function FutureGroupEvents() {
   const { id: groupId } = useLocalSearchParams() as { id: string };
@@ -71,15 +71,43 @@ export default function FutureGroupEvents() {
                 }
                 type="competitions"
               />
-            </VStack>
-            <VStack space="md">
-              <Heading size="lg">Collaborations</Heading>
-              <GroupEvents
-                events={
-                  futureEvents?.filter((event) => event.type == "collaboration")!
-                } 
-                type="collaborations"
-              />
+              <VStack space="md">
+                <Heading size="lg">Team Challenges</Heading>
+                <GroupEvents
+                  events={
+                    futureEvents?.filter((event) => event.type == "collaboration")!
+                  }
+                  type="team challenges"
+                />
+              </VStack>
+              <VStack space="md">
+                <Heading size="lg">Points Races</Heading>
+                <GroupEvents
+                  events={
+                    futureEvents?.filter((event) => event.type == "competition")!
+                  }
+                  type="points races"
+                />
+              </VStack>
+    
+              <VStack space="md">
+                <Heading size="lg">Endurance Challenges</Heading>
+                <GroupEvents
+                  events={
+                    futureEvents?.filter((event) => event.type == "total-time")!
+                  }
+                  type="endurance challenges"
+                />
+              </VStack>
+              <VStack space="md">
+                <Heading size="lg">Single Session Showdowns</Heading>
+                <GroupEvents
+                  events={
+                    futureEvents?.filter((event) => event.type == "single-workout")!
+                  }
+                  type="single session showdowns"
+                />
+              </VStack>
             </VStack></>: <Spinner/>
           }
   </Container>

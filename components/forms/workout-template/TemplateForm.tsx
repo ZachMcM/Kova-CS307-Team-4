@@ -31,6 +31,8 @@ import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
 import { Box } from "@/components/ui/box";
+import { getColors, getIntensities } from "@/services/intensityServices";
+import Body from "react-native-body-highlighter";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -89,6 +91,14 @@ export default function TemplateForm() {
     name: "data",
   });
 
+  const { data: muscleGroups, isPending: loadingMuscleGroups } = useQuery({
+    queryKey: ["muscleGroup"],
+    queryFn: async () => {
+      const muscleGroups = await getIntensities(exercises.map((exercise) => exercise.info.name), 4)
+      return muscleGroups
+    }
+  })
+
   async function onSubmit(values: FieldValues) {
     saveTemplate(values as TemplateFormValues);
   }
@@ -129,6 +139,7 @@ export default function TemplateForm() {
           },
         ],
       });
+      queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
     }
     else {
       console.log("Cardio exercise");
@@ -146,6 +157,7 @@ export default function TemplateForm() {
           },
         ],
       });
+      queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
     }
   }
 
@@ -230,6 +242,25 @@ export default function TemplateForm() {
               <ExerciseDataForm key={exercise.info.id} index={i} type={exercise.info.type!} />
             </VStack>
           ))}
+        </VStack>
+        <VStack space="4xl">
+          <Heading>Muscle Groups Exercised:</Heading>
+          { (!loadingMuscleGroups && muscleGroups) ? 
+            <HStack className="flex items-center justify-between">
+              <Body
+                colors={getColors()}
+                data={muscleGroups}
+                side="front"
+                scale={0.9}>
+              </Body>
+              <Body
+                colors={getColors()}
+                data={muscleGroups}
+                side="back"
+                scale={0.9}>
+              </Body>
+            </HStack> : <Spinner/>
+          }
         </VStack>
         <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
           <ButtonText>Save Template</ButtonText>
