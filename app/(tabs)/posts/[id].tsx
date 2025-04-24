@@ -24,6 +24,7 @@ import CommentCard from "@/components/CommentCard";
 import { DetailedWorkoutData } from "@/components/WorkoutData";
 import { LogBox } from 'react-native';
 import { Comment, getComments, pushComment } from "@/services/commentServices";
+import { useQueryClient } from "@tanstack/react-query";
 
 type ReducedProfile = {
   username: string;
@@ -36,6 +37,7 @@ const PAGE_SIZE = 3;
 export default function PostDetails() {
   const router = useRouter();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { id: postId } = useLocalSearchParams();
   const [post, setPost] = useState<Post>();
   const [isLoading, setIsLoading] = useState(true);
@@ -102,6 +104,7 @@ export default function PostDetails() {
         .eq("id", postId)
         .single();
 
+      
       // If post has a template_id, check if it's a copy
       if (data.template_id) {
         const { data: templateCheck } = await supabase
@@ -113,9 +116,6 @@ export default function PostDetails() {
         if (templateCheck?.originalTemplateId) {
           // If it's a copy, use the original template id
           data.workoutData.originalTemplateId = templateCheck.originalTemplateId;
-        } else {
-          // If it's an original template, use its own id
-          data.workoutData.originalTemplateId = data.template_id;
         }
       }
 
@@ -143,7 +143,6 @@ export default function PostDetails() {
         profile: data.profile || null,
         comments: data.comments
       };
-
 
       const postWithTaggedFriends = async (post: Post) => {
         if (post.taggedFriends && post.taggedFriends.length > 0) {
@@ -308,6 +307,10 @@ export default function PostDetails() {
         [
           {
             text: "No",
+            onPress: () => {
+              queryClient.invalidateQueries({ queryKey: ["templates"] });
+              router.back();
+            },
             style: "cancel"
           },
           {
@@ -492,7 +495,6 @@ export default function PostDetails() {
                   {post.workoutData.exercises.reduce((rows: Exercise[][], exercise: any, index: number) => {
                     // Convert exercise to Exercise type first
                     let normalizedExercise: Exercise;
-                    console.log("Exercise: ", exercise);
                     
                     if ('info' in exercise) {
                       if (exercise.info.type === "WEIGHTS") {
