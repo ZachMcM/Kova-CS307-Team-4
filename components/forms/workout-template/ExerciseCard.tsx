@@ -74,7 +74,7 @@ export default function ExerciseCard({
           </HStack>
         </HStack>
         <Box className="flex flex-row flex-wrap gap-2">
-          {exercise.tags.map((tag: Tables<"tag">) => (
+          {exercise.tags && exercise.tags.map((tag: Tables<"tag">) => (
             <Tag key={tag.id} tag={tag} />
           ))}
         </Box>

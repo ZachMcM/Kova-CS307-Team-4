@@ -5,18 +5,15 @@ import { HStack } from "@/components/ui/hstack";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/toast";
 import { getExercises } from "@/services/exerciseServices";
+import { getColors, getIntensities } from "@/services/intensityServices";
 import { newTemplate, updateTemplate } from "@/services/templateServices";
 import { showErrorToast } from "@/services/toastServices";
-import {
-  createTagCounter,
-  createWordCounter,
-  exercisesToSearch
-} from "@/types/searcher-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
-import { Pressable} from "react-native";
+import { Pressable } from "react-native";
+import Body from "react-native-body-highlighter";
 import {
   FormControl,
   FormControlError,
@@ -30,8 +27,6 @@ import { VStack } from "../../ui/vstack";
 import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
-import { getColors, getIntensities } from "@/services/intensityServices";
-import Body from "react-native-body-highlighter";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -90,36 +85,24 @@ export default function TemplateForm() {
     name: "data",
   });
 
-  const { data: muscleGroups, isPending: loadingMuscleGroups } = useQuery({
-    queryKey: ["muscleGroup"],
-    queryFn: async () => {
-      const muscleGroups = await getIntensities(exercises.map((exercise) => {
-        return {
-          name: exercise.info.name,
-          sets: exercise.sets.length
-        }
-      }), 4)
-      return muscleGroups
-    }
-  })
+  // const { data: muscleGroups, isPending: loadingMuscleGroups } = useQuery({
+  //   queryKey: ["muscleGroup"],
+  //   queryFn: async () => {
+  //     const muscleGroups = await getIntensities(
+  //       exercises.map((exercise) => {
+  //         return {
+  //           name: exercise.info.name,
+  //           sets: exercise.sets.length,
+  //         };
+  //       }),
+  //       4
+  //     );
+  //     return muscleGroups;
+  //   },
+  // });
 
   async function onSubmit(values: FieldValues) {
     saveTemplate(values as TemplateFormValues);
-  }
-
-  let searchItems = undefined;
-  let wordCounter = undefined;
-  let tagCounter = undefined;
-  let searchIdToIndex = undefined;
-
-  if (!exercisesLoading) {
-    searchItems = exercisesToSearch(allExercises!);
-    wordCounter = createWordCounter(searchItems);
-    tagCounter = createTagCounter(searchItems);
-    searchIdToIndex = new Map<string, number>();
-    for (let i = 0; i < searchItems.length; i++) {
-      searchIdToIndex.set(searchItems[i].id, i);
-    }
   }
 
   const handleExerciseSubmit = async (exercise: any) => {
@@ -133,7 +116,7 @@ export default function TemplateForm() {
         info: {
           name: exercise.name!,
           id: exercise.id,
-          type: exercise.type
+          type: exercise.type,
         },
         sets: [
           {
@@ -143,14 +126,13 @@ export default function TemplateForm() {
           },
         ],
       });
-    }
-    else {
+    } else {
       console.log("Cardio exercise");
       addExercise({
         info: {
           name: exercise.name!,
           id: exercise.id,
-          type: exercise.type
+          type: exercise.type,
         },
         sets: [
           {
@@ -161,9 +143,8 @@ export default function TemplateForm() {
         ],
       });
     }
-    queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
-  }
-
+    // queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
+  };
 
   return !exercisesLoading ? (
     allExercises && (
@@ -238,36 +219,44 @@ export default function TemplateForm() {
                 <Heading className="text-kova-500">
                   {exercise.info.name}
                 </Heading>
-                <Pressable onPress={() => {
-                      removeExercise(i)     
-                      queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
-                    }}>
+                <Pressable
+                  onPress={() => {
+                    removeExercise(i);
+                    // queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
+                  }}
+                >
                   <Icon as={TrashIcon} size="xl" color="red" />
                 </Pressable>
               </HStack>
-              <ExerciseDataForm key={exercise.info.id} index={i} type={exercise.info.type!} />
+              <ExerciseDataForm
+                key={exercise.info.id}
+                index={i}
+                type={exercise.info.type!}
+              />
             </VStack>
           ))}
         </VStack>
-        <VStack space="4xl">
+        {/* <VStack space="4xl">
           <Heading>Muscle Groups Exercised:</Heading>
-          { (!loadingMuscleGroups && muscleGroups) ? 
+          {!loadingMuscleGroups && muscleGroups ? (
             <HStack className="flex items-center justify-between">
               <Body
                 colors={getColors()}
                 data={muscleGroups}
                 side="front"
-                scale={0.9}>
-              </Body>
+                scale={0.9}
+              ></Body>
               <Body
                 colors={getColors()}
                 data={muscleGroups}
                 side="back"
-                scale={0.9}>
-              </Body>
-            </HStack> : <Spinner/>
-          }
-        </VStack>
+                scale={0.9}
+              ></Body>
+            </HStack>
+          ) : (
+            <Spinner />
+          )}
+        </VStack> */}
         <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
           <ButtonText>Save Template</ButtonText>
           {isPending && <ButtonSpinner color="#FFF" />}

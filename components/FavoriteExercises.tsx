@@ -1,20 +1,12 @@
-import {
-  getFavoriteExercises
-} from "@/services/exerciseServices";
+import { getFavoriteExercises } from "@/services/exerciseServices";
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
 import { useState } from "react";
 import ExerciseCard from "./forms/workout-template/ExerciseCard";
 import { useSession } from "./SessionContext";
 import { Alert, AlertIcon, AlertText } from "./ui/alert";
-import { Button, ButtonIcon, ButtonText } from "./ui/button";
 import { Heading } from "./ui/heading";
 import { HStack } from "./ui/hstack";
-import {
-  ArrowRightIcon,
-  InfoIcon,
-  SearchIcon
-} from "./ui/icon";
+import { InfoIcon, SearchIcon } from "./ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "./ui/input";
 import { Spinner } from "./ui/spinner";
 import { VStack } from "./ui/vstack";
@@ -38,10 +30,10 @@ export default function FavoriteExercises() {
     <VStack space="md">
       <HStack className="items-center justify-between">
         <Heading size="2xl">Favorite Exercises</Heading>
-        <Button variant="link" onPress={() => router.push("/exercises")}>
+        {/* <Button variant="link" onPress={() => router.push("/exercises")}>
           <ButtonText>View All</ButtonText>
           <ButtonIcon as={ArrowRightIcon} />
-        </Button>
+        </Button> */}
       </HStack>
       {isPending ? (
         <Spinner />
@@ -68,7 +60,7 @@ export default function FavoriteExercises() {
                 ).length > 0
             )
             .map((exercise) => (
-              <ExerciseCard key={exercise.id} exercise={exercise} />
+              <ExerciseCard key={exercise.id + Math.random()} exercise={exercise} />
             ))}
         </VStack>
       ) : (
