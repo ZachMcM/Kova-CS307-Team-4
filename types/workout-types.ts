@@ -21,7 +21,7 @@ export type Workout = {
   templateName: string,
   startTime: number,
   endTime: number | null,
-  pauseTime: string | null,
+  pauseTime?: string | null,
   exercises: ExerciseData[]
 }
 

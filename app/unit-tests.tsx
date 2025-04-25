@@ -43,12 +43,6 @@ export default function SettingsScreen() {
 
   // You must return a string that contains 'SUCCESS' or 'FAILURE' somewhere. This string will be displayed on the ui.
 
-  // function randInt(max: number = 999_999_999) {
-  //   //const ret_val = Math.floor(Math.random() * (max + 1))
-  //   //setRandNum(ret_val)
-  //   return Math.floor(Math.random() * (max + 1))
-  // }
-
   const tests = [
     {
       id: "1",
@@ -258,6 +252,7 @@ export default function SettingsScreen() {
       totalTests: 1,
     },
     {
+      id: "resetTests",
       name: "Password Reset tests",
       function: passwordResetTests,
       params: [
@@ -322,7 +317,7 @@ export default function SettingsScreen() {
       totalTests: 5,
     },
     {
-      if: "9",
+      id: "9",
       name: "Comments tests",
       function: commentTests,
       params: [],
