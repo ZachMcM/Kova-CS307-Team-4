@@ -1,26 +1,17 @@
-import { useSession } from "@/components/SessionContext";
 import {
   updateProfile,
   getProfile,
   unfollowUser,
-  getFollowing,
-  getFriends,
   followUser,
 } from "./profileServices";
-import { signOutUser } from "./loginServices";
-import { Session } from "@supabase/supabase-js";
 import {
   AuthAccountResponse,
   ExtendedExercise,
-  ExtendedTemplateWithCreator,
 } from "@/types/extended-types";
 import { supabase } from "@/lib/supabase";
 import {
   SearchItem,
-  SearchTag,
   TaggedSearchItem,
-  WordCounter,
-  TagCounter,
   createWordCounter,
   createTagCounter,
   profilesToSearch,
@@ -29,12 +20,11 @@ import {
   compareToQuery,
   compareToTaggedQuery,
 } from "@/types/searcher-types";
-import { Profile } from "@/types/profile-types";
-import { Post } from "@/app/(tabs)/feed";
 import { clearComments, Comment, getComments, pushComment } from "./commentServices";
 import { getExercisePoints } from "./groupEventServices";
 import { ExerciseData } from "@/types/workout-types";
 import { Tables } from "@/types/database.types";
+import { getAreasFromTags, getExercisesWithoutTags, getIntensities } from "@/services/intensityServices"
 
 const burnerProfileIds = ["36a95bc3-ccfc-4b6c-a1f4-b37ee68ba40a", "11e43cae-f818-42a9-97af-52125d09b85e"];
 const burnerProfileUserIds = ["e849d723-76bb-4b95-a028-9f7a382299da", "e159c552-2c1c-40a4-9505-49655e09593b"];
@@ -831,4 +821,172 @@ export const commentTests = async () => {
   await clearComments(postId);
 
   return output;
+}
+
+export async function testIntensityCalculations(): Promise<string> {
+  let output = "Output:\n\n"
+  output += "\nExercises without tags:\n"
+  let numWithoutTags = await getExercisesWithoutTags()
+  output += "\n [without tags:] " + numWithoutTags + "\n"
+  if (numWithoutTags.length != 0) {
+    return "FAILURE\n\n" + output
+  }
+  /* Testing tags. */
+  output += "\nTags only:\n"
+
+  // 'Stability' only, having no mapped areas.
+  let parts = getAreasFromTags(["Stability"])
+  output += "\n['Stability'] -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 0) {
+    return "FAILURE\n\n " + output
+  }
+
+  // 'Core' only, which has 4 areas.
+  parts = getAreasFromTags(["Core"])
+  output += "\n['Core'] -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 4) {
+    return "FAILURE\n\n" + output
+  }
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity! != 7) {
+      return "FAILURE\n\n" + output
+    }
+  }
+
+  // 'Core' and 'Arms' only, which has 5 areas.
+  parts = getAreasFromTags(["Core", "Arms"])
+  output += "\n['Core', 'Arms'] -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 5) {
+    return "FAILURE\n\n" + output
+  }
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity! != 7) {
+      return "FAILURE\n\n" + output
+    }
+  }
+
+  // 'Core' and 'Back' only, which has 4 areas. Two overlap.
+  parts = getAreasFromTags(["Core", "Back"])
+  output += "\n['Core', 'Arms'] -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 5) {
+    return "FAILURE\n\n" + output
+  }
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity! != 7) {
+      if (parts[i].slug !== "lower-back") {
+        return "FAILURE\n\n" + output
+      } else if (parts[i].intensity != 8) {
+        return "FAILURE\n\n" + output
+      }
+    }
+  }
+
+  /* Testing Exercise Data */
+  output += "\nTesting exercises\n"
+  // 1 set of Incline Chest Press, min of 2. Has Shoulders, Chest, and Pecs
+  parts = await getIntensities([{name: "Incline Chest Press", sets: 1}], 2)
+  output += "\n([{'Incline Chest Press', 1}], 2) -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 3) {
+    return "FAILURE\n\n" + output
+  } 
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity != 3) {
+      if (parts[i].slug !== "chest") {
+        return "FAILURE\n\n" + output
+      }
+      else if (parts[i].intensity != 5) {
+        return "FAILURE\n\n" + output
+      }
+    }
+  }
+
+  // 1 set of Incline Chest Press, min of 4. Has Shoulders, Chest, and Pecs
+  parts = await getIntensities([{name: "Incline Chest Press", sets: 1}], 4)
+  output += "\n([{'Incline Chest Press', 1}], 4) -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 3) {
+    return "FAILURE\n\n" + output
+  } 
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity != 5) {
+      if (parts[i].slug !== "chest") {
+        return "FAILURE\n\n" + output
+      }
+      else if (parts[i].intensity != 7) {
+        return "FAILURE\n\n" + output
+      }
+    }
+  }
+
+  // 5 sets of Incline Chest Press, min of 2. Has Shoulders, Chest, and Pecs
+  parts = await getIntensities([{name: "Incline Chest Press", sets: 5}], 2)
+  output += "\n([{'Incline Chest Press', 5}], 2) -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 3) {
+    return "FAILURE\n\n" + output
+  } 
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity != 5) {
+      if (parts[i].slug !== "chest") {
+        return "FAILURE\n\n" + output
+      }
+      else if (parts[i].intensity != 9) {
+        return "FAILURE\n\n" + output
+      }
+    }
+  }
+
+  // 1 set of Incline Chest Press and 1 set of Kettlebell Sumo Deadlift, min of 4.
+  // Incline Has Shoulders, Chest, and Pecs
+  // Kettlebell has Legs, Glutes, and Hamstrings
+  parts = await getIntensities([{name: "Incline Chest Press", sets: 1}, {name: "Kettlebell Sumo Deadlift", sets: 1}], 4)
+  output += "\n([{'Incline Chest Press', 1}, {'Kettlebell Sumo Deadleft', 1}], 4) -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 13) {
+    return "FAILURE\n\n" + output
+  } 
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity != 5) {
+      if (parts[i].slug !== "chest") {
+        return "FAILURE\n\n" + output
+      }
+      else if (parts[i].intensity != 7) {
+        return "FAILURE\n\n" + output
+      }
+    }
+  }
+
+  // 4 sets of Incline Chest Press and 1 set of Kettlebell Sumo Deadlift, min of 4.
+  // Incline Has Shoulders, Chest, and Pecs
+  // Kettlebell has Legs, Glutes, and Hamstrings
+  parts = await getIntensities([{name: "Incline Chest Press", sets: 4}, {name: "Kettlebell Sumo Deadlift", sets: 1}], 4)
+  output += "\n([{'Incline Chest Press', 4}, {'Kettlebell Sumo Deadleft', 1}], 4) -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 13) {
+    return "FAILURE\n\n" + output
+  } 
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity != 5) {
+      if (parts[i].slug !== "chest" && parts[i].slug !== "deltoids" && parts[i].slug !== "triceps" && parts[i].slug) {
+        return "FAILURE\n\n" + output
+      }
+      else if (parts[i].slug !== "chest" && parts[i].intensity != 7) {
+        return "FAILURE\n\n" + output
+      }
+      else if (parts[i].slug === "chest" && parts[i].intensity != 10) {
+        return "FAILURE\n\n" + output
+      }
+    }
+  }
+
+  // 20 sets of Incline Chest Press and 20 set of Kettlebell Sumo Deadlift, min of 4. 
+  // Incline Has Shoulders, Chest, and Pecs
+  // Kettlebell has Legs, Glutes, and Hamstrings
+  parts = await getIntensities([{name: "Incline Chest Press", sets: 20}, {name: "Kettlebell Sumo Deadlift", sets: 20}], 4)
+  output += "\n([{'Incline Chest Press', 20}, {'Kettlebell Sumo Deadleft', 20}], 4) -- " + parts.map((part) => JSON.stringify(part)) + "\n"
+  if (parts.length != 13) {
+    return "FAILURE\n\n" + output
+  } 
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].intensity != 12) {
+      return "FAILURE\n\n" + output
+    }
+  }
+  return "SUCCESS\n\n" + output
 }

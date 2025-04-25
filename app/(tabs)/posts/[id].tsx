@@ -11,19 +11,20 @@ import { useToast } from "@/components/ui/toast";
 import Container from "@/components/Container";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
-import { ChevronLeftIcon, ClockIcon, Icon, CopyIcon } from "@/components/ui/icon";
+import { ChevronLeftIcon, Icon, CopyIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { Spinner } from "@/components/ui/spinner";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Box } from "@/components/ui/box";
 import { Ionicons } from "@expo/vector-icons";
-import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
 import CommentCard from "@/components/CommentCard";
-import { DetailedWorkoutData } from "@/components/WorkoutData";
-import { LogBox } from 'react-native';
 import { Comment, getComments, pushComment } from "@/services/commentServices";
+import { useQueryClient } from "@tanstack/react-query";
+import Body from "react-native-body-highlighter";
+import { getColors, getIntensities } from "@/services/intensityServices";
+import { ExtendedBodyPart } from "react-native-body-highlighter"
 
 type ReducedProfile = {
   username: string;
@@ -36,6 +37,7 @@ const PAGE_SIZE = 3;
 export default function PostDetails() {
   const router = useRouter();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { id: postId } = useLocalSearchParams();
   const [post, setPost] = useState<Post>();
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +45,7 @@ export default function PostDetails() {
   const [commentValue, setCommentValue] = useState("");
   const [isSubmitPending, setIsSubmitPending] = useState(false);
   const [userId, setUserId] = useState("");
+  const [intensities, setIntensities] = useState([] as ExtendedBodyPart[])
   const [userProfile, setUserProfile] = useState<ReducedProfile>();
   const [page, setPage] = useState(1);
   const [isCurrentUserPost, setIsCurrentUserPost] = useState(false);
@@ -102,6 +105,7 @@ export default function PostDetails() {
         .eq("id", postId)
         .single();
 
+      
       // If post has a template_id, check if it's a copy
       if (data.template_id) {
         const { data: templateCheck } = await supabase
@@ -113,9 +117,6 @@ export default function PostDetails() {
         if (templateCheck?.originalTemplateId) {
           // If it's a copy, use the original template id
           data.workoutData.originalTemplateId = templateCheck.originalTemplateId;
-        } else {
-          // If it's an original template, use its own id
-          data.workoutData.originalTemplateId = data.template_id;
         }
       }
 
@@ -144,7 +145,6 @@ export default function PostDetails() {
         comments: data.comments
       };
 
-
       const postWithTaggedFriends = async (post: Post) => {
         if (post.taggedFriends && post.taggedFriends.length > 0) {
           const { data: friendsData, error: friendsError } = await supabase
@@ -161,6 +161,18 @@ export default function PostDetails() {
       };
 
       postWithTaggedFriends(fetchedPost);
+
+      const loadMuscleGroups = async (post: Post) => {
+        if (post?.workoutData?.exercises) {
+          console.log(post.workoutData.exercises)
+          console.log(post.workoutData.exercises.map((exercise) => exercise.name))
+          const muscleIntensities = await getIntensities(post.workoutData.exercises.map(
+              (exercise) => {return {name: exercise.name, sets: exercise.sets || 0}}), 4)
+          console.log("Res: " + muscleIntensities)
+          setIntensities(muscleIntensities)
+        }
+      }
+      loadMuscleGroups(fetchedPost)
 
       const { data: commentData } = await supabase
         .from('comment')
@@ -308,6 +320,10 @@ export default function PostDetails() {
         [
           {
             text: "No",
+            onPress: () => {
+              queryClient.invalidateQueries({ queryKey: ["templates"] });
+              router.back();
+            },
             style: "cancel"
           },
           {
@@ -461,6 +477,20 @@ export default function PostDetails() {
                         </HStack>
                       </Box>
                     )}
+                    {post.workoutData?.pauseTime ? (
+                      <Box className="flex-1 h-full justify-center items-center">
+                        <Text size="md">Rest Time</Text>
+                        <HStack>
+                          <Text size = "lg" bold>{post.workoutData.pauseTime}</Text>
+                        </HStack>
+                      </Box>
+                    ) : (
+                      <Box className="flex-1 h-full justify-center items-center">
+                        <Text size="md">Rest Time</Text>
+                        <HStack>
+                          <Text size = "lg" bold>0:00</Text>
+                        </HStack>
+                      </Box>)}
                     {post.workoutData?.calories && (
                       <Box className="flex-1 h-full justify-center items-center">
                         <Text size="md">Calories</Text>
@@ -486,18 +516,30 @@ export default function PostDetails() {
                     let normalizedExercise: Exercise;
                     
                     if ('info' in exercise) {
-                      normalizedExercise = {
-                        name: exercise.info?.name || 'Unknown Exercise',
-                        sets: exercise.sets?.length || 0,
-                        reps: exercise.sets?.reduce((acc: number, set: any) => acc + (set.reps || 0), 0) || 0,
-                        weight: exercise.sets?.length > 0 && exercise.sets[exercise.sets.length - 1].weight 
-                          ? `${exercise.sets[exercise.sets.length - 1].weight} lbs` 
-                          : undefined
-                      };
+                      if (exercise.info.type === "WEIGHTS") {
+                        normalizedExercise = {
+                          name: exercise.info?.name || 'Unknown Exercise',
+                          sets: exercise.sets?.length || 0,
+                          reps: exercise.sets?.reduce((acc: number, set: any) => acc + (set.reps || 0), 0) || 0,
+                          weight: exercise.sets?.length > 0 && exercise.sets[exercise.sets.length - 1].weight 
+                            ? `${exercise.sets[exercise.sets.length - 1].weight} lbs` 
+                            : undefined
+                        };
+                      }
+                      else {
+                        normalizedExercise = {
+                          name: exercise.info?.name || 'Unknown Exercise',
+                          sets: exercise.sets?.length || 0,
+                          distance: exercise.distance,
+                          time: exercise.time,
+                        };
+                      }
                     } else {
                       normalizedExercise = exercise as Exercise;
                     }
                     
+                    console.log("Normalized exercise: ", normalizedExercise);
+
                     // Now use the normalized exercise
                     if (index % 2 === 0) {
                       rows.push([normalizedExercise]);
@@ -529,6 +571,24 @@ export default function PostDetails() {
                                 <Text>{exercise.weight}</Text>
                               </Text>
                             )}
+                            {exercise.distance && (
+                              <Text>
+                                <Text>Distance: </Text>
+                                <Text>{exercise.distance}</Text>
+                              </Text>
+                            )}
+                            {exercise.time && (
+                              <Text>
+                                <Text>Time: </Text>
+                                <Text>{exercise.time}</Text>
+                              </Text>
+                            )}
+                            {exercise.cooldowns !== undefined && (
+                              <Text>
+                                <Text>Cooldown: </Text>
+                                <Text>{exercise.cooldowns}</Text>
+                              </Text>
+                            )}
                           </View>
                         </Box>
                       ))}
@@ -538,6 +598,24 @@ export default function PostDetails() {
                   ))}
                 </VStack>
               )}
+              {/*Muscle Matrix*/}
+              {
+                (post.workoutData?.exercises) ?
+                (<HStack className="flex items-center justify-between">
+                  <Body
+                    colors={getColors()}
+                    data={intensities}
+                    side="front"
+                    scale={0.9}>
+                  </Body>
+                  <Body
+                    colors={getColors()}
+                    data={intensities}
+                    side="back"
+                    scale={0.9}>
+                  </Body>
+                </HStack>) : <Spinner/>
+              }
             </VStack>
           )}
         </VStack>

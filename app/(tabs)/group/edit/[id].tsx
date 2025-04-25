@@ -1,5 +1,5 @@
 import Container from "@/components/Container";
-import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
-import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";

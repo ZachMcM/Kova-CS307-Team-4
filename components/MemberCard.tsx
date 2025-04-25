@@ -1,11 +1,10 @@
-import { Tables } from "@/types/database.types";
 import { useRouter } from "expo-router";
 import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";
 import { Pressable } from "./ui/pressable";
 import { Text } from "./ui/text";
 import { VStack } from "./ui/vstack";
-import { GroupOverview, GroupRelWithProfile, MemberRelationship } from "@/types/extended-types";
+import { GroupRelWithProfile } from "@/types/extended-types";
 import { HStack } from "./ui/hstack";
 import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
 import { Button, ButtonIcon, ButtonText } from "./ui/button";
@@ -13,7 +12,6 @@ import { ArrowDownIcon, ArrowUpIcon } from "./ui/icon";
 import { setRole } from "../services/groupServices"
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "./ui/toast";
-import { useEffect } from "react";
 import { useSession } from "./SessionContext";
 import { showSuccessToast } from "@/services/toastServices";
 

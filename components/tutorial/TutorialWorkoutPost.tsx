@@ -1,32 +1,18 @@
 import { Heading } from "@/components/ui/heading";
 import { Pressable } from "@/components/ui/pressable";
 import { Text as GText } from "@/components/ui/text";
-import {
-  addUserLike,
-  doesUserLike,
-  getLikes,
-  getNumOfLikes,
-  removeUserLike,
-} from "@/services/likeServices";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-  Animated,
-  Modal,
-  StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View
 } from "react-native";
 import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
 import { HStack } from "../ui/hstack";
-import { Spinner } from "../ui/spinner";
 import { Image } from "../ui/image";
 import { ScrollView } from "../ui/scroll-view";
-import { supabase } from "@/lib/supabase";
 import { TaggedFriend, workoutPostStyles } from "../WorkoutPost";
 
 type TutorialWorkoutPostProps = {

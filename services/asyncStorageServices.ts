@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { WorkoutContribution } from "@/types/event-types";
+import { ExtendedExercise } from "@/types/extended-types";
 import { PostAsyncStorage, PostDatabase } from "@/types/post.types";
 import { Workout } from "@/types/workout-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -227,4 +228,25 @@ export async function updateFeed() {
 
 export async function resetFeed() {
   AsyncStorage.removeItem("feed-items");
+}
+
+export async function asyncExercises(exercises: ExtendedExercise[]) {
+  try {
+    const stringVal = JSON.stringify(exercises)
+    await AsyncStorage.setItem("exercises", stringVal)
+  } catch (e) {
+    throw new Error("Error saving exercises")
+  }
+}
+
+export async function getExercisesFromStorage(): Promise<ExtendedExercise[] | null> {
+  try {
+    const stringVal = await AsyncStorage.getItem("exercises")
+    if (stringVal == null) {
+      return null
+    }
+    return JSON.parse(stringVal)
+  } catch (e) {
+    throw new Error("Error getting exercises")
+  }
 }

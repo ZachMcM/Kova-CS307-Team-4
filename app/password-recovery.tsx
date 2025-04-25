@@ -7,14 +7,11 @@ import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Redirect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { createAccount } from "@/services/loginServices";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";
-import { makeRedirectUri } from "expo-auth-session"
 
 
 // const redirectURL = makeRedirectUri();

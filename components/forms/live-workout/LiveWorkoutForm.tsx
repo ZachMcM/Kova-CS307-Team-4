@@ -30,7 +30,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useElapsedTime } from "@/hooks/useStopwatch";
+import { takeRest, useElapsedTime } from "@/hooks/useStopwatch";
 import { calculateTime, formatCalculateTime } from "@/lib/calculateTime";
 import {
   clearWorkout,
@@ -38,7 +38,7 @@ import {
   saveContributionsToStorage,
   setWorkoutEndTime,
 } from "@/services/asyncStorageServices";
-import { showErrorToast } from "@/services/toastServices";
+import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -56,7 +56,6 @@ export default function LiveWorkoutForm() {
   const router = useRouter();
 
   const { session } = useSession();
-
   const { fields: exercises } = useFieldArray({
     control,
     name: "exercises",
@@ -64,14 +63,36 @@ export default function LiveWorkoutForm() {
 
   const endTime = watch("endTime");
   const startTime = watch("startTime");
+  const [pauseTime, setPauseTime] = useState(0);
+  const [isPaused, setPaused] = useState(false);
+
+  // const [endPauseTime, endPauseStart] = useState(Date.now())
   const templateName = watch("templateName");
 
   const isWorkoutFinished = endTime != null;
+  /*
+  const {minutes: pauseMin, seconds: pauseSec, setIsStopped: setIsPaused } = useElapsedTime(
+    pauseTime,
+    isWorkoutPaused
+  ) 
+  */
 
   const { minutes, seconds, setIsStopped } = useElapsedTime(
     startTime,
     isWorkoutFinished
   );
+
+  const stopRest = function(difference: number) {
+    setPaused(false);
+    setPauseTime(pauseTime + difference);
+    console.log("New pause time: " + pauseTime)
+    showErrorToast(toast, "Rest has ended! Back to exercise")
+  }
+
+  const { extendRest, startRest, endRest, remainingRestTime, endWorkout} = takeRest(
+    0,
+    stopRest
+  )
 
   // Then create a function to calculate the current stats
   const getWorkoutStats = () => {
@@ -93,13 +114,17 @@ export default function LiveWorkoutForm() {
   };
 
   const toast = useToast();
-
+  /*
+  const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+  console.log("Printing ")
+  AsyncStorage.clear()
+  */
   const queryClient = useQueryClient();
-
   const { data: contributions, isPending: contributionsPending } = useQuery({
     queryKey: ["contributions"],
     queryFn: async () => {
       const contributions = await getContributionsFromStorage();
+      console.log(contributions)
       return contributions;
     },
   });
@@ -128,6 +153,7 @@ export default function LiveWorkoutForm() {
           queryKey: ["event-leaderboard", { id: contribution.competition.id }],
         });
       }
+      setValue("pauseTime", formatCalculateTime(calculateTime(0, pauseTime * 1000)))
       await setWorkoutEndTime(endTime);
     },
     onSuccess: () => {
@@ -162,10 +188,11 @@ export default function LiveWorkoutForm() {
 
       const workoutStats = getWorkoutStats();
       const duration = formatCalculateTime(calculateTime(startTime, endTime!));
-
+      const pauseDuration = formatCalculateTime(calculateTime(0, pauseTime * 1000))
       const postData = {
         templateId: workoutData.templateId,
         duration,
+        pauseTime: pauseDuration,
         exercises: workoutData.exercises,
         stats: workoutStats,
       };
@@ -200,30 +227,98 @@ export default function LiveWorkoutForm() {
   return (
     <VStack space="4xl">
       <Box className="flex flex-row items-center justify-between">
-        <HStack space="sm" className="items-center">
-          <Box className="bg-secondary-500 p-1.5 rounded-md">
-            <Icon size="xl" as={ClockIcon} />
-          </Box>
-          <Text size="xl" className="font-semibold">
-            {!isWorkoutFinished
-              ? `${minutes}:${seconds}`
-              : formatCalculateTime(calculateTime(startTime, endTime!))}
-          </Text>
+        <HStack space="sm" className="flex items-center justify-between">
+          <Text size="xl" className="font-bold">Time Spent on Workout:</Text>
+          <Box className="p-1.5"></Box>
+          <Box className="p-1.5"></Box>
+          <Box className="p-1.5"></Box>
+          <Box className="p-1.5"></Box>
+          <HStack className="items-center">
+            <Box className="bg-secondary-500 p-1.5 rounded-md">
+              <Icon size="xl" as={ClockIcon} />
+            </Box>
+            <Box className="p-1.5"></Box>
+            <Text size="xl" className="font-semibold">
+              {!isWorkoutFinished
+                ? `${minutes}:${seconds}`
+                : formatCalculateTime(calculateTime(startTime, endTime!))}
+            </Text>
+          </HStack>
         </HStack>
-        <Button
-          size="md"
-          action="kova"
-          isDisabled={formState.isLoading}
-          onPress={() => finishWorkout()}
-        >
-          <ButtonText size="lg">Finish</ButtonText>
-          {finishPending ? (
-            <ButtonSpinner color="#FFF" />
-          ) : (
-            <ButtonIcon as={CheckCircleIcon} size="lg" />
-          )}
-        </Button>
       </Box>
+      <Button
+        size="lg"
+        action="kova"
+        className="w-full"
+        onPress={() => {
+          startRest(30 * 1000);
+          setPaused(true);
+        }}
+      >
+        <ButtonText>Pause</ButtonText>
+      </Button>
+      <Modal isOpen={isPaused}
+        size="md">
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalBody>
+            <HStack space="sm" className="items-center">
+              <Text size="xl" className="font-bold">Remaining Rest Time: </Text>
+              <Box className="p-1.5"></Box>
+
+              <HStack className="items-center">
+                <Box className="bg-secondary-500 p-1.5 rounded-md">
+                  <Icon size="xl" as={ClockIcon} />
+                </Box>
+                <Box className="p-1.5"></Box>
+
+                <Text size="xl" className="font-semibold">
+                  {formatCalculateTime(calculateTime(0, remainingRestTime * 1000))}
+                </Text>
+              </HStack>
+            </HStack>
+            <Box className="p-1.5"></Box>
+            <Button
+              size="lg"
+              action="kova"
+              className="w-full"
+              onPress={() => {
+                setPauseTime(endRest() + pauseTime)
+                console.log("New pause time: " + pauseTime)
+                setPaused(false)
+                showSuccessToast(toast, "Ended rest!")
+              }}
+            >
+              <ButtonText>Stop Break</ButtonText>
+            </Button>
+            <Box className="p-1.5"></Box>
+            <Button
+              size="lg"
+              action="kova"
+              className="w-full"
+              onPress={() => {
+                extendRest(30 * 1000);
+              }}
+            >
+              <ButtonText>Extend Break (+30s)</ButtonText>
+            </Button>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      <Button
+        size="md"
+        action="kova"
+        isDisabled={formState.isLoading}
+        onPress={() => finishWorkout()}
+      >
+        <ButtonText size="lg">Finish</ButtonText>
+        {finishPending ? (
+          <ButtonSpinner color="#FFF" />
+        ) : (
+          <ButtonIcon as={CheckCircleIcon} size="lg" />
+        )}
+      </Button>
       <VStack space="2xl">
         <Heading className="text-2xl">{templateName}</Heading>
         <VStack space="4xl">
@@ -268,6 +363,12 @@ export default function LiveWorkoutForm() {
                   </Heading>
                 </HStack>
                 <HStack className="justify-between items-center">
+                  <Heading size="md">Rest Time</Heading>
+                  <Heading size="2xl">
+                    {formatCalculateTime(calculateTime(0, pauseTime * 1000))}
+                  </Heading>
+                </HStack>
+                <HStack className="justify-between items-center">
                   <Heading size="md">Exercises</Heading>
                   <Heading size="2xl">
                     {getWorkoutStats().exerciseCount}
@@ -307,6 +408,8 @@ export default function LiveWorkoutForm() {
                   )}
                 </VStack>
               </VStack>
+              
+
               <Button
                 size="lg"
                 action="kova"
@@ -319,6 +422,7 @@ export default function LiveWorkoutForm() {
                   );
 
                   // Close the modal
+                  endWorkout()
                   setModal(false);
 
                   // Submit the form data
@@ -338,4 +442,18 @@ export default function LiveWorkoutForm() {
       </Modal>
     </VStack>
   );
+}
+
+function getTime(startTime: number, endTime: number, workoutTime: number) : {seconds: number, minutes: number} {
+  const {seconds: s1, minutes: min1} = calculateTime(0, workoutTime)
+  const {seconds: s2, minutes: min2} = calculateTime(startTime, endTime)
+  let seconds = (s1 + s2) % 60
+  let minutes = min1 + min2;
+  if (s1 + s2 > 60) {
+    minutes++;
+  }
+  return {
+    seconds: seconds,
+    minutes: minutes
+  }
 }

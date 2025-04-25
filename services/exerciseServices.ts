@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { Tables } from "@/types/database.types";
 import { ExtendedExercise } from "@/types/extended-types";
 
 export async function getExercises(): Promise<ExtendedExercise[]> {
@@ -40,7 +39,7 @@ export const getTagsAndDetails = async (exerciseNames: string[]): Promise<{tagMa
   if (error) {
     console.error('Error fetching exercise tags:', error)
     throw error
-  }
+  } 
 
   const exerciseTagsMap: Record<string, string[]> = {}
   const exerciseDetailsMap: Record<string, string> = {}
@@ -55,6 +54,7 @@ export const getTagsAndDetails = async (exerciseNames: string[]): Promise<{tagMa
 }
 
 export const getFavoriteExercises = async (profileId: string): Promise<ExtendedExercise[]> => {
+  console.log("starting query")
   const { data: favoriteRels, error } = await supabase
     .from("favoriteRel")
     .select(`*,
@@ -66,27 +66,30 @@ export const getFavoriteExercises = async (profileId: string): Promise<ExtendedE
     throw new Error(error.message)
   }
 
+  console.log("favorite rels", favoriteRels)
+
   const exercises: ExtendedExercise[] = []
 
   for (const rel of favoriteRels) {
-    const { data, error } = await supabase
-      .from("relTag")
-      .select(`
-        *,
-        tag:tag_id(*)
-      `)
-      .eq("exercise_id", rel.exerciseId)
+    // const { data, error } = await supabase
+    //   .from("relTag")
+    //   .select(`
+    //     *,
+    //     tag:tag_id(*)
+    //   `)
+    //   .eq("exercise_id", rel.exerciseId)
 
-    if (error) {
-      console.log(error)
-      throw new Error(error.message)
-    }
+    // if (error) {
+    //   console.log(error)
+    //   throw new Error(error.message)
+    // }
 
     const exercise = rel.exercise
 
     exercises.push({
       ...exercise,
-      tags: data.map(rel => rel.tag)
+      // tags: data.map(rel => rel.tag)
+      tags: []
     })
   }
 

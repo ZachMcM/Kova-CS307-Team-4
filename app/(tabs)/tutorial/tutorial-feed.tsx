@@ -28,7 +28,6 @@ import {
 } from "react-native-spotlight-tour";
 import { TaggedFriend, workoutPostStyles } from "@/components/WorkoutPost";
 import { TutorialWorkoutPost } from "@/components/tutorial/TutorialWorkoutPost";
-import { Profile } from "@/types/profile-types";
 import { Modal, ModalBackdrop, ModalContent, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Heading } from "@/components/ui/heading";
 import { Avatar, AvatarFallbackText, AvatarImage } from "@/components/ui/avatar";

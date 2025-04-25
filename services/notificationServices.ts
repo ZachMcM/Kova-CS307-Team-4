@@ -1,5 +1,4 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NOTIFICATION_SETTINGS_KEY = '@weight_tracking_notification_settings';

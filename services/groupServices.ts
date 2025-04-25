@@ -1,7 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/types/database.types";
-import { ExtendedGroupRel, ExtendedGroupWithEvents, GroupOverview, GroupPage, GroupRelWithProfile, MemberRelationship } from "@/types/extended-types";
-import { getProfile, getProfiles } from "./profileServices";
+import { ExtendedGroupRel, ExtendedGroupWithEvents, GroupOverview, GroupRelWithProfile } from "@/types/extended-types";
 
 /*
 import { Tables } from "@/types/database.types";

@@ -1,7 +1,6 @@
 import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";
 import { Text } from "./ui/text";
-import { Link } from "./ui/link";
 import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectContent, SelectItem } from "./ui/select";
 import { Icon, ChevronDownIcon, ChevronRightIcon } from "./ui/icon";
 import { View } from "./ui/view"
@@ -19,18 +18,6 @@ export default function SettingsCard({ setting }: {setting: any }) {
       </Card>
     );
   }
-  // else if (setting.attribute == "Delete Account") {
-  //   return (
-  //     <Card variant="outline" className="rounded-none border-l-0 border-r-0 border-t-0">
-  //       <View className = "flex-row justify-end">
-  //         <Text size = "md" bold={true} className="text-red-800">{setting.attribute}</Text>
-  //         <Pressable onPress = {() => router.replace(setting.content/*"/unit-tests"*/)} className = "mt-1 ml-auto">
-  //           <Icon as={ChevronRightIcon}></Icon>
-  //         </Pressable>
-  //       </View>
-  //     </Card>
-  //   );
-  // }
   else if (setting.type == "redirect") {
     console.log("Banner")
     return (

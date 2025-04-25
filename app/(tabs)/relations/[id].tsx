@@ -13,9 +13,9 @@ import { getFollowers, getFriends, getFollowing, followUser, unfollowUser } from
 import { Avatar, AvatarImage, AvatarFallbackText } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
-import { showErrorToast, showSuccessToast, showFollowToast } from "@/services/toastServices";
+import { showErrorToast, showFollowToast } from "@/services/toastServices";
 import { useToast } from "@/components/ui/toast";
-import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
+import { Badge, BadgeIcon } from "@/components/ui/badge";
 import { Input, InputField } from "@/components/ui/input";
 
 export default function RelationsView() {

@@ -1,4 +1,3 @@
-import StaticContainer from "@/components/StaticContainer";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
@@ -17,9 +16,11 @@ import {
   MenuIcon,
   TrashIcon,
   CheckCircleIcon,
-  CircleIcon,
   AlertCircleIcon,
   EditIcon,
+  GlobeIcon,
+  StarIcon,
+  LockIcon,
 } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
 import {
@@ -30,13 +31,11 @@ import {
   followUser,
   unfollowUser,
   uploadProfilePicture,
-  privacies,
   getProfilePrivacies,
 } from "@/services/profileServices";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "@/components/ui/spinner";
-import { getProfileAccess } from "@/types/profile-types";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/toast";
@@ -47,17 +46,9 @@ import {
 } from "@/services/toastServices";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import * as ImagePicker from "expo-image-picker";
-import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
+import { Badge, BadgeIcon } from "@/components/ui/badge";
 import { View } from "react-native";
-import {
-  RadioGroup,
-  Radio,
-  RadioIndicator,
-  RadioIcon,
-  RadioLabel,
-} from "@/components/ui/radio";
 import { useSession } from "@/components/SessionContext";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ProfileActivities } from "@/components/ProfileActivities";
 import { Post } from "../feed";
 import { useNavigation } from "@react-navigation/native";
@@ -66,6 +57,9 @@ import Container from "@/components/Container";
 import { getAllGroups, getUserGroups } from "@/services/groupServices";
 import GroupCard from "@/components/GroupCard";
 import FavoriteExercises from "@/components/FavoriteExercises";
+import PersonalGoals from "@/components/PersonalGoals";
+import { ExtendedExercise } from "@/types/extended-types";
+import { getExercisesFromStorage } from "@/services/asyncStorageServices";
 
 export default function ProfileScreen() {
   // General states
@@ -126,11 +120,14 @@ export default function ProfileScreen() {
   const [postError, setPostError] = useState<Error | null>(null);
   const [postsIsLoading, setPostsIsLoading] = useState(true);
 
+  const [exercises, setExercises] = useState<ExtendedExercise[]>([]);
+
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => {
       const profile = await getProfile(id as string);
+      getExercises();
       return profile;
     },
   });
@@ -172,7 +169,12 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
-      queryClient.invalidateQueries({ queryKey: ["weight", id] });
+      queryClient.invalidateQueries();
+      queryClient.clear();
+      console.log("invalidated queries");
+      /*queryClient.invalidateQueries({ queryKey: ["weight", id] });
+      queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });*/
       if (profile && session?.user.id === id) {
         fetchOwnPosts();
         console.log("fetching user posts");
@@ -183,8 +185,12 @@ export default function ProfileScreen() {
   }, [navigation, profile]);
 
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["privacy_data", id] });
+    queryClient.invalidateQueries();
+    queryClient.clear();
+    /*queryClient.invalidateQueries({ queryKey: ["privacy_data", id] });
     queryClient.invalidateQueries({ queryKey: ["weight", id] });
+    queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
+    queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });*/
   }, []);
 
   useEffect(() => {
@@ -223,10 +229,8 @@ export default function ProfileScreen() {
       if (profile.gender) {
         setGender(profile.gender || "");
       }
-      if (session?.user.id === id) {
-        fetchOwnPosts();
-        console.log("fetching user posts");
-      } //Need this and the navigation to work
+      fetchOwnPosts();
+      console.log("fetching user posts");
     }
   }, [profile]);
 
@@ -525,19 +529,42 @@ export default function ProfileScreen() {
 
   const getPrivacyIcon = (parameter: string) => {
     if (!privacy_list) return <></>;
-    if (privacy_list[parameter] === "PUBLIC") {
-      return <MaterialIcons name="remove-red-eye" size={24} color="black" />;
-    } else if (privacy_list[parameter] === "FRIENDS") {
-      return <MaterialIcons name="people" size={24} color="black" />;
-    } else {
-      return (
-        <MaterialIcons
-          name="private-connectivity"
-          size={24}
-          className="m-0"
-          color="black"
-        />
-      );
+    
+    if (parameter != "friends_following" && parameter != "age" && parameter != "bio") {
+      if (privacy_list[parameter] === "PUBLIC") {
+        return <Icon as = {GlobeIcon} size="md" className="ml-1 mt-4 text-gray-700" color="black" />
+      } else if (privacy_list[parameter] === "FRIENDS") {
+        return <Icon as = {StarIcon} size="md" className="ml-1 mt-4 text-gray-700" color="black" />
+      } else {
+        return <Icon as = {LockIcon} size="md" className="ml-1 mt-4 text-gray-700" color="black" />
+      }
+    }
+    else if (parameter == "age") {
+      if (privacy_list[parameter] === "PUBLIC") {
+        return <Icon as = {GlobeIcon} size="md" className="ml-1 mt-2 text-gray-700" color="black" />
+      } else if (privacy_list[parameter] === "FRIENDS") {
+        return <Icon as = {StarIcon} size="md" className="ml-1 mt-2 text-gray-700" color="black" />
+      } else {
+        return <Icon as = {LockIcon} size="md" className="ml-1 mt-2 text-gray-700" color="black" />
+      }
+    }
+    else if (parameter == "bio") {
+      if (privacy_list[parameter] === "PUBLIC") {
+        return <Icon as = {GlobeIcon} size="md" className="text-gray-700 absolute right-1 bottom-1" color="black" />
+      } else if (privacy_list[parameter] === "FRIENDS") {
+        return <Icon as = {StarIcon} size="md" className="text-gray-700 absolute right-1 bottom-1" color="black" />
+      } else {
+        return <Icon as = {LockIcon} size="md" className="text-gray-700 absolute right-1 bottom-1" color="black" />
+      }
+    }
+    else {
+      if (privacy_list[parameter] === "PUBLIC") {
+        return <Icon as = {GlobeIcon} size="xl" className="ml-2 mt-2" color="black" />
+      } else if (privacy_list[parameter] === "FRIENDS") {
+        return <Icon as = {StarIcon} size="xl" className="ml-2 mt-2" color="black" />
+      } else {
+        return <Icon as = {LockIcon} size="xl" className="ml-2 mt-2" color="black" />
+      }
     }
   };
 
@@ -617,6 +644,10 @@ export default function ProfileScreen() {
       throw error;
     }
   };
+
+  const getExercises = async () => {
+    setExercises(await getExercisesFromStorage() || []);
+  }
 
   return (
     <Container className="flex px-6 py-16">
@@ -778,19 +809,17 @@ export default function ProfileScreen() {
                 </HStack>
                 <VStack>
                   {isEditingProfile && (
-                    <Box className="p-2 border rounded border-gray-300">
-                      <Button
-                        variant="solid"
-                        size="xl"
-                        action="kova"
-                        className="mt-5 mb-5 ml-5 mr-5"
-                        onPress={() => {
-                          router.replace("/privacy-editing");
-                        }}
-                      >
-                        <ButtonText>Edit Privacy Settings</ButtonText>
-                      </Button>
-                    </Box>
+                    <Button
+                      variant="solid"
+                      size="xl"
+                      action="kova"
+                      className=""
+                      onPress={() => {
+                        router.replace("/privacy-editing");
+                      }}
+                    >
+                      <ButtonText>Edit Privacy Settings</ButtonText>
+                    </Button>
                   )}
                   {hasNoAccess() == "FALSE" &&
                   (isEditingProfile ||
@@ -801,12 +830,12 @@ export default function ProfileScreen() {
                     <Box className="border border-gray-300 rounded p-2 mt-2">
                       {isEditingProfile && !ageDisabled ? (
                         <HStack className="mr-7">
-                          <Heading size="md" className="mr-1 mt-3">
+                          <Heading size="md" className="mr-1 mt-1">
                             🎂:
                           </Heading>
                           <Input
                             variant="outline"
-                            className="mt-2 w-11/12 mr-0.5"
+                            className="w-11/12 mr-0.5"
                           >
                             <InputField
                               id="AgeInput"
@@ -1179,13 +1208,17 @@ export default function ProfileScreen() {
               </VStack>
             </VStack>
           )}
-        {profile && id === session?.user.id && (
+        {profile && typeof id === "string" && userId && (
           <>
             <FavoriteExercises />
+            {hasSpecificAccess("personal_goals") && (
+              <PersonalGoals goals = {profile.goals} userId = {userId} profileUserId = {id} exercises={exercises}/>
+            )}
             <ProfileActivities
               posts={posts as Post[]}
               isLoading={postsIsLoading}
               updatePostFunc={updateOwnPost}
+              userId = {profile.user_id}
             ></ProfileActivities>
           </>
         )}

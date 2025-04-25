@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, View } from "react-native";
 
 /*
  *  StaticContainer differs from Container as it does not include a ScrollView
