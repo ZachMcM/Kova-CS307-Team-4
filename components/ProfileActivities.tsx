@@ -40,7 +40,7 @@ import { Switch } from "./ui/switch";
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Spinner } from "./ui/spinner";
-import { getColors, getIntensities } from "@/services/intensityServices";
+import { getColors, getIntensities, getAreasFromTags } from "@/services/intensityServices";
 import Body, { BodyPart, ExtendedBodyPart } from "react-native-body-highlighter";
 
 type ProfileActivitiesProps = {
@@ -1143,6 +1143,22 @@ export const ProfileActivities = ({
                             <Text size="md" className="text-typography-700">
                               {favorite.details}
                             </Text>
+                            {favorite.tags && (
+                            <HStack className="flex items-center justify-between">
+                            <Body
+                              colors={getColors()}
+                              data={getAreasFromTags(favorite.tags)}
+                              side="front"
+                              scale={0.7}>
+                            </Body>
+                            <Body
+                              colors={getColors()}
+                              data={getAreasFromTags(favorite.tags)}
+                              side="back"
+                              scale={0.7}>
+                            </Body>
+                           </HStack>
+                          )}
                           </ModalBody>
                         </ModalContent>
                       </Modal>
