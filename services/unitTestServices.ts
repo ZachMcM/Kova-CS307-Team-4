@@ -24,7 +24,7 @@ import { clearComments, Comment, getComments, pushComment } from "./commentServi
 import { getExercisePoints } from "./groupEventServices";
 import { ExerciseData } from "@/types/workout-types";
 import { Tables } from "@/types/database.types";
-import { getAreasFromTags, getIntensities } from "@/services/intensityServices"
+import { getAreasFromTags, getExercisesWithoutTags, getIntensities } from "@/services/intensityServices"
 
 const burnerProfileIds = ["36a95bc3-ccfc-4b6c-a1f4-b37ee68ba40a", "11e43cae-f818-42a9-97af-52125d09b85e"];
 const burnerProfileUserIds = ["e849d723-76bb-4b95-a028-9f7a382299da", "e159c552-2c1c-40a4-9505-49655e09593b"];
@@ -825,7 +825,14 @@ export const commentTests = async () => {
 
 export async function testIntensityCalculations(): Promise<string> {
   let output = "Output:\n\n"
+  output += "\nExercises without tags:\n"
+  let numWithoutTags = await getExercisesWithoutTags()
+  output += "\n [without tags:] " + numWithoutTags + "\n"
+  if (numWithoutTags.length != 0) {
+    return "FAILURE\n\n" + output
+  }
   /* Testing tags. */
+  output += "\nTags only:\n"
 
   // 'Stability' only, having no mapped areas.
   let parts = getAreasFromTags(["Stability"])
