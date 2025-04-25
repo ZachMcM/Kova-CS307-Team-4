@@ -28,6 +28,7 @@ import { showSuccessToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router/build/hooks";
+import { useIsFocused } from "@react-navigation/native";
 
 export default function Group() {
   const { id: groupId } = useLocalSearchParams() as { id: string };
@@ -64,6 +65,11 @@ export default function Group() {
   })
 
   const router = useRouter();
+
+  const isFocused = useIsFocused();
+  if (!isFocused) {
+    return null;
+  }
 
   return (
     <Container>

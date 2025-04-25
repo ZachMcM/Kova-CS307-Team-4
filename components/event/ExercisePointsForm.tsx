@@ -10,6 +10,7 @@ import ExerciseCard from "../forms/workout-template/ExerciseCard";
 import { Card } from "../ui/card";
 import { HStack } from "../ui/hstack";
 import { Heading } from "../ui/heading";
+import { TextInput } from "react-native";
 
 export default function ExercisePointsForm({
   form,
@@ -32,7 +33,7 @@ export default function ExercisePointsForm({
   return (
     <VStack space="2xl">
       <Input size="md">
-        <InputField
+        <TextInput
           placeholder="Search exercises"
           onChangeText={setExerciseQuery}
           value={exerciseQuery}
@@ -96,7 +97,7 @@ export default function ExercisePointsForm({
                 <HStack space="sm" className="items-center justify-center">
                   <Heading size="sm">Points:</Heading>
                   <Input size="sm" className=" flex-1">
-                    <InputField
+                    <TextInput
                       placeholder="1"
                       value={value?.toString()}
                       onChangeText={onChange}

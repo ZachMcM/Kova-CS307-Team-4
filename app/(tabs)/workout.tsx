@@ -13,6 +13,7 @@ import { createWordCounter, templatesToSearch } from "@/types/searcher-types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { TextInput } from "react-native";
 
 export default function Workout() {
   const { session } = useSession();
@@ -53,7 +54,7 @@ export default function Workout() {
         </VStack>
         {/* TODO Needs to be replaced by actual search component from areeb @AreebE */}
         <Input>
-          <InputField
+          <TextInput
             value={templateQuery}
             onChangeText={setTemplateQuery}
             placeholder="Search for a workout template"

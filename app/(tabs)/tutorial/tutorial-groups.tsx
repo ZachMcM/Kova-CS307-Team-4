@@ -10,7 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, TextInput } from "react-native";
 import { useSession } from "@/components/SessionContext";
 import { feedStyles } from "../feed";
 import { useNavigation } from "@react-navigation/native";
@@ -279,7 +279,7 @@ export default function TutorialGroupScreen() {
             </AttachStep>
               <><Heading>Your Groups</Heading><VStack space="md">
                   <Input>
-                    <InputField
+                    <TextInput
                       placeholder="Search for one of your groups."
                     />
                   </Input>
@@ -317,7 +317,7 @@ export default function TutorialGroupScreen() {
                 </VStack><Heading>All Groups</Heading><VStack space="md">
                   <AttachStep index={3}>
                     <Input>
-                      <InputField
+                      <TextInput
                         placeholder="Search for a group to join."
                       />
                     </Input>

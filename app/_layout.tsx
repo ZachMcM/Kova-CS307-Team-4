@@ -79,7 +79,6 @@ export default function RootLayout() {
 
   return (
     <SessionProvider>
-    <QueryClientProvider client={queryClient}>
       <QueryClientProvider client={queryClient}>
         <GluestackUIProvider
           mode={(colorScheme ?? "light") as "light" | "dark"}
@@ -110,7 +109,6 @@ export default function RootLayout() {
           </ThemeProvider>
         </GluestackUIProvider>
       </QueryClientProvider>
-    </QueryClientProvider>
     </SessionProvider>
   );
 }

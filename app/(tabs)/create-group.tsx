@@ -14,6 +14,7 @@ import { HStack } from "@/components/ui/hstack";
 import { useSession } from "@/components/SessionContext";
 import { createGroup, isTitleUnique } from "@/services/groupServices"
 import { useQueryClient } from "@tanstack/react-query";
+import { TextInput } from "react-native";
 
 export default function CreateGroup() {
   const { session } = useSession();
@@ -50,7 +51,7 @@ export default function CreateGroup() {
             Title
           </Text>
           <Input className="ml-3 mr-5">
-            <InputField
+            <TextInput
               value={title}
               onChangeText={setTitle}
               placeholder="Enter Title"
@@ -62,7 +63,7 @@ export default function CreateGroup() {
             Description
           </Text>
           <Input className="ml-3 mr-5">
-            <InputField
+            <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder="Enter Description"
@@ -74,7 +75,7 @@ export default function CreateGroup() {
             Goal
           </Text>
           <Input className="ml-3 mr-5">
-            <InputField
+            <TextInput
               value={goal}
               onChangeText={setGoal}
               placeholder="Enter Goal"

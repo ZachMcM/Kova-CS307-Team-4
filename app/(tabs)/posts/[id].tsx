@@ -25,6 +25,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Body from "react-native-body-highlighter";
 import { getColors, getIntensities } from "@/services/intensityServices";
 import { ExtendedBodyPart } from "react-native-body-highlighter"
+import { useIsFocused } from "@react-navigation/native";
 
 type ReducedProfile = {
   username: string;
@@ -341,6 +342,11 @@ export default function PostDetails() {
       setIsCopyingTemplate(false);
     }
   };
+
+  const isFocused = useIsFocused();
+  if (!isFocused) {
+    return null;
+  }
 
   return (
     <Container className = "flex">

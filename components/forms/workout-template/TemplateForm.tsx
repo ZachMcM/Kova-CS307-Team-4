@@ -12,7 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
-import { Pressable } from "react-native";
+import { Pressable, TextInput } from "react-native";
 import Body from "react-native-body-highlighter";
 import {
   FormControl,
@@ -27,6 +27,7 @@ import { VStack } from "../../ui/vstack";
 import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
+import { useIsFocused } from "@react-navigation/native";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -146,6 +147,11 @@ export default function TemplateForm() {
     // queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
   };
 
+  const isFocused = useIsFocused();
+  if (!isFocused) {
+    return null;
+  }
+
   return !exercisesLoading ? (
     allExercises && (
       <VStack space="2xl">
@@ -159,7 +165,7 @@ export default function TemplateForm() {
                 <FormControlLabelText>Name</FormControlLabelText>
               </FormControlLabel>
               <Input>
-                <InputField
+                <TextInput
                   placeholder="Enter a template name"
                   value={field.value}
                   onChangeText={field.onChange}
@@ -175,7 +181,7 @@ export default function TemplateForm() {
           )}
         />
         <Input size="md">
-          <InputField
+          <TextInput
             placeholder="Search exercises"
             onChangeText={setExerciseQuery}
             value={exerciseQuery}

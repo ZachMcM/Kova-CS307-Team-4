@@ -18,6 +18,7 @@ import { CheckIcon, CloseIcon } from "../ui/icon";
 import { Input, InputField } from "../ui/input";
 import { useToast } from "../ui/toast";
 import { VStack } from "../ui/vstack";
+import { TextInput } from "react-native";
 
 export default function EditEventDetails({
   event,
@@ -180,7 +181,7 @@ export default function EditEventDetails({
               <VStack space="sm">
                 <Heading size="md">Goal</Heading>
                 <Input>
-                  <InputField
+                  <TextInput
                     onChangeText={onChange}
                     value={value?.toString()}
                     keyboardType="numeric"
@@ -206,7 +207,7 @@ export default function EditEventDetails({
                 <VStack space="sm">
                   <Heading size="md">Weight Multiplier</Heading>
                   <Input>
-                    <InputField
+                    <TextInput
                       onChangeText={onChange}
                       value={value?.toString()}
                       keyboardType="numeric"
@@ -229,7 +230,7 @@ export default function EditEventDetails({
                 <VStack space="sm">
                   <Heading size="md">Rep Multiplier</Heading>
                   <Input>
-                    <InputField
+                    <TextInput
                       onChangeText={onChange}
                       value={value?.toString()}
                       keyboardType="numeric"
