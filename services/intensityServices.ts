@@ -1,5 +1,6 @@
 import { ExtendedBodyPart } from "react-native-body-highlighter"
 import { getTagsAndDetails } from "./exerciseServices"
+import { supabase } from "@/lib/supabase"
 
 export enum Areas {
   TRAPEZIUS, TRICEPS, FOREARM, ADDUCTORS, CALVES,
@@ -140,6 +141,32 @@ export function getColors() : string[] {
     "#01c6c6",
     "#01dcdc",
   ]
+}
+
+export async function getExercisesWithoutTags() : Promise<string[]>{
+  const {data: exerciseData, error: exerciseError} = await supabase
+    .from("exercise")
+    .select("id")
+  if (exerciseError) {
+    throw new Error(exerciseError.message)
+  }
+
+  const {data: relTagData, error: relTagError} = await supabase
+    .from("relTag")
+    .select("exercise_id")
+  if (relTagError) {
+    throw new Error(relTagError.message)
+  }
+  const exerciseIds = new Set<string>()
+  for (let i = 0; i < exerciseData.length; i++) {
+    exerciseIds.add(exerciseData[i].id)
+  }
+  for (let i = 0; i < relTagData.length; i++) {
+    exerciseIds.delete(relTagData[i].exercise_id)
+  }
+  const exercisesWithoutTags = [] as string[]
+  exerciseIds.forEach((item) => {exercisesWithoutTags.push(item)})
+  return exercisesWithoutTags
 }
 
 function getAreas(tag: string) : Areas[] {
