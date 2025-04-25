@@ -7,12 +7,11 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ChevronLeftIcon, Icon, InfoIcon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
-import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { isMemberOfGroup, getRole } from "@/services/groupServices";
 import { getPastEvents } from "@/services/simpleEventServices";
 import { Tables } from "@/types/database.types";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 export default function PastGroupEvents() {

@@ -7,11 +7,9 @@ import {
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
-import { Link, LinkText } from "@/components/ui/link";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { supabase } from "@/lib/supabase";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -25,7 +23,6 @@ import {
   AlertDialogBody,
   AlertDialogBackdrop,
 } from "@/components/ui/alert-dialog";
-import { Box } from "@/components/ui/box";
 
 export default function deleteAccountScreen() {
     const [verifyPassword, setVerifyPassword] = useState("");

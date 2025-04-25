@@ -2,9 +2,7 @@ import { useSession } from '@/components/SessionContext';
 import { supabase } from '@/lib/supabase';
 import { Redirect } from "expo-router";
 import { useEffect, useState } from 'react';
-import { boolean } from 'zod';
 import { Text } from "@/components/ui/text";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function IndexScreen() {

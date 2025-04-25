@@ -10,11 +10,10 @@ import { VStack } from "@/components/ui/vstack";
 import { showErrorToast } from "@/services/toastServices";
 import { ExerciseData } from "@/types/workout-types";
 import clsx from "clsx";
-import { Controller, useFieldArray, useWatch } from "react-hook-form";
+import { Controller, useFieldArray } from "react-hook-form";
 import { TextInput } from "react-native";
 import { useLiveWorkout } from "./LiveWorkoutContext";
 import { DistanceInput, TimeInput } from "../workout-template/ExerciseDataForm";
-import { useState } from "react";
 
 export default function LiveExerciseForm({
   exercise,

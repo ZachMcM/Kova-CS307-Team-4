@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Profile, PrivateProfile, PublicProfile } from "@/types/profile-types";
-import { useState } from "react";
+import { Profile, PublicProfile } from "@/types/profile-types";
 
 export interface privacies {
   // friends_following: string,

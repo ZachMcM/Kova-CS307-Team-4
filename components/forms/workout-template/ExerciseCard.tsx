@@ -4,7 +4,7 @@ import { Box } from "@/components/ui/box";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { AlertCircleIcon, CloseIcon, Icon, InfoIcon } from "@/components/ui/icon";
+import { CloseIcon, Icon, InfoIcon } from "@/components/ui/icon";
 import {
   Modal,
   ModalBackdrop,

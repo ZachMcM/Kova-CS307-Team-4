@@ -1,4 +1,3 @@
-import { exerciseSchema } from "@/schemas/exerciseSchema";
 import { liveExerciseSchema } from "@/schemas/liveExerciseSchema";
 import { updateWorkout } from "@/services/asyncStorageServices";
 import { Workout } from "@/types/workout-types";

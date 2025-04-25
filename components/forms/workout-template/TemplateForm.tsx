@@ -16,7 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
-import { Pressable, ScrollView} from "react-native";
+import { Pressable} from "react-native";
 import {
   FormControl,
   FormControlError,
@@ -30,7 +30,6 @@ import { VStack } from "../../ui/vstack";
 import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
-import { Box } from "@/components/ui/box";
 import { getColors, getIntensities } from "@/services/intensityServices";
 import Body from "react-native-body-highlighter";
 

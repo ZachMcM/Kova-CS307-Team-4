@@ -1,4 +1,3 @@
-import StaticContainer from "@/components/StaticContainer";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
@@ -17,7 +16,6 @@ import {
   MenuIcon,
   TrashIcon,
   CheckCircleIcon,
-  CircleIcon,
   AlertCircleIcon,
   EditIcon,
   GlobeIcon,
@@ -33,13 +31,11 @@ import {
   followUser,
   unfollowUser,
   uploadProfilePicture,
-  privacies,
   getProfilePrivacies,
 } from "@/services/profileServices";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "@/components/ui/spinner";
-import { getProfileAccess } from "@/types/profile-types";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/toast";
@@ -50,17 +46,9 @@ import {
 } from "@/services/toastServices";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import * as ImagePicker from "expo-image-picker";
-import { Badge, BadgeText, BadgeIcon } from "@/components/ui/badge";
+import { Badge, BadgeIcon } from "@/components/ui/badge";
 import { View } from "react-native";
-import {
-  RadioGroup,
-  Radio,
-  RadioIndicator,
-  RadioIcon,
-  RadioLabel,
-} from "@/components/ui/radio";
 import { useSession } from "@/components/SessionContext";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ProfileActivities } from "@/components/ProfileActivities";
 import { Post } from "../feed";
 import { useNavigation } from "@react-navigation/native";

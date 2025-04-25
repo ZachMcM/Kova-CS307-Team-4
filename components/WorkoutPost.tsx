@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Animated,
   Modal,
@@ -26,9 +26,6 @@ import { HStack } from "./ui/hstack";
 import { Spinner } from "./ui/spinner";
 import { Image } from "./ui/image";
 import { ScrollView } from "./ui/scroll-view";
-import { supabase } from "@/lib/supabase";
-import { getColors, getIntensities } from "@/services/intensityServices";
-import Body from "react-native-body-highlighter";
 
 export type Exercise = {
   name: string;

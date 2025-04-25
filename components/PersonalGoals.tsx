@@ -3,7 +3,6 @@ import { Alert, AlertIcon, AlertText } from "./ui/alert";
 import { Heading } from "./ui/heading";
 import { CheckCircleIcon, CheckIcon, CircleIcon, CloseIcon, Icon, InfoIcon } from "./ui/icon";
 import { VStack } from "./ui/vstack";
-import GoalCard from "./GoalCard";
 import { Card } from "./ui/card";
 import { TouchableOpacity } from "react-native";
 import { HStack } from "./ui/hstack";
@@ -13,16 +12,12 @@ import { Button, ButtonText } from "./ui/button";
 import { updateProfileGoals } from "@/services/profileServices";
 import { useToast } from "./ui/toast";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
-import { Center } from "./ui/center";
-import { set } from "zod";
 import { Modal, ModalBackdrop, ModalBody, ModalCloseButton, ModalContent, ModalHeader } from "./ui/modal";
 import { Box } from "./ui/box";
 import { Input, InputField } from "./ui/input";
-import { getExercisesFromStorage } from "@/services/asyncStorageServices";
 import { ExtendedExercise } from "@/types/extended-types";
 import ExerciseCard from "./forms/workout-template/ExerciseCard";
 import { ScrollView } from "@/components/ui/scroll-view";
-import { parse } from "@babel/core";
 
 export default function PersonalGoals({goals, userId, profileUserId, exercises} : {goals: JSON[], userId: string, profileUserId: string, exercises: ExtendedExercise[]}) {
   const [isLoading, setIsLoading] = useState(false);

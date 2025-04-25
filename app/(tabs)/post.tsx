@@ -49,7 +49,6 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { set } from "zod";
 
 const defaultWorkoutData = {
   duration: "0 minutes",

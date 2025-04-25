@@ -11,8 +11,8 @@ import { VStack } from "@/components/ui/vstack";
 import { getUserTemplates } from "@/services/templateServices";
 import { createWordCounter, templatesToSearch } from "@/types/searcher-types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { useState, useEffect } from "react";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 
 export default function Workout() {
   const { session } = useSession();

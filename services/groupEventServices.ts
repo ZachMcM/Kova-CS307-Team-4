@@ -9,7 +9,6 @@ import {
 } from "@/types/extended-types";
 import { ExerciseData, Workout } from "@/types/workout-types";
 import { getUserGroups } from "./groupServices";
-import { getCurrentEvents } from "./simpleEventServices";
 
 export const newEvent = async (
   groupId: string,

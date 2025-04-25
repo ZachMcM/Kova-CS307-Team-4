@@ -1,5 +1,3 @@
-import { Exercise } from "@/components/WorkoutPost"
-import { Workout } from "@/types/workout-types"
 import { ExtendedBodyPart } from "react-native-body-highlighter"
 import { getTagsAndDetails } from "./exerciseServices"
 

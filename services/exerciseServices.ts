@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { Tables } from "@/types/database.types";
 import { ExtendedExercise } from "@/types/extended-types";
 
 export async function getExercises(): Promise<ExtendedExercise[]> {

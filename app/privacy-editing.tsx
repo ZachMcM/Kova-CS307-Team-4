@@ -14,7 +14,6 @@ import { useSession } from "@/components/SessionContext";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Container from "@/components/Container";
 import { Card } from "@/components/ui/card";
-import { set } from "zod";
 
 export default function PrivacyEditingScreen() {
     const router = useRouter();

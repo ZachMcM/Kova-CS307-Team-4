@@ -1,26 +1,17 @@
-import { useSession } from "@/components/SessionContext";
 import {
   updateProfile,
   getProfile,
   unfollowUser,
-  getFollowing,
-  getFriends,
   followUser,
 } from "./profileServices";
-import { signOutUser } from "./loginServices";
-import { Session } from "@supabase/supabase-js";
 import {
   AuthAccountResponse,
   ExtendedExercise,
-  ExtendedTemplateWithCreator,
 } from "@/types/extended-types";
 import { supabase } from "@/lib/supabase";
 import {
   SearchItem,
-  SearchTag,
   TaggedSearchItem,
-  WordCounter,
-  TagCounter,
   createWordCounter,
   createTagCounter,
   profilesToSearch,
@@ -29,8 +20,6 @@ import {
   compareToQuery,
   compareToTaggedQuery,
 } from "@/types/searcher-types";
-import { Profile } from "@/types/profile-types";
-import { Post } from "@/app/(tabs)/feed";
 import { clearComments, Comment, getComments, pushComment } from "./commentServices";
 import { getExercisePoints } from "./groupEventServices";
 import { ExerciseData } from "@/types/workout-types";

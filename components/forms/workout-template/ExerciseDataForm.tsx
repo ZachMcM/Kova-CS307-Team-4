@@ -12,7 +12,6 @@ import { TextInput } from "react-native";
 import { useTemplateForm } from "./TemplateFormContext";
 import { Box } from "@/components/ui/box";
 import { useEffect, useState } from "react";
-import { HStack } from "@/components/ui/hstack";
 
 
 export default function ExerciseDataForm({ index, type }: { index: number, type: string }) {

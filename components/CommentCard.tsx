@@ -4,7 +4,6 @@ import { HStack } from "./ui/hstack";
 import { Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { Avatar, AvatarFallbackText, AvatarImage } from "./ui/avatar";
-import { Heading } from "./ui/heading";
 import { Text } from "./ui/text";
 import { Comment } from "@/services/commentServices";
 import { Button, ButtonText } from "./ui/button";

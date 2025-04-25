@@ -8,11 +8,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getAllGroups, getUserGroups } from "@/services/groupServices";
-import { GroupOverview } from "@/types/extended-types";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { RefreshControl, ScrollView } from "react-native";
+import { useState } from "react";
 
 export default function Groups() {
   const { session } = useSession();
