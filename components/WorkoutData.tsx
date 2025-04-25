@@ -146,7 +146,7 @@ export const SummaryWorkoutData = ({
         </VStack>
         <VStack style={postStyles.summaryItem}>
           <Text size="xs">Rest Time:</Text>
-          <Text size="sm" bold>{workoutData.pauseTime}</Text>
+          <Text size="sm" bold>{workoutData.pauseTime ? workoutData.pauseTime : '0:00'}</Text>
         </VStack>
         <VStack style={postStyles.summaryItem}>
           <Text size="xs">Calories</Text>

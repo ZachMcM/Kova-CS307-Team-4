@@ -13,18 +13,23 @@ export async function getLikes(postId: string): Promise<LikeRelation[]> {
         throw new Error(error.message);
     }
 
+    console.log("database likes: ", JSON.stringify(data));
+
     const names: string[] = []
     for (const like of data) {
-        const { data: profile, error: profileErr } = await supabase.from("profile").select('name, avatars').eq("userId", like.user_id).single()
+        const { data: profile, error: profileErr } = await supabase.from("profile").select('name, avatar').eq("userId", like.user_id).single()
         if (profileErr) throw new Error(profileErr.message)
         names.push(profile.name)
     }
+
+    console.log("names: ", names)
 
     const likeRelations = data.map((likeInfo, i) => ({
         postId: likeInfo.post_id,
         userId: likeInfo.user_id,
         name: names[i]
     }));
+    console.log("Like relations: " + JSON.stringify(likeRelations));
     if (likeRelations == undefined) {
         return [] as LikeRelation[];
     }
