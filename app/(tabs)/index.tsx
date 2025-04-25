@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Redirect } from "expo-router";
 import { useEffect, useState } from 'react';
 import { Text } from "@/components/ui/text";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function IndexScreen() {

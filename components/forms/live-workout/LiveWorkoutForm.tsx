@@ -141,7 +141,15 @@ export default function LiveWorkoutForm() {
         endTime,
         session?.user.user_metadata.profileId
       );
-      saveContributionsToStorage(contributions);
+      const exercises = getValues("exercises")
+      let cardio = false
+      for (const exercise of exercises) {
+        if (exercise.info.type == "CARDIO") {
+          cardio = true
+        }
+      }
+      if (!cardio)
+        saveContributionsToStorage(contributions);
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
       // invalidate all competition workouts for curr profile
       queryClient.invalidateQueries({
@@ -408,8 +416,6 @@ export default function LiveWorkoutForm() {
                   )}
                 </VStack>
               </VStack>
-              
-
               <Button
                 size="lg"
                 action="kova"
