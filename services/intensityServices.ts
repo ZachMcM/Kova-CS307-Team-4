@@ -47,18 +47,12 @@ export function getAreasFromTags(tags: string[]) : ExtendedBodyPart[] {
   return partsToReturn
 }
 
-export async function getIntensities(exerciseNames: string[], minIntensity: number) : Promise<ExtendedBodyPart[]> {
-  /*
-  let totalReps = 0
-  for (let i = 0; i < exerciseData.length; i++) {
-    exerciseNames.push(exerciseData[i].name)
-    totalReps += exerciseData[i].reps!
-  }
-  */
-  const tagsOfExercises = (await getTagsAndDetails(exerciseNames)).tagMap
+export async function getIntensities(exercises: {name: string, sets: number}[], minIntensity: number) : Promise<ExtendedBodyPart[]> {
+  const tagsOfExercises = (await getTagsAndDetails(exercises.map((exercise) => exercise.name))).tagMap
   const repsOfParts = {} as Record<Areas, number>
-  for (let i = 0; i < exerciseNames.length; i++) {
-    const tags = tagsOfExercises[exerciseNames[i]]
+  const setsOfParts = {} as Record<Areas, number>
+  for (let i = 0; i < exercises.length; i++) {
+    const tags = tagsOfExercises[exercises[i].name]
     if (tags) {
       for (let j = 0; j < tags.length; j++) {
         const areas = getAreas(tags[j])
@@ -68,6 +62,12 @@ export async function getIntensities(exerciseNames: string[], minIntensity: numb
           }
           else {
             repsOfParts[areas[k]]++;
+          }
+          if (isNaN(setsOfParts[areas[k]])) {
+            setsOfParts[areas[k]] = exercises[i].sets
+          }
+          else {
+            setsOfParts[areas[k]] += exercises[i].sets
           }
         }
       }
@@ -83,14 +83,17 @@ export async function getIntensities(exerciseNames: string[], minIntensity: numb
     Areas.GLUTEAL
   ]
   for (let i = 0; i < areas.length; i++) {
-    let intensity = repsOfParts[areas[i]]
+    let intensity = repsOfParts[areas[i]] + Math.floor(setsOfParts[areas[i]] / 2)
     if (!isNaN(intensity) && intensity != null) {
       const part = allParts.get(areas[i])
-      part!.intensity = ((intensity + minIntensity > getRangeOfIntensities() + 1)?
-        getRangeOfIntensities() + 1: intensity + minIntensity)
+      part!.intensity = ((intensity + minIntensity > getRangeOfIntensities())?
+        getRangeOfIntensities(): intensity + minIntensity)
       partsToReturn.push(part!)
     }
   }
+  console.log("Left " + exercises.map((exercise) => JSON.stringify(exercise)) + ", \n" + JSON.stringify(repsOfParts))
+  console.log(JSON.stringify(setsOfParts))
+  console.log("Results: " + partsToReturn.map((part) => JSON.stringify(part)))
   return partsToReturn
 }
 
@@ -172,13 +175,17 @@ function getAreas(tag: string) : Areas[] {
       areas.push(Areas.TIBIALIS)
       break;
     case "Shoulders":
+      areas.push(Areas.DELTOIDS)
       areas.push(Areas.TRICEPS)
       break;
     case "Legs":
       areas.push(Areas.ADDUCTORS)
       areas.push(Areas.ANKLES)
+      areas.push(Areas.QUADRICEPS)
       areas.push(Areas.FEET)
+      areas.push(Areas.CALVES)
       areas.push(Areas.KNEES)
+      areas.push(Areas.TIBIALIS)
       areas.push(Areas.ABS)
       break;
     case "Forearms":
@@ -217,6 +224,9 @@ function getAreas(tag: string) : Areas[] {
       break;
     case "Endurance":
 
+      break;
+    case "Glutes":
+      areas.push(Areas.GLUTEAL)
       break;
     case "Traps":
       areas.push(Areas.TRAPEZIUS)

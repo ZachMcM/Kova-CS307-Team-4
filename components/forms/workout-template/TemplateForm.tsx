@@ -94,7 +94,12 @@ export default function TemplateForm() {
   const { data: muscleGroups, isPending: loadingMuscleGroups } = useQuery({
     queryKey: ["muscleGroup"],
     queryFn: async () => {
-      const muscleGroups = await getIntensities(exercises.map((exercise) => exercise.info.name), 4)
+      const muscleGroups = await getIntensities(exercises.map((exercise) => {
+        return {
+          name: exercise.info.name,
+          sets: exercise.sets.length
+        }
+      }), 4)
       return muscleGroups
     }
   })
@@ -118,7 +123,7 @@ export default function TemplateForm() {
     }
   }
 
-  const handleExerciseSubmit = (exercise: any) => {
+  const handleExerciseSubmit = async (exercise: any) => {
     setExerciseQuery("");
 
     console.log(exercise);
@@ -139,7 +144,6 @@ export default function TemplateForm() {
           },
         ],
       });
-      queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
     }
     else {
       console.log("Cardio exercise");
@@ -157,8 +161,8 @@ export default function TemplateForm() {
           },
         ],
       });
-      queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
     }
+    queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
   }
 
 
@@ -235,7 +239,10 @@ export default function TemplateForm() {
                 <Heading className="text-kova-500">
                   {exercise.info.name}
                 </Heading>
-                <Pressable onPress={() => removeExercise(i)}>
+                <Pressable onPress={() => {
+                      removeExercise(i)     
+                      queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
+                    }}>
                   <Icon as={TrashIcon} size="xl" color="red" />
                 </Pressable>
               </HStack>

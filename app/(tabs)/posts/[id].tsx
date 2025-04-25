@@ -169,7 +169,8 @@ export default function PostDetails() {
         if (post?.workoutData?.exercises) {
           console.log(post.workoutData.exercises)
           console.log(post.workoutData.exercises.map((exercise) => exercise.name))
-          const muscleIntensities = await getIntensities(post.workoutData.exercises.map((exercise) => exercise.name), 4)
+          const muscleIntensities = await getIntensities(post.workoutData.exercises.map(
+              (exercise) => {return {name: exercise.name, sets: exercise.sets || 0}}), 4)
           console.log("Res: " + muscleIntensities)
           setIntensities(muscleIntensities)
         }

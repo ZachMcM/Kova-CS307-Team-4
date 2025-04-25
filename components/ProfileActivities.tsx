@@ -133,40 +133,47 @@ export const ProfileActivities = ({
       muscleGroupsWeek: [] as ExtendedBodyPart[],
     })
 
-    const getExerciseNames = function (workoutPosts: Post[]) : string[] {
-      const exerciseNames = [] as string[]
+    const getExercises = function (workoutPosts: Post[]) : {name: string, sets: number}[] {
+      const exerciseNames = [] as {name: string, sets: number}[]
       for (let i = 0; i < workoutPosts.length; i++) {
         const p = workoutPosts[i]
         if (p.workoutData) {
           for (let j = 0; j < p.workoutData.exercises.length; j++) {
-            exerciseNames.push(p.workoutData.exercises[j].name)
+            exerciseNames.push({
+              name: p.workoutData.exercises[j].name,
+              sets: p.workoutData.exercises[j].sets!
+            })
           }
         }
       }
+      console.log("Exercise names " + JSON.stringify(exerciseNames))
       return exerciseNames
     }
 
-      useQuery({
-        queryKey: ["gettingMuscleGroupsProfile", userId],
-        queryFn: async () => {
-          if (workoutData != null && workoutData.workouts.length != 0) {
-            console.log(getExerciseNames(workoutData.workouts))
-            const muscleGroupsAll = await getIntensities(getExerciseNames(workoutData.workouts), 0)
-            const muscleGroupsWeek = await getIntensities(getExerciseNames(workoutData.workoutsWeek), 0)
-            const muscleGroupsMonth = await getIntensities(getExerciseNames(workoutData.workoutsMonth), 0)
-            const muscleGroupsYear = await getIntensities(getExerciseNames(workoutData.workoutsYear), 0)
-  
-            setMuscleGroups({ 
-              muscleGroupsAll: muscleGroupsAll,
-              muscleGroupsWeek: muscleGroupsWeek,
-              muscleGroupsMonth: muscleGroupsMonth,
-              muscleGroupsYear: muscleGroupsYear
-            })
-          }
-          return "Complete"
-        },
-        enabled: workoutData.workouts.length != 0
-      })
+    useQuery({
+      queryKey: ["gettingMuscleGroupsProfile", userId],
+      queryFn: async () => {
+        console.log("Conducting query")
+        // console.log("Got items " + workoutData + JSON.stringify(workoutData.workouts))
+        if (workoutData != null && workoutData.workouts.length != 0) {
+          console.log("EEEE")
+          const muscleGroupsAll = await getIntensities(getExercises(workoutData.workouts), 0)
+          const muscleGroupsWeek = await getIntensities(getExercises(workoutData.workoutsWeek), 0)
+          const muscleGroupsMonth = await getIntensities(getExercises(workoutData.workoutsMonth), 0)
+          const muscleGroupsYear = await getIntensities(getExercises(workoutData.workoutsYear), 0)
+          console.log("Fin")
+          setMuscleGroups({ 
+            muscleGroupsAll: muscleGroupsAll,
+            muscleGroupsWeek: muscleGroupsWeek,
+            muscleGroupsMonth: muscleGroupsMonth,
+            muscleGroupsYear: muscleGroupsYear
+          })
+        }
+        console.log("If failed")
+        return "Complete"
+      },
+      enabled: workoutData.workouts.length != 0
+    })
 
 
     // Load notification preferences from storage

@@ -24,6 +24,7 @@ import {
   socialInformationTests,
   testCounters,
   pointsTest,
+  testIntensityCalculations,
 } from "@/services/unitTestServices";
 import { useSession } from "@/components/SessionContext";
 import { ProfileActivities } from "@/components/ProfileActivities";
@@ -323,6 +324,13 @@ export default function SettingsScreen() {
       params: [],
       totalTests: 5,
     },
+    {
+      id: "10",
+      name: "Intensity Tests",
+      function: testIntensityCalculations,
+      params: [],
+      totalTests: 1
+    }
   ];
 
   const runTest = async (test: any) => {
