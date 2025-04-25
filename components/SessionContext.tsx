@@ -370,6 +370,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
 
       try {
+        //Note, once at this point, no errors are thrown, they are just logged to prevent Data Corruption in case of errors
         //Deleting user's favorite exerices
         await deleteAllUserFavorites(profileId);
 
@@ -382,7 +383,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         });
         if (followError || !followData) {
           console.log("follow error: ", followError);
-          throw new Error("Something went wrong! Try again later.");
         }
 
         //Deleting all of user's group relations 
@@ -394,7 +394,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         });
         if (postError || !postData) {
           console.log("post error: ", postError);
-          throw new Error("Something went wrong! Try again later.");
         }
 
         //Setting user profile fields to deleted profile fields
@@ -406,7 +405,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           .eq('userId', userId);
         if (usernameError) {
           console.log("username error: ", usernameError);
-          throw new Error("Something went wrong! Try again later.");
         }
 
         //If everything else has succeeded, set deleted profile fields in the auth table
@@ -416,7 +414,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
        )
         if (passwordUpdateError) {
          console.log("password update error: ", passwordUpdateError);
-         throw new Error("Something went wrong! Try again later.")
         }
         //Email update is done with an edge function, code for it is on supabase API
         let randNum = Math.floor(Math.random() * (999_999_999 + 1)).toString();
@@ -426,7 +423,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         })
         if (emailUpdateError) {
           console.log("email update error: ", emailUpdateError);
-          throw new Error("Something went wrong! Try again later");
         }
 
         AsyncStorage.clear();
