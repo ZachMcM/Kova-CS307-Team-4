@@ -122,6 +122,11 @@ export default function PostScreen() {
 
     checkSession();
 
+    // Check for auto_content parameter (for weight goal achievements)
+    if (params.auto_content) {
+      setDescription(params.auto_content as string);
+    }
+
     const workoutDataParam =
       params.workoutData ||
       (params.params && JSON.parse(params.params as string).workoutData);

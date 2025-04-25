@@ -170,7 +170,6 @@ export default function ProfileScreen() {
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       queryClient.invalidateQueries();
-      queryClient.clear();
       console.log("invalidated queries");
       /*queryClient.invalidateQueries({ queryKey: ["weight", id] });
       queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
@@ -186,7 +185,6 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     queryClient.invalidateQueries();
-    queryClient.clear();
     /*queryClient.invalidateQueries({ queryKey: ["privacy_data", id] });
     queryClient.invalidateQueries({ queryKey: ["weight", id] });
     queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });

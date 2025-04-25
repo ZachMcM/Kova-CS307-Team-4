@@ -479,7 +479,7 @@ export default function WeightTrackingScreen() {
     );
     
     // Weight remaining
-    const weightRemaining = Math.abs(latestWeight - target_weight);
+    const weightRemaining = latestWeight - target_weight;
     
     // Goal direction
     let goalDirection: "ahead" | "behind" | "on-track" = "on-track";
