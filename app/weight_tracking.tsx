@@ -59,7 +59,7 @@ import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import React, { useEffect, useState } from "react";
-import { Alert, Dimensions, ScrollView } from "react-native";
+import { Alert, Dimensions, ScrollView, TextInput } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 
 export default function WeightTrackingScreen() {
@@ -647,7 +647,7 @@ export default function WeightTrackingScreen() {
                   Weight:
                 </Text>
                 <Input className="flex-1">
-                  <InputField
+                  <TextInput
                     value={weight}
                     onChangeText={setWeight}
                     keyboardType="numeric"
@@ -770,7 +770,7 @@ export default function WeightTrackingScreen() {
                       Target Weight:
                     </Text>
                     <Input className="flex-1">
-                      <InputField
+                      <TextInput
                         value={goalFormData.targetWeight}
                         onChangeText={(value) =>
                           setGoalFormData((prev) => ({

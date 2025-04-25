@@ -16,6 +16,7 @@ import { HStack } from "@/components/ui/hstack";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useIsFocused } from "@react-navigation/native";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -24,6 +25,11 @@ export default function LoginScreen() {
   const toast = useToast();
   const router = useRouter();
   const { signInUser, sessionLoading, setSessionLoading, showTutorial } = useSession();
+
+  const isFocused = useIsFocused();
+  if (!isFocused) {
+    return null;
+  }
 
   return (
     <Container>

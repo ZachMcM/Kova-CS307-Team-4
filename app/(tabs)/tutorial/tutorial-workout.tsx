@@ -11,7 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, TextInput } from "react-native";
 import { useSession } from "@/components/SessionContext";
 import { feedStyles } from "../feed";
 import { useNavigation } from "@react-navigation/native";
@@ -261,7 +261,7 @@ export default function TutorialWorkoutScreen() {
             </VStack>
             <AttachStep index={1}>
             <Input>
-              <InputField
+              <TextInput
                 placeholder="Search for a workout template"
               />
             </Input>

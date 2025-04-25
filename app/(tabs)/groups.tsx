@@ -8,9 +8,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getAllGroups, getUserGroups } from "@/services/groupServices";
+import { useIsFocused } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { TextInput } from "react-native";
 
 export default function Groups() {
   const { session } = useSession();
@@ -35,6 +37,11 @@ export default function Groups() {
     }
   })
 
+  const isFocused = useIsFocused();
+  if (!isFocused) {
+    return null;
+  }
+
   return (
     // TODO work on this UI
     <Container>
@@ -58,7 +65,7 @@ export default function Groups() {
         ) : (
           <><Heading>Your Groups</Heading><VStack space="md">
               <Input>
-                <InputField
+                <TextInput
                   value={userGroupQuery}
                   onChangeText={setUserGroupQuery}
                   placeholder="Search for one of your groups."
@@ -72,7 +79,7 @@ export default function Groups() {
                 ))) : <Text>You haven't joined a group yet. Join one!</Text>}
             </VStack><Heading>All Groups</Heading><VStack space="md">
                 <Input>
-                  <InputField
+                  <TextInput
                     value={groupQuery}
                     onChangeText={setGroupQuery}
                     placeholder="Search for a group to join."

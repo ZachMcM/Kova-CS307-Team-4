@@ -49,6 +49,7 @@ import {
   ModalHeader,
 } from "../ui/modal";
 import { Switch } from "../ui/switch";
+import { TextInput } from "react-native";
 
 const schema = z
   .object({
@@ -212,7 +213,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
             <VStack space="sm">
               <Heading size="md">Title</Heading>
               <Input>
-                <InputField
+                <TextInput
                   onChangeText={onChange}
                   value={value}
                   placeholder="Enter a title..."
@@ -359,7 +360,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
               </HStack>
               {goalOn && (
                 <Input>
-                  <InputField
+                  <TextInput
                     onChangeText={onChange}
                     value={value?.toString()}
                     keyboardType="numeric"
@@ -441,7 +442,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
                 <VStack space="sm">
                   <Heading size="md">Weight Multiplier</Heading>
                   <Input>
-                    <InputField
+                    <TextInput
                       onChangeText={onChange}
                       value={value?.toString()}
                       keyboardType="numeric"
@@ -464,7 +465,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
                 <VStack space="sm">
                   <Heading size="md">Rep Multiplier</Heading>
                   <Input>
-                    <InputField
+                    <TextInput
                       onChangeText={onChange}
                       value={value?.toString()}
                       keyboardType="numeric"

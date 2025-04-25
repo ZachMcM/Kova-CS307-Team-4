@@ -4,7 +4,7 @@ import { Heading } from "./ui/heading";
 import { CheckCircleIcon, CheckIcon, CircleIcon, CloseIcon, Icon, InfoIcon } from "./ui/icon";
 import { VStack } from "./ui/vstack";
 import { Card } from "./ui/card";
-import { TouchableOpacity, FlatList } from "react-native";
+import { TouchableOpacity, FlatList, TextInput } from "react-native";
 import { HStack } from "./ui/hstack";
 import { formatDate } from "./CommentCard";
 import { Text } from "./ui/text";
@@ -374,7 +374,7 @@ export default function PersonalGoals({goals, userId, profileUserId, exercises} 
                 <Heading size="md" className="mb-2">Add a new goal</Heading>
                 <HStack space="lg" className="mb-2">
                   <Input className="border border-gray-300 rounded-md p-2 w-24">
-                    <InputField 
+                    <TextInput 
                       placeholder="Reps" 
                       keyboardType="numeric" 
                       onChangeText={(text) => dispatch({ 
@@ -385,7 +385,7 @@ export default function PersonalGoals({goals, userId, profileUserId, exercises} 
                     />
                   </Input>
                   <Input className="border border-gray-300 rounded-md p-2 w-24">
-                    <InputField 
+                    <TextInput 
                       placeholder="Weight" 
                       keyboardType="numeric" 
                       onChangeText={(text) => dispatch({ 
@@ -424,7 +424,7 @@ export default function PersonalGoals({goals, userId, profileUserId, exercises} 
                       </ModalHeader>
                       <ModalBody>
                         <Input className="border border-gray-300 rounded-md p-2 mb-2">
-                          <InputField 
+                          <TextInput 
                             placeholder="Search for an exercise" 
                             onChangeText={handleSearchChange}
                           />

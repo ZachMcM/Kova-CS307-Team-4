@@ -10,6 +10,7 @@ import { InfoIcon, SearchIcon } from "./ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "./ui/input";
 import { Spinner } from "./ui/spinner";
 import { VStack } from "./ui/vstack";
+import { TextInput } from "react-native";
 
 export default function FavoriteExercises() {
   const [exerciseQuery, setExerciseQuery] = useState("");
@@ -40,7 +41,7 @@ export default function FavoriteExercises() {
       ) : favoriteExercises && favoriteExercises.length > 0 ? (
         <VStack space="md">
           <Input size="md">
-            <InputField
+            <TextInput
               placeholder="Search for your favorite exercises"
               onChangeText={setExerciseQuery}
               value={exerciseQuery}

@@ -4,9 +4,17 @@ import { TemplateFormProvider } from "@/components/forms/workout-template/Templa
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useIsFocused } from "@react-navigation/native";
 
 
 export default function NewTemplate() {
+
+    const isFocused = useIsFocused();
+  
+    if (!isFocused) {
+      return null;
+    }
+
   return (
     <Container>
       <VStack space="2xl">

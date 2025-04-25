@@ -38,6 +38,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useForm } from "react-hook-form";
+import { TextInput } from "react-native";
 import * as z from "zod";
 
 export default function Event() {
@@ -263,7 +264,7 @@ function EditTile({
             <VStack space="sm">
               <Heading size="md">Title</Heading>
               <Input>
-                <InputField
+                <TextInput
                   onChangeText={onChange}
                   value={value}
                   placeholder="Enter a title..."

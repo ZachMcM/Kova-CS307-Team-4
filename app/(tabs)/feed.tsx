@@ -18,6 +18,7 @@ import {
   Icon,
   HelpCircleIcon
 } from "@/components/ui/icon";
+import { useIsFocused } from "@react-navigation/native";
 
 export type Post = {
   id: string;
@@ -286,6 +287,11 @@ export default function FeedScreen() {
   }
 
   asyncStoreExercises();
+
+  const isFocused = useIsFocused();
+  if (!isFocused) {
+    return null;
+  }
 
   return (
     <ScrollView

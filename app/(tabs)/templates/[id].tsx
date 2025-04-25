@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getTemplate } from "@/services/templateServices";
+import { useIsFocused } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 
@@ -20,6 +21,11 @@ export default function EditTemplate() {
       return template;
     },
   });
+
+  const isFocused = useIsFocused();
+  if (!isFocused) {
+    return null;
+  }
 
   return (
     <Container>

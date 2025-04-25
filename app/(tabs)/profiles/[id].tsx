@@ -51,7 +51,7 @@ import { View } from "react-native";
 import { useSession } from "@/components/SessionContext";
 import { ProfileActivities } from "@/components/ProfileActivities";
 import { Post } from "../feed";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { getWeightEntries } from "@/services/weightServices";
 import Container from "@/components/Container";
 import { getAllGroups, getUserGroups } from "@/services/groupServices";
@@ -122,6 +122,8 @@ export default function ProfileScreen() {
 
   const [exercises, setExercises] = useState<ExtendedExercise[]>([]);
 
+  const isFocused = useIsFocused();
+
   // Functions related to accessing the profiles
   const { data: profile, isPending } = useQuery({
     queryKey: ["profile", id],
@@ -169,12 +171,12 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
-      queryClient.invalidateQueries();
-      queryClient.clear();
+      //queryClient.invalidateQueries();
+      //queryClient.clear();
       console.log("invalidated queries");
-      /*queryClient.invalidateQueries({ queryKey: ["weight", id] });
+      queryClient.invalidateQueries({ queryKey: ["weight", id] });
       queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
-      queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });*/
+      queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });
       if (profile && session?.user.id === id) {
         fetchOwnPosts();
         console.log("fetching user posts");
@@ -185,12 +187,12 @@ export default function ProfileScreen() {
   }, [navigation, profile]);
 
   useEffect(() => {
-    queryClient.invalidateQueries();
-    queryClient.clear();
-    /*queryClient.invalidateQueries({ queryKey: ["privacy_data", id] });
+    //queryClient.invalidateQueries();
+    //queryClient.clear();
+    queryClient.invalidateQueries({ queryKey: ["privacy_data", id] });
     queryClient.invalidateQueries({ queryKey: ["weight", id] });
     queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
-    queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });*/
+    queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });
   }, []);
 
   useEffect(() => {
@@ -647,6 +649,10 @@ export default function ProfileScreen() {
 
   const getExercises = async () => {
     setExercises(await getExercisesFromStorage() || []);
+  }
+
+  if (!isFocused) {
+    return null;
   }
 
   return (

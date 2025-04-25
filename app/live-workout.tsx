@@ -2,6 +2,7 @@ import Container from "@/components/Container";
 import { LiveWorkoutProvider } from "@/components/forms/live-workout/LiveWorkoutContext";
 import LiveWorkoutForm from "@/components/forms/live-workout/LiveWorkoutForm";
 import { getWorkout } from "@/services/asyncStorageServices";
+import { useIsFocused } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { Redirect } from "expo-router";
 
@@ -13,6 +14,11 @@ export default function LiveWorkout() {
     },
     queryKey: ["live-workout"],
   });
+
+    const isFocused = useIsFocused();
+    if (!isFocused) {
+      return null;
+    }
   
   return (
     <Container>

@@ -22,6 +22,7 @@ import { Text } from "../ui/text";
 import { VStack } from "../ui/vstack";
 import { getExercises } from "@/services/exerciseServices";
 import EditExercisePoints from "./EditExercisePoints";
+import { TextInput } from "react-native";
 
 export default function ExercisePointsView({
   event,
@@ -92,7 +93,7 @@ export default function ExercisePointsView({
         <VStack space="md">
           <HStack className="items-center" space="lg">
             <Input variant="outline" size="md" className="flex-1">
-              <InputField
+              <TextInput
                 placeholder="Search for a specific exercise"
                 value={exerciseQuery}
                 onChangeText={setExerciseQuery}
