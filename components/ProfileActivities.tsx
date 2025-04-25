@@ -53,7 +53,7 @@ export type PopularExercise = {
     tags: string[];
 }
 
-export const ProfileActivities = ({
+export const ProfileActivities = React.memo(({
     posts,
     isLoading,
     updatePostFunc,
@@ -171,26 +171,26 @@ export const ProfileActivities = ({
 
 
     // Load notification preferences from storage
-    useEffect(() => {
-      const loadNotificationPreferences = async () => {
-        try {
-          const storedEnabled = await AsyncStorage.getItem('notificationsEnabled');
-          const storedFrequency = await AsyncStorage.getItem('notificationFrequency');
+    // useEffect(() => {
+    //   const loadNotificationPreferences = async () => {
+    //     try {
+    //       const storedEnabled = await AsyncStorage.getItem('notificationsEnabled');
+    //       const storedFrequency = await AsyncStorage.getItem('notificationFrequency');
           
-          if (storedEnabled !== null) {
-            setNotificationsEnabled(storedEnabled === 'true');
-          }
+    //       if (storedEnabled !== null) {
+    //         setNotificationsEnabled(storedEnabled === 'true');
+    //       }
           
-          if (storedFrequency !== null) {
-            setNotificationFrequency(storedFrequency);
-          }
-        } catch (error) {
-          console.error('Error loading notification preferences:', error);
-        }
-      };
+    //       if (storedFrequency !== null) {
+    //         setNotificationFrequency(storedFrequency);
+    //       }
+    //     } catch (error) {
+    //       console.error('Error loading notification preferences:', error);
+    //     }
+    //   };
       
-      loadNotificationPreferences();
-    }, []);
+    //   loadNotificationPreferences();
+    // }, []);
 
     // Save notification preferences
     const saveNotificationPreferences = async () => {
@@ -1272,4 +1272,4 @@ export const ProfileActivities = ({
             </VStack>
         </View>
     );
-}
+})
