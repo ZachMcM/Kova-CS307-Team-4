@@ -66,7 +66,8 @@ export default function ExercisePointsView({
             exercises
           </Text>
         </VStack>
-        {allExercises != undefined && !editPointValues && groupRel?.role == "owner" && (
+        {(allExercises != undefined && !editPointValues && groupRel?.role === "owner" 
+            && (new Date(event.end_date!) > new Date(Date.now()))) ? (
           <Pressable
             onPress={() => {
               setEditPointValues(true);
@@ -74,7 +75,7 @@ export default function ExercisePointsView({
           >
             <Icon size="xl" as={EditIcon} />
           </Pressable>
-        )}
+        ): <></>}
       </HStack>
       {editPointValues ? (
         <EditExercisePoints

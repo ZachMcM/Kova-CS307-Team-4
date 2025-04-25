@@ -48,6 +48,7 @@ export default function FutureGroupEvents() {
   return <Container>
               { (!gettingEvents) ?
             <><VStack space="md">
+              <Heading size="3xl">Future events:</Heading>
               <Button
                 variant="outline"
                 size="md"
@@ -64,13 +65,6 @@ export default function FutureGroupEvents() {
                   <ButtonText>Back to Group</ButtonText>
                 </HStack>
               </Button>
-              <Heading size="lg">Competitions</Heading>
-              <GroupEvents
-                events={
-                  futureEvents?.filter((event) => event.type == "competition")!
-                }
-                type="competitions"
-              />
               <VStack space="md">
                 <Heading size="lg">Team Challenges</Heading>
                 <GroupEvents

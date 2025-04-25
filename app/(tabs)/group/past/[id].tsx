@@ -45,6 +45,7 @@ export default function PastGroupEvents() {
     return <Container>
               { (!gettingEvents) ?
             <><VStack space="md">
+              <Heading size="3xl">Past events:</Heading>
               <Button
                 variant="outline"
                 size="md"
