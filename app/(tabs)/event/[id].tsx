@@ -96,7 +96,7 @@ export default function Event() {
                   </Link>
                 </HStack>
               </VStack>
-              {!editTitle && groupRel?.role == "owner" && (
+              {!editTitle && groupRel?.role == "owner" && new Date(event.end_date!) > new Date(Date.now()) && (
                 <Pressable
                   onPress={() => {
                     setEditTitle(true);
@@ -123,7 +123,7 @@ export default function Event() {
                   details
                 </Text>
               </VStack>
-              {!editDetails && groupRel?.role == "owner" && (
+              {!editDetails && groupRel?.role == "owner" && new Date(event.end_date!) > new Date(Date.now()) && (
                 <Pressable
                   onPress={() => {
                     setEditDetails(true);

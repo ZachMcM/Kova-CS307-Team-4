@@ -42,11 +42,6 @@ export default function SettingsScreen() {
       content: "/change-username"
     },
     {
-      attribute: "Delete Account",
-      type: "redirect",
-      content: "/delete-account"
-    },
-    {
       attribute: "Debug: Unit Testing",
       type: "banner"
     },

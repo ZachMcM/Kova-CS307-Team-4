@@ -145,16 +145,25 @@ export const SummaryWorkoutData = ({
           <Text size="sm" bold>{workoutData.duration}</Text>
         </VStack>
         <VStack style={postStyles.summaryItem}>
+          <Text size="xs">Rest Time:</Text>
+          <Text size="sm" bold>{workoutData.pauseTime ? workoutData.pauseTime : '0:00'}</Text>
+        </VStack>
+        <VStack style={postStyles.summaryItem}>
           <Text size="xs">Calories</Text>
           <Text size="sm" bold>{workoutData.calories}</Text>
         </VStack>
       </HStack>
 
+
       <Text size="sm" bold style={postStyles.exercisesTitle}>Exercises</Text>
-      {workoutData.exercises.map((exercise: { name: string; sets: number; reps: number; weight: string }, index: number) => (
+      {workoutData.exercises.map((exercise: { name: string; sets: number; reps: number; weight: string; distance: string; time: string; }, index: number) => (
         <View key={index} style={postStyles.exerciseItem}>
           <Text size="sm" bold>{exercise.name}</Text>
-          <Text size="xs">{exercise.sets} sets × {exercise.reps} reps • {exercise.weight}</Text>
+          {exercise.sets && exercise.reps && exercise.weight ? (
+            <Text size="xs">{exercise.sets} sets × {exercise.reps} reps • {exercise.weight}</Text>
+          ) : exercise.sets && exercise.distance && exercise.time && (
+            <Text size="xs">{exercise.sets} sets • {exercise.distance} • {exercise.time}</Text>
+          )}
         </View>
       ))}
     </View>

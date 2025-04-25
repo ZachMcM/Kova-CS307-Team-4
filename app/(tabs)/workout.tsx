@@ -10,12 +10,14 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getUserTemplates } from "@/services/templateServices";
 import { createWordCounter, templatesToSearch } from "@/types/searcher-types";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
 export default function Workout() {
   const { session } = useSession();
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: templates, isPending } = useQuery({
     queryKey: ["templates"],
@@ -26,10 +28,6 @@ export default function Workout() {
       return templates;
     },
   });
-
-  // router from expo-router
-  const router = useRouter();
-
   const [templateQuery, setTemplateQuery] = useState("");
 
   let searchItems = undefined;

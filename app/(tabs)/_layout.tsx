@@ -83,6 +83,18 @@ export default function TabLayout() {
           href: null
         }}/>
       <Tabs.Screen
+        name="group/future/[id]"
+        options={{
+          title: "Edit Group",
+          href: null
+        }}/>
+      <Tabs.Screen
+        name="group/past/[id]"
+        options={{
+          title: "Edit Group",
+          href: null
+        }}/>
+      <Tabs.Screen
         name="create-group"
         options={{
           title: "Create Group",

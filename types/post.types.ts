@@ -1,4 +1,3 @@
-import { Json } from "./database.types";
 import { ExerciseData, Workout } from "./workout-types";
 
 export type PostDatabase = {

@@ -1,4 +1,3 @@
-import { Tables } from "@/types/database.types";
 import { useRouter } from "expo-router";
 import { Card } from "./ui/card";
 import { Heading } from "./ui/heading";

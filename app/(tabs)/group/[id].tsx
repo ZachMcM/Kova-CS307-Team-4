@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { getCurrentEvents } from "@/services/simpleEventServices";
 import {
   getGroup,
   getMembers,
@@ -55,6 +56,13 @@ export default function Group() {
     },
   });
 
+  const { data: currentEvents, isPending: gettingEvents} = useQuery({
+    queryKey: ["currentEvents", {groupId}],
+    queryFn: async () => {
+      return await getCurrentEvents(groupId)
+    }
+  })
+
   const router = useRouter();
 
   return (
@@ -81,8 +89,40 @@ export default function Group() {
               <Text>Goal: "{group?.goal}"</Text>
             </VStack>
           </HStack>
-          {!gettingRole && role === "owner" ? (
-            <Button
+          {
+            (!gettingEvents) ? (
+            <HStack className="justify-between items-center">
+              <Button
+                  variant="solid"
+                  action="secondary"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/group/past/[id]",
+                      params: { id: groupId },
+                    })
+                  }
+                  size="lg"
+                >
+                <ButtonText>View Past Events</ButtonText>
+              </Button>
+              <Button
+                  variant="solid"
+                  action="secondary"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/group/future/[id]",
+                      params: { id: groupId },
+                    })
+                  }
+                  size="lg"
+                >
+                <ButtonText>View Future Events</ButtonText>
+              </Button>
+            </HStack>) : (<></>)
+          }
+
+          { (!gettingRole && role === "owner") ?
+            (<Button
               variant="solid"
               action="secondary"
               onPress={() =>
@@ -115,7 +155,7 @@ export default function Group() {
             <Heading size="lg">Team Challenges</Heading>
             <GroupEvents
               events={
-                group?.events.filter((event) => event.type == "collaboration")!
+                currentEvents?.filter((event) => event.type == "collaboration")!
               }
               type="team challenges"
             />
@@ -124,7 +164,7 @@ export default function Group() {
             <Heading size="lg">Points Races</Heading>
             <GroupEvents
               events={
-                group?.events.filter((event) => event.type == "competition")!
+                currentEvents?.filter((event) => event.type == "competition")!
               }
               type="points races"
             />
@@ -134,7 +174,7 @@ export default function Group() {
             <Heading size="lg">Endurance Challenges</Heading>
             <GroupEvents
               events={
-                group?.events.filter((event) => event.type == "total-time")!
+                currentEvents?.filter((event) => event.type == "total-time")!
               }
               type="endurance challenges"
             />
@@ -143,7 +183,7 @@ export default function Group() {
             <Heading size="lg">Single Session Showdowns</Heading>
             <GroupEvents
               events={
-                group?.events.filter((event) => event.type == "single-workout")!
+                currentEvents?.filter((event) => event.type == "single-workout")!
               }
               type="single session showdowns"
             />

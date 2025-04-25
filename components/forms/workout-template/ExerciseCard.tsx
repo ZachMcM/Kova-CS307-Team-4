@@ -4,7 +4,7 @@ import { Box } from "@/components/ui/box";
 import { Card } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { AlertCircleIcon, CloseIcon, Icon, InfoIcon } from "@/components/ui/icon";
+import { CloseIcon, Icon, InfoIcon } from "@/components/ui/icon";
 import {
   Modal,
   ModalBackdrop,
@@ -23,17 +23,21 @@ import {
   isExerciseFavorited,
   removeFavorite,
 } from "@/services/exerciseServices";
+import { getAreasFromTags, getColors } from "@/services/intensityServices";
 import { showErrorToast } from "@/services/toastServices";
 import { Tables } from "@/types/database.types";
 import { ExtendedExercise } from "@/types/extended-types";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import Body from "react-native-body-highlighter";
 
 export default function ExerciseCard({
   exercise,
+  displayDetails = true,
 }: {
   exercise: ExtendedExercise;
+  displayDetails?: boolean;
 }) {
   const { session } = useSession();
   const { data: favorited, isPending: isFavoritedPending } = useQuery({
@@ -55,48 +59,66 @@ export default function ExerciseCard({
         <HStack className="items-center justify-between">
           <Heading size="md">{exercise.name}</Heading>
           <HStack space="md" className="justify-center">
-            {isFavoritedPending ? (
+            {isFavoritedPending && displayDetails ? (
               <Spinner />
-            ) : (
+            ) : displayDetails && (
               favorited != undefined && (
                 <Favorite exercise={exercise} initFavorited={favorited} />
               )
             )}
-            <Pressable onPress={() => setDetailsModal(true)}>
-              <Icon as={InfoIcon} size="xl" />
-            </Pressable>
+            {displayDetails && (
+              <Pressable onPress={() => setDetailsModal(true)}>
+                <Icon as={InfoIcon} size="xl" />
+              </Pressable>
+            )}
           </HStack>
         </HStack>
         <Box className="flex flex-row flex-wrap gap-2">
-          {exercise.tags.map((tag: Tables<"tag">) => (
+          {exercise.tags && exercise.tags.map((tag: Tables<"tag">) => (
             <Tag key={tag.id} tag={tag} />
           ))}
         </Box>
       </VStack>
-      <Modal
-        isOpen={detailsModal}
-        onClose={() => setDetailsModal(false)}
-        size="md"
-        closeOnOverlayClick
-      >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Heading size="lg">Details</Heading>
-            <ModalCloseButton>
-              <Icon
-                as={CloseIcon}
-                className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
-              />
-            </ModalCloseButton>
-          </ModalHeader>
-          <ModalBody>
-            <Text size="md" className="text-typography-700">
-              {exercise.details}
-            </Text>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+      {displayDetails && (
+        <Modal
+          isOpen={detailsModal}
+          onClose={() => setDetailsModal(false)}
+          size="md"
+          closeOnOverlayClick
+        >
+          <ModalBackdrop />
+          <ModalContent>
+            <ModalHeader>
+              <Heading size="lg">Details</Heading>
+              <ModalCloseButton>
+                <Icon
+                  as={CloseIcon}
+                  className="stroke-background-400 group-[:hover]/modal-close-button:stroke-background-700 group-[:active]/modal-close-button:stroke-background-900 group-[:focus-visible]/modal-close-button:stroke-background-900"
+                />
+              </ModalCloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <Text size="md" className="text-typography-700">
+                {exercise.details}
+              </Text>
+              <HStack className="flex items-center justify-between">
+                <Body
+                  colors={getColors()}
+                  data={getAreasFromTags(exercise.tags.map((tag) => tag.name!))}
+                  side="front"
+                  scale={0.7}>
+                </Body>
+                <Body
+                  colors={getColors()}
+                  data={getAreasFromTags(exercise.tags.map((tag) => tag.name!))}
+                  side="back"
+                  scale={0.7}>
+                </Body>
+              </HStack>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      )}
     </Card>
   );
 }

@@ -2,7 +2,6 @@ import { useSession } from '@/components/SessionContext';
 import { supabase } from '@/lib/supabase';
 import { Redirect } from "expo-router";
 import { useEffect, useState } from 'react';
-import { boolean } from 'zod';
 import { Text } from "@/components/ui/text";
 
 
@@ -18,7 +17,6 @@ export default function IndexScreen() {
       .select("show_tutorial")
       .eq('userId', session.user.id)
       .then(({data: tutorialData}) => {
-        console.log(JSON.stringify(tutorialData));
         if (tutorialData) setShowTutorial(tutorialData[0].show_tutorial);
       });
     } else {

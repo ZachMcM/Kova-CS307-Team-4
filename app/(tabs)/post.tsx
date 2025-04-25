@@ -53,6 +53,7 @@ import {
 const defaultWorkoutData = {
   duration: "0 minutes",
   calories: "0 kcal",
+  pauseTime: "0:00",
   exercises: [],
 };
 
@@ -89,6 +90,26 @@ export default function PostScreen() {
     enabled: !!userId,
   });
 
+  const formatTime = (totalSeconds: number) => {
+    if (!totalSeconds && totalSeconds !== 0) return '';
+    
+    const limitedSeconds = totalSeconds;
+    
+    const hours = Math.floor(limitedSeconds / 3600);
+    const minutes = Math.floor((limitedSeconds % 3600) / 60);
+    const seconds = limitedSeconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    if (minutes > 0) {
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    return `${seconds}`;
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -106,6 +127,7 @@ export default function PostScreen() {
       (params.params && JSON.parse(params.params as string).workoutData);
 
     if (workoutDataParam) {
+      console.log("Workout data param:", workoutDataParam);
       try {
         const parsedData = JSON.parse(workoutDataParam as string);
         // Check for template ID
@@ -113,6 +135,7 @@ export default function PostScreen() {
         const processedWorkoutData = {
           duration: parsedData.duration || "0 minutes",
           calories: "0 kcal",
+          pauseTime: parsedData.pauseTime,
           exercises: [],
           templateId: parsedData.templateId || null, // Store template ID if present
         };
@@ -128,22 +151,66 @@ export default function PostScreen() {
         if (parsedData.exercises && Array.isArray(parsedData.exercises)) {
           processedWorkoutData.exercises = parsedData.exercises.map(
             (exercise: any) => {
-              let totalReps = 0;
-              let lastWeight = 0;
+              if (exercise.info.type === "WEIGHTS") {
+                let totalReps = 0;
+                let lastWeight = 0;
 
-              if (Array.isArray(exercise.sets)) {
-                totalReps = exercise.sets.reduce((acc: number, set: any) => {
-                  if (set.weight) lastWeight = set.weight;
-                  return acc + (set.reps || 0);
-                }, 0);
+                if (Array.isArray(exercise.sets)) {
+                  totalReps = exercise.sets.reduce((acc: number, set: any) => {
+                    if (set.weight) lastWeight = set.weight;
+                    return acc + (set.reps || 0);
+                  }, 0);
+                }
+
+                return {
+                  name: exercise.info?.name || "Unknown Exercise",
+                  sets: Array.isArray(exercise.sets) ? exercise.sets.length : 0,
+                  reps: totalReps,
+                  weight: `${lastWeight} lbs`,
+                };
               }
+              else {
+                let totalTime = 0;
+                let totalDistance = 0;
+                let totalCooldown = 0;
 
-              return {
-                name: exercise.info?.name || "Unknown Exercise",
-                sets: Array.isArray(exercise.sets) ? exercise.sets.length : 0,
-                reps: totalReps,
-                weight: `${lastWeight} lbs`,
-              };
+                if (Array.isArray(exercise.sets)) {
+                  totalTime = exercise.sets.reduce((acc: number, set: any) => {
+                    if (!set.cooldown) {
+                      return acc + (set.time || 0);
+                    }
+                    else {
+                      return acc;
+                    }
+                  }, 0);
+                  totalDistance = exercise.sets.reduce((acc: number, set: any) => {
+                    if (!set.cooldown) {
+                      return acc + (set.distance || 0);
+                    }
+                    else {
+                      return acc;
+                    }
+                  }, 0);
+                  totalCooldown = exercise.sets.reduce((acc: number, set: any) => {
+                    if (set.cooldown) {
+                      return acc + (set.time || 0);
+                    }
+                    else {
+                      return acc;
+                    }
+                  }, 0);
+                }
+
+                const totalSets = exercise.sets.filter((set: any) => !set.cooldown).length;
+
+                return {
+                  name: exercise.info?.name || "Unknown Exercise",
+                  sets: totalSets,
+                  cooldowns: `${formatTime(totalCooldown)}`,
+                  time: `${formatTime(totalTime)}`,
+                  distance: `${totalDistance} mi`,
+                };
+              }
             }
           );
         }

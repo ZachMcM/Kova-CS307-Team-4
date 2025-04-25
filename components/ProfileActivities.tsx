@@ -1,29 +1,24 @@
-import Container from "@/components/Container";
 import { useSession } from "@/components/SessionContext";
-import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "./ui/hstack";
 import { WorkoutPost } from "@/components/WorkoutPost";
-import { supabase } from "@/lib/supabase";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Dimensions, TouchableOpacity, View } from "react-native";
-import { getFollowing, getFriends } from "@/services/profileServices";
+import React, {useEffect, useState } from "react";
+import {Dimensions, TouchableOpacity, View } from "react-native";
 import { Heading } from "./ui/heading";
 import { Card } from "./ui/card";
 import { formatDate, formatDuration, formatTime, Post } from "@/app/(tabs)/feed";
-import { DetailedWorkoutData, SummaryWorkoutData, WorkoutHeader } from "./WorkoutData";
+import { SummaryWorkoutData, WorkoutHeader } from "./WorkoutData";
 import { useNavigation } from "@react-navigation/native";
 import { WorkoutData } from "@/types/workout-types";
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from "@/components/ui/radio";
-import { Icon, TrashIcon, EditIcon, AddIcon, ChevronLeftIcon, DownloadIcon, CloseIcon, InfoIcon, BellIcon, CheckIcon } from "@/components/ui/icon";
+import { Icon, ChevronLeftIcon, CloseIcon, InfoIcon, BellIcon, CheckIcon } from "@/components/ui/icon";
 import { Box } from "./ui/box";
-import { Accordion, AccordionContent, AccordionContentText, AccordionHeader, AccordionTitleText } from "./ui/accordion";
 import { getTagsAndDetails } from "@/services/exerciseServices";
 import { TagString } from "./Tag";
 import {
@@ -39,11 +34,14 @@ import { Pressable } from "./ui/pressable";
 import { Switch } from "./ui/switch";
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getColors, getIntensities, getAreasFromTags } from "@/services/intensityServices";
+import Body, { BodyPart, ExtendedBodyPart } from "react-native-body-highlighter";
 
 type ProfileActivitiesProps = {
     posts: Post[];
     isLoading: boolean;
     updatePostFunc: (postId: string, title: string, description: string) => Promise<any[]>;
+    userId: string;
 }
 
 export type PopularExercise = {
@@ -55,10 +53,11 @@ export type PopularExercise = {
     tags: string[];
 }
 
-export const ProfileActivities = ({
+export const ProfileActivities = React.memo(({
     posts,
     isLoading,
     updatePostFunc,
+    userId
 }: ProfileActivitiesProps) => {
 
     const { session } = useSession();
@@ -121,27 +120,77 @@ export const ProfileActivities = ({
       workoutsWeek: [] as Post[],
     })
 
-    // Load notification preferences from storage
-    useEffect(() => {
-      const loadNotificationPreferences = async () => {
-        try {
-          const storedEnabled = await AsyncStorage.getItem('notificationsEnabled');
-          const storedFrequency = await AsyncStorage.getItem('notificationFrequency');
-          
-          if (storedEnabled !== null) {
-            setNotificationsEnabled(storedEnabled === 'true');
+    const [muscleGroups, setMuscleGroups] = useState({
+      muscleGroupsAll: [] as ExtendedBodyPart[],
+      muscleGroupsYear: [] as ExtendedBodyPart[],
+      muscleGroupsMonth: [] as ExtendedBodyPart[],
+      muscleGroupsWeek: [] as ExtendedBodyPart[],
+    })
+
+    const getExercises = function (workoutPosts: Post[]) : {name: string, sets: number}[] {
+      const exerciseNames = [] as {name: string, sets: number}[]
+      for (let i = 0; i < workoutPosts.length; i++) {
+        const p = workoutPosts[i]
+        if (p.workoutData) {
+          for (let j = 0; j < p.workoutData.exercises.length; j++) {
+            exerciseNames.push({
+              name: p.workoutData.exercises[j].name,
+              sets: p.workoutData.exercises[j].sets!
+            })
           }
-          
-          if (storedFrequency !== null) {
-            setNotificationFrequency(storedFrequency);
-          }
-        } catch (error) {
-          console.error('Error loading notification preferences:', error);
         }
-      };
+      }
+      console.log("Exercise names " + JSON.stringify(exerciseNames))
+      return exerciseNames
+    }
+
+    useQuery({
+      queryKey: ["gettingMuscleGroupsProfile", userId],
+      queryFn: async () => {
+        console.log("Conducting query")
+        // console.log("Got items " + workoutData + JSON.stringify(workoutData.workouts))
+        if (workoutData != null && workoutData.workouts.length != 0) {
+          console.log("EEEE")
+          const muscleGroupsAll = await getIntensities(getExercises(workoutData.workouts), 0)
+          const muscleGroupsWeek = await getIntensities(getExercises(workoutData.workoutsWeek), 0)
+          const muscleGroupsMonth = await getIntensities(getExercises(workoutData.workoutsMonth), 0)
+          const muscleGroupsYear = await getIntensities(getExercises(workoutData.workoutsYear), 0)
+          console.log("Fin")
+          setMuscleGroups({ 
+            muscleGroupsAll: muscleGroupsAll,
+            muscleGroupsWeek: muscleGroupsWeek,
+            muscleGroupsMonth: muscleGroupsMonth,
+            muscleGroupsYear: muscleGroupsYear
+          })
+        }
+        console.log("If failed")
+        return "Complete"
+      },
+      enabled: workoutData.workouts.length != 0
+    })
+
+
+    // Load notification preferences from storage
+    // useEffect(() => {
+    //   const loadNotificationPreferences = async () => {
+    //     try {
+    //       const storedEnabled = await AsyncStorage.getItem('notificationsEnabled');
+    //       const storedFrequency = await AsyncStorage.getItem('notificationFrequency');
+          
+    //       if (storedEnabled !== null) {
+    //         setNotificationsEnabled(storedEnabled === 'true');
+    //       }
+          
+    //       if (storedFrequency !== null) {
+    //         setNotificationFrequency(storedFrequency);
+    //       }
+    //     } catch (error) {
+    //       console.error('Error loading notification preferences:', error);
+    //     }
+    //   };
       
-      loadNotificationPreferences();
-    }, []);
+    //   loadNotificationPreferences();
+    // }, []);
 
     // Save notification preferences
     const saveNotificationPreferences = async () => {
@@ -444,7 +493,6 @@ export const ProfileActivities = ({
       setPopularExercises(popularData);
       mutate(popularData);
     }
-
     // Prepare chart data
     const prepareWorkoutCountChart = () => {
       let labels: string[];
@@ -553,6 +601,18 @@ export const ProfileActivities = ({
       };
     };
 
+    const getMuscleGroup = () => {
+      switch (timePeriod) {
+        case 'week':
+          return muscleGroups.muscleGroupsWeek
+        case 'month':
+          return muscleGroups.muscleGroupsMonth
+        case 'year':
+          return muscleGroups.muscleGroupsYear
+        default:
+          return muscleGroups.muscleGroupsAll
+      }
+    }
     const prepareWorkoutMinuteChart = () => {
       let labels: string[];
       let data: number[] = [];
@@ -735,7 +795,7 @@ export const ProfileActivities = ({
     useEffect(() => {
       calculateStats();
     }, [workouts])
-
+    
     return (
         <View className="mb-10">
             <VStack space="2xl">
@@ -1022,6 +1082,24 @@ export const ProfileActivities = ({
                     }}
                   />
                   )}
+                  <Heading className="mb-5" size="xl">Muscles Exercised</Heading>
+                  { 
+                    <HStack className="flex items-center justify-between">
+                      <Body
+                        colors={getColors()}
+                        data={getMuscleGroup()}
+                        side="front"
+                        scale={0.8}>
+                      </Body>
+                      <Body
+                        colors={getColors()}
+                        data={getMuscleGroup()}
+                        side="back"
+                        scale={0.8}>
+                      </Body>
+                    </HStack>
+                  }
+
                   <Card variant="outline">
                     <Heading className="mb-5" size="xl">Most Popular Exercises ⭐</Heading>
                     {popularExercises.length === 0 && (
@@ -1036,7 +1114,9 @@ export const ProfileActivities = ({
                             <Icon as={InfoIcon} size="xl" />
                           </Pressable>
                         </HStack>
-                        <Heading size="md">Personal Best: {favorite.weight} {favorite.unit}</Heading>
+                        {favorite.weight > 0 && (  
+                          <Heading size="md">Personal Best: {favorite.weight} {favorite.unit}</Heading>
+                        )}
                         <Text size="md">You have done {favorite.count} sets of this exercise!</Text>
                         <Box className="flex flex-row flex-wrap gap-2">
                           {favorite.tags && favorite.tags.map((tag) => (
@@ -1064,6 +1144,22 @@ export const ProfileActivities = ({
                             <Text size="md" className="text-typography-700">
                               {favorite.details}
                             </Text>
+                            {favorite.tags && (
+                            <HStack className="flex items-center justify-between">
+                            <Body
+                              colors={getColors()}
+                              data={getAreasFromTags(favorite.tags)}
+                              side="front"
+                              scale={0.7}>
+                            </Body>
+                            <Body
+                              colors={getColors()}
+                              data={getAreasFromTags(favorite.tags)}
+                              side="back"
+                              scale={0.7}>
+                            </Body>
+                           </HStack>
+                          )}
                           </ModalBody>
                         </ModalContent>
                       </Modal>
@@ -1132,7 +1228,7 @@ export const ProfileActivities = ({
 
                     {visiblePosts && visiblePosts.map((post) => (
                         <WorkoutPost
-                            id={post.profile?.userId || ""}
+                            id={userId || ""}
                             key={post.id}
                             postId={post.id}
                             username={post.profile?.username || "Unknown user"}
@@ -1155,6 +1251,7 @@ export const ProfileActivities = ({
                             }
                             workoutDuration={post.workoutData?.duration || undefined}
                             workoutCalories={post.workoutData?.calories || undefined}
+                            pauseTime={post.workoutData?.pauseTime || undefined}
                             userId={session?.user.id!}
                             comments={post.comments}
                             imageUrls={post.images || undefined}
@@ -1175,4 +1272,4 @@ export const ProfileActivities = ({
             </VStack>
         </View>
     );
-}
+})

@@ -5,18 +5,15 @@ import { HStack } from "@/components/ui/hstack";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/toast";
 import { getExercises } from "@/services/exerciseServices";
+import { getColors, getIntensities } from "@/services/intensityServices";
 import { newTemplate, updateTemplate } from "@/services/templateServices";
 import { showErrorToast } from "@/services/toastServices";
-import {
-  createTagCounter,
-  createWordCounter,
-  exercisesToSearch
-} from "@/types/searcher-types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, FieldValues, useFieldArray } from "react-hook-form";
-import { Pressable, ScrollView} from "react-native";
+import { Pressable } from "react-native";
+import Body from "react-native-body-highlighter";
 import {
   FormControl,
   FormControlError,
@@ -30,7 +27,6 @@ import { VStack } from "../../ui/vstack";
 import ExerciseCard from "./ExerciseCard";
 import ExerciseDataForm from "./ExerciseDataForm";
 import { TemplateFormValues, useTemplateForm } from "./TemplateFormContext";
-import { Box } from "@/components/ui/box";
 
 export default function TemplateForm() {
   // TODO remove and replace with actual searching and exercise search component
@@ -59,6 +55,7 @@ export default function TemplateForm() {
 
   const { mutate: saveTemplate, isPending } = useMutation({
     mutationFn: async (values: TemplateFormValues) => {
+      console.log("Saving template", values);
       if (values.id) {
         await updateTemplate(values, session?.user.user_metadata.profileId);
       } else {
@@ -88,24 +85,66 @@ export default function TemplateForm() {
     name: "data",
   });
 
+  // const { data: muscleGroups, isPending: loadingMuscleGroups } = useQuery({
+  //   queryKey: ["muscleGroup"],
+  //   queryFn: async () => {
+  //     const muscleGroups = await getIntensities(
+  //       exercises.map((exercise) => {
+  //         return {
+  //           name: exercise.info.name,
+  //           sets: exercise.sets.length,
+  //         };
+  //       }),
+  //       4
+  //     );
+  //     return muscleGroups;
+  //   },
+  // });
+
   async function onSubmit(values: FieldValues) {
     saveTemplate(values as TemplateFormValues);
   }
 
-  let searchItems = undefined;
-  let wordCounter = undefined;
-  let tagCounter = undefined;
-  let searchIdToIndex = undefined;
+  const handleExerciseSubmit = async (exercise: any) => {
+    setExerciseQuery("");
 
-  if (!exercisesLoading) {
-    searchItems = exercisesToSearch(allExercises!);
-    wordCounter = createWordCounter(searchItems);
-    tagCounter = createTagCounter(searchItems);
-    searchIdToIndex = new Map<string, number>();
-    for (let i = 0; i < searchItems.length; i++) {
-      searchIdToIndex.set(searchItems[i].id, i);
+    console.log(exercise);
+
+    if (exercise.type === "WEIGHTS") {
+      console.log("Weights exercise");
+      addExercise({
+        info: {
+          name: exercise.name!,
+          id: exercise.id,
+          type: exercise.type,
+        },
+        sets: [
+          {
+            reps: 0,
+            weight: 0,
+            cooldown: false,
+          },
+        ],
+      });
+    } else {
+      console.log("Cardio exercise");
+      addExercise({
+        info: {
+          name: exercise.name!,
+          id: exercise.id,
+          type: exercise.type,
+        },
+        sets: [
+          {
+            distance: 0,
+            time: 0,
+            cooldown: false,
+          },
+        ],
+      });
     }
-  }
+    // queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
+  };
 
   return !exercisesLoading ? (
     allExercises && (
@@ -165,19 +204,7 @@ export default function TemplateForm() {
               <Pressable
                 key={exercise.id}
                 onPress={() => {
-                  setExerciseQuery("");
-                  addExercise({
-                    info: {
-                      name: exercise.name!,
-                      id: exercise.id,
-                    },
-                    sets: [
-                      {
-                        reps: 0,
-                        weight: 0,
-                      },
-                    ],
-                  });
+                  handleExerciseSubmit(exercise);
                 }}
                 className="flex flex-1"
               >
@@ -192,14 +219,44 @@ export default function TemplateForm() {
                 <Heading className="text-kova-500">
                   {exercise.info.name}
                 </Heading>
-                <Pressable onPress={() => removeExercise(i)}>
+                <Pressable
+                  onPress={() => {
+                    removeExercise(i);
+                    // queryClient.invalidateQueries({queryKey: ["muscleGroup"],})
+                  }}
+                >
                   <Icon as={TrashIcon} size="xl" color="red" />
                 </Pressable>
               </HStack>
-              <ExerciseDataForm key={exercise.info.id} index={i} />
+              <ExerciseDataForm
+                key={exercise.info.id}
+                index={i}
+                type={exercise.info.type!}
+              />
             </VStack>
           ))}
         </VStack>
+        {/* <VStack space="4xl">
+          <Heading>Muscle Groups Exercised:</Heading>
+          {!loadingMuscleGroups && muscleGroups ? (
+            <HStack className="flex items-center justify-between">
+              <Body
+                colors={getColors()}
+                data={muscleGroups}
+                side="front"
+                scale={0.9}
+              ></Body>
+              <Body
+                colors={getColors()}
+                data={muscleGroups}
+                side="back"
+                scale={0.9}
+              ></Body>
+            </HStack>
+          ) : (
+            <Spinner />
+          )}
+        </VStack> */}
         <Button size="xl" action="kova" onPress={handleSubmit(onSubmit)}>
           <ButtonText>Save Template</ButtonText>
           {isPending && <ButtonSpinner color="#FFF" />}

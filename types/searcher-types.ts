@@ -1,10 +1,7 @@
 // Contains search item types, as well as some helper methods for sorting.
 
-import ExerciseDataForm from "@/components/forms/workout-template/ExerciseDataForm";
 import { Tables } from "./database.types";
 import { ExtendedExercise, ExtendedTemplateWithCreator } from "./extended-types";
-import { PublicProfile } from "./profile-types";
-import { Workout } from "./workout-types";
 
 /** A simple search item with an id and a name.
  * * name -- the name of item.

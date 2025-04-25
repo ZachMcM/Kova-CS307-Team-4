@@ -6,20 +6,17 @@ import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import {
   Icon,
   ChevronLeftIcon,
-  HelpCircleIcon,
   AddIcon,
-  CloseIcon,
   CircleIcon,
 } from "@/components/ui/icon";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { useSession } from "@/components/SessionContext";
 import { feedStyles } from "../feed";
 import { useNavigation } from "@react-navigation/native";
 import Container from "@/components/Container";
-import { Card } from "@/components/ui/card";
 import {
   AttachStep,
   SpotlightTourProvider,
@@ -28,18 +25,12 @@ import {
   offset,
   shift,
 } from "react-native-spotlight-tour";
-import { TaggedFriend } from "@/components/WorkoutPost";
-import { TutorialWorkoutPost } from "@/components/tutorial/TutorialWorkoutPost";
-import { Profile } from "@/types/profile-types";
 import { Modal, ModalBackdrop, ModalContent, ModalHeader, ModalBody } from "@/components/ui/modal";
 import { Heading } from "@/components/ui/heading";
 import { postStyles, SummaryWorkoutData } from "@/components/WorkoutData";
 import { Input, InputField } from "@/components/ui/input";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallbackText, AvatarImage } from "@/components/ui/avatar";
-import { Ionicons } from "@expo/vector-icons";
-import { Image } from "@/components/ui/image";
 import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from "@/components/ui/radio";
 
 

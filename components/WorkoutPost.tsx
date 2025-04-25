@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Animated,
   Modal,
@@ -26,13 +26,15 @@ import { HStack } from "./ui/hstack";
 import { Spinner } from "./ui/spinner";
 import { Image } from "./ui/image";
 import { ScrollView } from "./ui/scroll-view";
-import { supabase } from "@/lib/supabase";
 
 export type Exercise = {
   name: string;
   reps?: number;
   sets?: number;
+  distance?: string;
+  time?: string;
   weight?: string;
+  cooldowns?: string;
 };
 
 export type TaggedFriend = {
@@ -54,6 +56,7 @@ type WorkoutPostProps = {
   comments: number;
   imageUrls?: string[];
   workoutDuration?: string;
+  pauseTime?: string;
   workoutCalories?: string;
   isOwnPost?: boolean;
   postId?: string;
@@ -79,6 +82,7 @@ export const WorkoutPost = ({
   comments,
   imageUrls,
   workoutDuration,
+  pauseTime,
   workoutCalories,
   isOwnPost = false,
   postId,
@@ -153,6 +157,7 @@ export const WorkoutPost = ({
       queryClient.invalidateQueries({ queryKey: ["likeRel", { id: postId }] });
     },
   });
+
 
   const handleSaveEdit = async () => {
     if (!postId || !onUpdatePost) return;
@@ -310,6 +315,11 @@ export const WorkoutPost = ({
                         />
                       </View>
                       <Text style={workoutPostStyles.summaryText}>{workoutDuration}</Text>
+                    </View>
+                  )}
+                  {pauseTime && (
+                    <View style={workoutPostStyles.summaryItem}>
+                      <Text style={workoutPostStyles.summaryText}>{pauseTime}</Text>
                     </View>
                   )}
                   {workoutCalories && (

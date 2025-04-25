@@ -3,24 +3,19 @@ import { useSession } from "@/components/SessionContext";
 import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
-import { VStack } from "@/components/ui/vstack";
 import { WorkoutPost } from "@/components/WorkoutPost";
 import { supabase } from "@/lib/supabase";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { getFollowing, getFriends } from "@/services/profileServices";
+import { getExercises } from "@/services/exerciseServices";
+import { asyncExercises } from "@/services/asyncStorageServices";
 import { HStack } from "@/components/ui/hstack";
 import {
   Icon,
-  MenuIcon,
-  TrashIcon,
-  CheckCircleIcon,
-  CircleIcon,
-  AlertCircleIcon,
-  EditIcon,
   HelpCircleIcon
 } from "@/components/ui/icon";
 
@@ -36,6 +31,7 @@ export type Post = {
   workoutData: {
     calories?: string;
     duration?: string;
+    pauseTime?: string;
     exercises: Array<
         {
           name: string;
@@ -283,6 +279,14 @@ export default function FeedScreen() {
     return post.profile?.userId === userId;
   };
 
+  const asyncStoreExercises = async () => {
+    await getExercises().then((exercises) => {
+      asyncExercises(exercises);
+    });
+  }
+
+  asyncStoreExercises();
+
   return (
     <ScrollView
       style={feedStyles.scrollView}
@@ -345,6 +349,7 @@ export default function FeedScreen() {
               : []
             }
             workoutDuration={post.workoutData?.duration || undefined}
+            pauseTime={post.workoutData?.pauseTime || "0:00"}
             workoutCalories={post.workoutData?.calories || undefined}
             userId={userId!}
             comments={post.comments}

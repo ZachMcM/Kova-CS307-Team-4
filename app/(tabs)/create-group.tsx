@@ -7,13 +7,12 @@ import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { showErrorToast, showSuccessToast } from "@/services/toastServices";
-import { Redirect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Icon, ChevronLeftIcon } from '@/components/ui/icon';
 import { HStack } from "@/components/ui/hstack";
 import { useSession } from "@/components/SessionContext";
 import { createGroup, isTitleUnique } from "@/services/groupServices"
-import { boolean } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function CreateGroup() {
@@ -111,7 +110,7 @@ export default function CreateGroup() {
                     queryClient.invalidateQueries({queryKey: ["groupRel"],})
                     queryClient.invalidateQueries({queryKey: ["group profile"]})
                     queryClient.invalidateQueries({queryKey: ["groupRel profile"]})
-                    showSuccessToast(toast, "Welcome to Kova!")
+                    showSuccessToast(toast, "Successfully created group!")
                 }).catch(error => {
                     console.log(error);
                     showErrorToast(toast, error.message);

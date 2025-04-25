@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { deleteAllUserFavorites } from "@/services/exerciseServices";
 import { leaveAllUserGroups } from "@/services/groupServices";
 import { deleteAllUserLikes } from "@/services/likeServices";
+import { updateProfile } from "@/services/profileServices";
 import { AuthAccountResponse } from "@/types/extended-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
@@ -76,7 +77,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
     
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("session ", session);
       setSession(session);
     });
 
@@ -84,6 +84,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setSession(session);
     });
   }, []);
+
+  //Function for randomly generating extremely passwords for deleted accounts so they cannot be re-logged into
+  //The invalid email should make it impossible, but this is another level of safety added to that
+  const random_string = () => {
+    let chars = [], output = "jav123ASc8;;";
+    for (let i = 35; i < 127; i++) {
+        if (i != 92) {
+          chars.push(String.fromCharCode(i));
+        } else {
+          chars.push(String.fromCharCode(91));
+        }
+    }
+    for (let i = 0; i < 28; i++) {
+        output += chars[Math.floor(Math.random() * chars.length )];
+    }
+    return output;
+  }
 
   // put all other sign in related functions in here
 
@@ -353,45 +370,84 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
 
       //Making sure the user isn't the sole owner of any group
-      //TODO (rpc)
+      const { data: groupData, error: groupError } = await supabase.rpc('delete_profile_groups', {
+        profile_id: profileId
+      });
+      if (groupError || !groupData) {
+        console.log("group error: ", groupError);
+        throw new Error("You must have at least one other member as an owner in all \nmulti-user groups you own before you can delete your account");
+      }
+      if (groupData !== true) {
+        console.log("Need to promote in groups");
+        throw new Error("You must have at least one other member as an owner in all multi-user groups you own before you can delete your account");
+      }
 
       try {
-      //Deleting any groups the user is the owner and only member of
-      //TODO (rpc)
+        //Note, once at this point, no errors are thrown, they are just logged to prevent Data Corruption in case of errors
+        //Deleting user's favorite exerices
+        await deleteAllUserFavorites(profileId);
 
-      //Deleting user's favorite exerices
-      await deleteAllUserFavorites(profileId);
+        //Deleting user's likes
+        await deleteAllUserLikes(userId);
 
-      //Deleting user's likes
-      await deleteAllUserLikes(userId);
+        //Deleting user's following and friend relations 
+        const { data: followData, error: followError } = await supabase.rpc('unfollow_all', {
+          user_id: userId
+        });
+        if (followError || !followData) {
+          console.log("follow error: ", followError);
+        }
 
-      //Deleting user's following and friend relations 
-      //TODO (rpc)
+        //Deleting all of user's group relations 
+        await leaveAllUserGroups(profileId);
 
-      //Deleting all of user's group relations 
-      await leaveAllUserGroups(profileId);
+        //Deleting posts, and all associated likes and comments
+        const { data: postData, error: postError } = await supabase.rpc('delete_posts', {
+          profile_id: profileId
+        });
+        if (postError || !postData) {
+          console.log("post error: ", postError);
+        }
 
-      //Deleting posts, and all associated likes and comments
-      //TODO (rpc)
+        //Setting user profile fields to deleted profile fields
+        await updateProfile(profileId, "", "", "", "", "PRIVATE", "Deleted User", 0, "", 0, 
+        {"age": "PRIVATE", "bio": "PRIVATE", "goal": "PRIVATE", "posts": "PRIVATE", "gender": "PRIVATE", "weight": "PRIVATE", "location": "PRIVATE", "achievement": "PRIVATE", "friends_following": "PRIVATE"});
+        const {error: usernameError} = await supabase
+          .from('profile')
+          .update({username: "deleteduser"})
+          .eq('userId', userId);
+        if (usernameError) {
+          console.log("username error: ", usernameError);
+        }
 
-      //Setting user profile fields to deleted profile fields
-      //TODO (rpc)
+        //If everything else has succeeded, set deleted profile fields in the auth table
+        const { error: passwordUpdateError } = await supabase.auth.updateUser({
+         password: random_string(),
+         }
+       )
+        if (passwordUpdateError) {
+         console.log("password update error: ", passwordUpdateError);
+        }
+        //Email update is done with an edge function, code for it is on supabase API
+        let randNum = Math.floor(Math.random() * (999_999_999 + 1)).toString();
+        let newEmail = `deleted${randNum}@deleted.com`;
+        const { error: emailUpdateError } = await supabase.functions.invoke('swift-api', {
+          body: {userId, newEmail: newEmail}
+        })
+        if (emailUpdateError) {
+          console.log("email update error: ", emailUpdateError);
+        }
 
-      //If everything else has succeeded, set deleted profile fields in the auth table
-      //TODO (rpc)
+        AsyncStorage.clear();
+        setSession(null);
+        setShowTutorial(false);
+        setSessionLoading(false);
+        setOTPSignIn(false); 
+
       } catch (error) {
         console.log("Delete account error: ", error);
         throw new Error("Error in deleting user account. Try again later.")
       }
-
-
-      //TODO check if these are the correct steps
-      //signOutUser();
-      //console.log("Delete account to be implemented");
-      //AsyncStorage.clear();
-      //setSession(null);
-      //setSessionLoading(false);
-      //setOTPSignIn(false);
   }
 
   const updateShowTutorial = async (updateTutorial: boolean) => {

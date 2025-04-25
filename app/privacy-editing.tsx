@@ -30,6 +30,7 @@ export default function PrivacyEditingScreen() {
     const [achievementPrivacy, setAchievementPrivacy] = useState("");
     const [genderPrivacy, setGenderPrivacy] = useState("");
     const [postsPrivacy, setPostsPrivacy] = useState("");
+    const [personalGoalsPrivacy, setPersonalGoalsPrivacy] = useState("");
     const [preset, setPreset] = useState("");
 
     async function get_privacy_data(id: string) {
@@ -47,6 +48,7 @@ export default function PrivacyEditingScreen() {
         setAchievementPrivacy(privacy["achievement"]);
         setGenderPrivacy(privacy["gender"]);
         setPostsPrivacy(privacy["posts"]);
+        setPersonalGoalsPrivacy(privacy["personal_goals"]);
         setLoading(false);
         return privacy
     }
@@ -72,6 +74,7 @@ export default function PrivacyEditingScreen() {
         setAchievementPrivacy(privacyPreset);
         setGenderPrivacy(privacyPreset);
         setPostsPrivacy(privacyPreset);
+        setPersonalGoalsPrivacy(privacyPreset);
     }
 
 
@@ -240,6 +243,14 @@ export default function PrivacyEditingScreen() {
             bioPrivacy === "FRIENDS" ? "rounded-full bg-green-600" : "rounded-full bg-orange-400"
           )} onPress={() => {incrementPrivacy(bioPrivacy, setBioPrivacy)}}>
             {getPrivacyIcon(bioPrivacy)}
+          </Button>
+        </HStack>
+        <HStack>
+          <Text size = "xl" className = "mr-4 bg">📝Personal Goals Privacy</Text>
+          <Button size="xs" className={personalGoalsPrivacy === "PUBLIC" ? "rounded-full bg-teal-300" : (
+            personalGoalsPrivacy === "FRIENDS" ? "rounded-full bg-green-600" : "rounded-full bg-orange-400"
+          )} onPress={() => {incrementPrivacy(personalGoalsPrivacy, setPersonalGoalsPrivacy)}}>
+            {getPrivacyIcon(personalGoalsPrivacy)}
           </Button>
         </HStack>
         <Button
