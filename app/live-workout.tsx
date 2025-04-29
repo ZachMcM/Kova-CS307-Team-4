@@ -20,8 +20,6 @@ export default function LiveWorkout() {
     if (!isFocused) {
       return null;
     }
-
-    AsyncStorage.clear()
     
   return (
     <Container>
