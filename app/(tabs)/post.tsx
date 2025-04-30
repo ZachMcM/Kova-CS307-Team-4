@@ -486,7 +486,7 @@ export default function PostScreen() {
               Title
             </Text>
             <Input variant="outline" isInvalid={!!titleError}>
-              <TextInput
+              <InputField
                 placeholder="Enter a title for your post"
                 value={title}
                 onChangeText={handleTitleChange}
@@ -579,7 +579,7 @@ export default function PostScreen() {
             {showFriendSelector && (
               <VStack style={postStyles.friendSelectorContainer} space="sm">
                 <Input variant="outline">
-                  <TextInput
+                  <InputField
                     placeholder="Search friends..."
                     value={friendSearch}
                     onChangeText={setFriendSearch}
@@ -673,7 +673,7 @@ export default function PostScreen() {
               Location
             </Text>
             <Input variant="outline">
-              <TextInput
+              <InputField 
                 placeholder="Add location (optional)"
                 value={location}
                 onChangeText={setLocation}
@@ -686,7 +686,7 @@ export default function PostScreen() {
                 Weigh-in (optional)
               </Text>
               <Input variant="outline" className="w-20">
-                <TextInput
+                <InputField
                   placeholder=""
                   value={weighIn > 0 ? weighIn.toString() : ""}
                   onChangeText={(text) => setWeighIn(Number(text) || -1)}

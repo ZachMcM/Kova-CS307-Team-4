@@ -279,7 +279,7 @@ export default function TutorialGroupScreen() {
             </AttachStep>
               <><Heading>Your Groups</Heading><VStack space="md">
                   <Input>
-                    <TextInput
+                    <InputField
                       placeholder="Search for one of your groups."
                     />
                   </Input>
@@ -317,7 +317,7 @@ export default function TutorialGroupScreen() {
                 </VStack><Heading>All Groups</Heading><VStack space="md">
                   <AttachStep index={3}>
                     <Input>
-                      <TextInput
+                      <InputField
                         placeholder="Search for a group to join."
                       />
                     </Input>

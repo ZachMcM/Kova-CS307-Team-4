@@ -213,7 +213,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
             <VStack space="sm">
               <Heading size="md">Title</Heading>
               <Input>
-                <TextInput
+                <InputField
                   onChangeText={onChange}
                   value={value}
                   placeholder="Enter a title..."
@@ -360,7 +360,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
               </HStack>
               {goalOn && (
                 <Input>
-                  <TextInput
+                  <InputField
                     onChangeText={onChange}
                     value={value?.toString()}
                     keyboardType="numeric"
@@ -442,7 +442,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
                 <VStack space="sm">
                   <Heading size="md">Weight Multiplier</Heading>
                   <Input>
-                    <TextInput
+                    <InputField
                       onChangeText={onChange}
                       value={value?.toString()}
                       keyboardType="numeric"
@@ -465,7 +465,7 @@ export default function EventForm({ groupId }: { groupId: string }) {
                 <VStack space="sm">
                   <Heading size="md">Rep Multiplier</Heading>
                   <Input>
-                    <TextInput
+                    <InputField
                       onChangeText={onChange}
                       value={value?.toString()}
                       keyboardType="numeric"

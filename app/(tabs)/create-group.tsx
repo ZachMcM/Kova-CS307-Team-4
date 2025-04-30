@@ -51,7 +51,7 @@ export default function CreateGroup() {
             Title
           </Text>
           <Input className="ml-3 mr-5">
-            <TextInput
+            <InputField
               value={title}
               onChangeText={setTitle}
               placeholder="Enter Title"
@@ -63,7 +63,7 @@ export default function CreateGroup() {
             Description
           </Text>
           <Input className="ml-3 mr-5">
-            <TextInput
+            <InputField
               value={description}
               onChangeText={setDescription}
               placeholder="Enter Description"
@@ -75,7 +75,7 @@ export default function CreateGroup() {
             Goal
           </Text>
           <Input className="ml-3 mr-5">
-            <TextInput
+            <InputField
               value={goal}
               onChangeText={setGoal}
               placeholder="Enter Goal"

@@ -165,7 +165,7 @@ export default function TemplateForm() {
                 <FormControlLabelText>Name</FormControlLabelText>
               </FormControlLabel>
               <Input>
-                <TextInput
+                <InputField
                   placeholder="Enter a template name"
                   value={field.value}
                   onChangeText={field.onChange}
@@ -181,7 +181,7 @@ export default function TemplateForm() {
           )}
         />
         <Input size="md">
-          <TextInput
+          <InputField
             placeholder="Search exercises"
             onChangeText={setExerciseQuery}
             value={exerciseQuery}

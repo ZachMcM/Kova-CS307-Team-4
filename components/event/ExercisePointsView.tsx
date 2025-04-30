@@ -93,7 +93,7 @@ export default function ExercisePointsView({
         <VStack space="md">
           <HStack className="items-center" space="lg">
             <Input variant="outline" size="md" className="flex-1">
-              <TextInput
+              <InputField
                 placeholder="Search for a specific exercise"
                 value={exerciseQuery}
                 onChangeText={setExerciseQuery}

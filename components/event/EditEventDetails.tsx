@@ -181,7 +181,7 @@ export default function EditEventDetails({
               <VStack space="sm">
                 <Heading size="md">Goal</Heading>
                 <Input>
-                  <TextInput
+                  <InputField
                     onChangeText={onChange}
                     value={value?.toString()}
                     keyboardType="numeric"
@@ -207,7 +207,7 @@ export default function EditEventDetails({
                 <VStack space="sm">
                   <Heading size="md">Weight Multiplier</Heading>
                   <Input>
-                    <TextInput
+                    <InputField
                       onChangeText={onChange}
                       value={value?.toString()}
                       keyboardType="numeric"
@@ -230,7 +230,7 @@ export default function EditEventDetails({
                 <VStack space="sm">
                   <Heading size="md">Rep Multiplier</Heading>
                   <Input>
-                    <TextInput
+                    <InputField
                       onChangeText={onChange}
                       value={value?.toString()}
                       keyboardType="numeric"

@@ -54,7 +54,7 @@ export default function Workout() {
         </VStack>
         {/* TODO Needs to be replaced by actual search component from areeb @AreebE */}
         <Input>
-          <TextInput
+          <InputField
             value={templateQuery}
             onChangeText={setTemplateQuery}
             placeholder="Search for a workout template"

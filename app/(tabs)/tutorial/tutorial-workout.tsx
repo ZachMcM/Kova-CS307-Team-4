@@ -261,7 +261,7 @@ export default function TutorialWorkoutScreen() {
             </VStack>
             <AttachStep index={1}>
             <Input>
-              <TextInput
+              <InputField
                 placeholder="Search for a workout template"
               />
             </Input>

@@ -45,7 +45,7 @@ export default function FavoriteExercises() {
       ) : favoriteExercises && favoriteExercises.length > 0 ? (
         <VStack space="md">
           <Input size="md">
-            <TextInput
+            <InputField
               placeholder="Search for your favorite exercises"
               onChangeText={setExerciseQuery}
               value={exerciseQuery}

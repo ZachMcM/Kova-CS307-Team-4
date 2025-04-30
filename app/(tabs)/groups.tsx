@@ -65,7 +65,7 @@ export default function Groups() {
         ) : (
           <><Heading>Your Groups</Heading><VStack space="md">
               <Input>
-                <TextInput
+                <InputField
                   value={userGroupQuery}
                   onChangeText={setUserGroupQuery}
                   placeholder="Search for one of your groups."
@@ -79,7 +79,7 @@ export default function Groups() {
                 ))) : <Text>You haven't joined a group yet. Join one!</Text>}
             </VStack><Heading>All Groups</Heading><VStack space="md">
                 <Input>
-                  <TextInput
+                  <InputField
                     value={groupQuery}
                     onChangeText={setGroupQuery}
                     placeholder="Search for a group to join."

@@ -647,7 +647,7 @@ export default function WeightTrackingScreen() {
                   Weight:
                 </Text>
                 <Input className="flex-1">
-                  <TextInput
+                  <InputField
                     value={weight}
                     onChangeText={setWeight}
                     keyboardType="numeric"
@@ -770,7 +770,7 @@ export default function WeightTrackingScreen() {
                       Target Weight:
                     </Text>
                     <Input className="flex-1">
-                      <TextInput
+                      <InputField
                         value={goalFormData.targetWeight}
                         onChangeText={(value) =>
                           setGoalFormData((prev) => ({

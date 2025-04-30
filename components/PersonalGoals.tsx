@@ -374,7 +374,7 @@ export default function PersonalGoals({goals, userId, profileUserId, exercises} 
                 <Heading size="md" className="mb-2">Add a new goal</Heading>
                 <HStack space="lg" className="mb-2">
                   <Input className="border border-gray-300 rounded-md p-2 w-24">
-                    <TextInput 
+                    <InputField 
                       placeholder="Reps" 
                       keyboardType="numeric" 
                       onChangeText={(text) => dispatch({ 
@@ -385,7 +385,7 @@ export default function PersonalGoals({goals, userId, profileUserId, exercises} 
                     />
                   </Input>
                   <Input className="border border-gray-300 rounded-md p-2 w-24">
-                    <TextInput 
+                    <InputField 
                       placeholder="Weight" 
                       keyboardType="numeric" 
                       onChangeText={(text) => dispatch({ 
@@ -424,7 +424,7 @@ export default function PersonalGoals({goals, userId, profileUserId, exercises} 
                       </ModalHeader>
                       <ModalBody>
                         <Input className="border border-gray-300 rounded-md p-2 mb-2">
-                          <TextInput 
+                          <InputField 
                             placeholder="Search for an exercise" 
                             onChangeText={handleSearchChange}
                           />

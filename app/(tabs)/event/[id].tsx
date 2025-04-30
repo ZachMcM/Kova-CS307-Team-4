@@ -264,7 +264,7 @@ function EditTile({
             <VStack space="sm">
               <Heading size="md">Title</Heading>
               <Input>
-                <TextInput
+                <InputField
                   onChangeText={onChange}
                   value={value}
                   placeholder="Enter a title..."
