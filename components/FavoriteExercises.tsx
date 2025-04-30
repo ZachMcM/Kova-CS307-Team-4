@@ -35,10 +35,10 @@ export default function FavoriteExercises() {
     <VStack space="md">
       <HStack className="items-center justify-between">
         <Heading size="2xl">Favorite Exercises</Heading>
-        <Button variant="link" onPress={() => router.push("/exercises")}>
+        {/* <Button variant="link" onPress={() => router.push("/exercises")}>
           <ButtonText>View All</ButtonText>
           <ButtonIcon as={ArrowRightIcon} />
-        </Button>
+        </Button> */}
       </HStack>
       {isPending ? (
         <Spinner />

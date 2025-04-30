@@ -140,6 +140,9 @@ function Favorite({
   const { mutate: unfavorite } = useMutation({
     mutationFn: async () => {
       await removeFavorite(session?.user.user_metadata.profileId, exercise.id);
+      queryClient.invalidateQueries({
+        queryKey: ["favorite-exercises"],
+      });
     },
     onError: (err) => {
       showErrorToast(toast, err.message);
