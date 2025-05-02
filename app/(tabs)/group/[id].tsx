@@ -194,7 +194,7 @@ export default function Group() {
               type="single session showdowns"
             />
           </VStack>
-          {!gettingRole ? (
+          {!gettingRole && (
             role === "owner" ? (
               <Button
                 variant="solid"
@@ -267,8 +267,6 @@ export default function Group() {
             ) : (
               <></>
             )
-          ) : (
-            <></>
           )}
         </VStack>
       )}
