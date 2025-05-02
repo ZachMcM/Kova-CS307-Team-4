@@ -398,11 +398,18 @@ export const ProfileActivities = React.memo(({
       );
       
       const postsWeek = posts.filter((post) => 
-        (new Date(post.createdAt)).getFullYear() === now.getFullYear() &&
-        (new Date(post.createdAt)).getMonth() === now.getMonth() &&
-        (Math.abs((new Date(post.createdAt)).getDate() - now.getDate()) <= now.getDay()) &&
-        DOWArray.includes((new Date(post.createdAt)).getDay())
+      {
+        let nowmilliseconds = now.getTime();
+        let postmilliseconds = (new Date(post.createdAt)).getTime();
+        //(new Date(post.createdAt)).getFullYear() === now.getFullYear() &&
+        //(new Date(post.createdAt)).getMonth() === now.getMonth() &&
+        //(Math.abs((new Date(post.createdAt)).getDate() - now.getDate()) <= now.getDay()) &&
+        //if (nowmilliseconds - postmilliseconds < (now.getDay() + 1) * 85000000) {console.log(post.createdAt, postmilliseconds);}
+        return (nowmilliseconds - postmilliseconds < (now.getDay() + 1) * 85000000) //&& 
+        //DOWArray.includes((new Date(post.createdAt)).getDay())
+      }
       );
+      console.log(10386966 < 86400000);
       
       const workoutsWeek = postsWeek.filter((post) => 
         post?.workoutData && post.workoutData.exercises.length !== 0

@@ -17,6 +17,7 @@ import { showErrorToast, showFollowToast } from "@/services/toastServices";
 import { useToast } from "@/components/ui/toast";
 import { Badge, BadgeIcon } from "@/components/ui/badge";
 import { Input, InputField } from "@/components/ui/input";
+import { useNavigation } from "@react-navigation/native";
 
 export default function RelationsView() {
   const { id, type } = useLocalSearchParams();
@@ -24,6 +25,7 @@ export default function RelationsView() {
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const navigation = useNavigation();
 
   const [visible, setVisible] = useState(true);
 
@@ -63,6 +65,21 @@ export default function RelationsView() {
     enabled: !!userId,
   });
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      //queryClient.invalidateQueries();
+      //queryClient.clear();
+      console.log("invalidated queries");
+      queryClient.invalidateQueries({ queryKey: ["following", id as string] });
+      queryClient.invalidateQueries({ queryKey: ["friends", id as string] });
+      queryClient.invalidateQueries({ queryKey: ["profile", id as string] });
+      queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
   const handleFollowBack = async (relation: any) => {
     try {
       //setVisible(false);
@@ -72,6 +89,8 @@ export default function RelationsView() {
       queryClient.invalidateQueries({ queryKey: ["following", id as string] });
       queryClient.invalidateQueries({ queryKey: ["friends", id as string] });
       queryClient.invalidateQueries({ queryKey: ["profile", id as string] });
+      queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });
       //setVisible(true);
     } catch (error) {
       console.error("Failed to follow back:", error);

@@ -432,6 +432,11 @@ export default function ProfileScreen() {
           profile.friends += 1;
         }
       }
+      queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["following", id as string] });
+      queryClient.invalidateQueries({ queryKey: ["friends", id as string] });
+      queryClient.invalidateQueries({ queryKey: ["profile", id as string] });
     } catch (error) {
       console.error(error);
       showErrorToast(toast, "Failed to follow profile");
@@ -450,6 +455,11 @@ export default function ProfileScreen() {
           profile.friends -= 1;
         }
       }
+      queryClient.invalidateQueries({ queryKey: ["followerStatus", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["followingStatus", userId, id] });
+      queryClient.invalidateQueries({ queryKey: ["following", id as string] });
+      queryClient.invalidateQueries({ queryKey: ["friends", id as string] });
+      queryClient.invalidateQueries({ queryKey: ["profile", id as string] });
     } catch (error) {
       console.error(error);
       showErrorToast(toast, "Failed to unfollow profile");
